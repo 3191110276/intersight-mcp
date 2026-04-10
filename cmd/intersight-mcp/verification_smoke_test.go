@@ -32,7 +32,7 @@ func TestServeWithIOVerificationMatrix(t *testing.T) {
 	stdoutReader, stdoutWriter := io.Pipe()
 	defer stdoutReader.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 
 	errCh := make(chan error, 1)

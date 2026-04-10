@@ -9,7 +9,7 @@ const (
 	DefaultMaxOutput     = 512 * 1024
 	DefaultMaxConcurrent = 50
 
-	SearchTimeout    = 5 * time.Second
+	SearchTimeout    = 15 * time.Second
 	PerCallTimeout   = 15 * time.Second
 	MaxCodeSizeBytes = 100 * 1024
 	WASMMemoryBytes  = 64 * 1024 * 1024
