@@ -73,6 +73,8 @@ export INTERSIGHT_CLIENT_SECRET=your-client-secret
 
 The process communicates only over stdin/stdout. It does not expose an HTTP listener.
 
+Search execution reuses immutable embedded artifacts prepared at startup, but it does not pool QuickJS runtimes. Each `search` call executes in a fresh runtime.
+
 ## Configuration
 
 Supported configuration comes from flags and matching environment variables. Flags take precedence over environment variables.

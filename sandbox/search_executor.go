@@ -10,14 +10,8 @@ import (
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 )
 
-type pooledSearchExecutor struct {
-	cfg              Config
-	specJSON         []byte
-	catalogJSON      []byte
-	rulesJSON        []byte
-	publicSearchJSON []byte
-}
-
+// NewSearchExecutor builds a search executor backed by immutable JSON artifacts.
+// It creates a fresh QuickJS runtime for each execution; runtimes are not pooled.
 func NewSearchExecutor(cfg Config, specJSON, catalogJSON, rulesJSON, searchJSON []byte) (Executor, error) {
 	cfg = normalizeConfig(cfg)
 	if !json.Valid(specJSON) {
@@ -38,7 +32,7 @@ func NewSearchExecutor(cfg Config, specJSON, catalogJSON, rulesJSON, searchJSON 
 		return nil, err
 	}
 
-	exec := &pooledSearchExecutor{
+	exec := &searchExecutor{
 		cfg:              cfg,
 		specJSON:         append([]byte(nil), specJSON...),
 		catalogJSON:      append([]byte(nil), catalogJSON...),
@@ -48,12 +42,14 @@ func NewSearchExecutor(cfg Config, specJSON, catalogJSON, rulesJSON, searchJSON 
 	return exec, nil
 }
 
+// NewSearchExecutorFromBundle reuses the parsed immutable artifact bundle, but
+// still creates a fresh QuickJS runtime for each search execution.
 func NewSearchExecutorFromBundle(cfg Config, bundle *ArtifactBundle) (Executor, error) {
 	if bundle == nil {
 		return nil, contracts.ValidationError{Message: "artifact bundle is required"}
 	}
 	cfg = normalizeConfig(cfg)
-	return &pooledSearchExecutor{
+	return &searchExecutor{
 		cfg:              cfg,
 		specJSON:         append([]byte(nil), bundle.specJSON...),
 		catalogJSON:      append([]byte(nil), bundle.catalogJSON...),
@@ -62,7 +58,15 @@ func NewSearchExecutorFromBundle(cfg Config, bundle *ArtifactBundle) (Executor, 
 	}, nil
 }
 
-func (e *pooledSearchExecutor) loadGlobals(rt *qjs.Runtime) error {
+type searchExecutor struct {
+	cfg              Config
+	specJSON         []byte
+	catalogJSON      []byte
+	rulesJSON        []byte
+	publicSearchJSON []byte
+}
+
+func (e *searchExecutor) loadGlobals(rt *qjs.Runtime) error {
 	spec := rt.Context().ParseJSON(string(e.specJSON))
 	sdk := rt.Context().ParseJSON(string(e.catalogJSON))
 	rules := rt.Context().ParseJSON(string(e.rulesJSON))
@@ -121,9 +125,9 @@ func redactSearchCatalogPublicFields(searchJSON []byte) ([]byte, error) {
 	return redacted, nil
 }
 
-func (e *pooledSearchExecutor) Execute(ctx context.Context, code string, mode Mode) (Result, error) {
+func (e *searchExecutor) Execute(ctx context.Context, code string, mode Mode) (Result, error) {
 	if mode != ModeSearch {
-		return Result{}, contracts.ValidationError{Message: "pooled search executor only supports search mode"}
+		return Result{}, contracts.ValidationError{Message: "search executor only supports search mode"}
 	}
 
 	execCtx, cancel := context.WithTimeout(ctx, e.cfg.SearchTimeout)
@@ -165,6 +169,6 @@ func (e *pooledSearchExecutor) Execute(ctx context.Context, code string, mode Mo
 	return result, nil
 }
 
-func (e *pooledSearchExecutor) Close() error {
+func (e *searchExecutor) Close() error {
 	return nil
 }

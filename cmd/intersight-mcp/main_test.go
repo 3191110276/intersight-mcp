@@ -4,12 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/mimaurer/intersight-mcp/intersight"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 	"github.com/mimaurer/intersight-mcp/internal/testutil"
 )
@@ -77,6 +79,40 @@ func TestServeStartsWhenAuthBootstrapFails(t *testing.T) {
 
 	if err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
 		t.Fatalf("serveWithIO() error = %v", err)
+	}
+}
+
+func TestBootstrapOAuthManagerTimesOutStalledStartupAuth(t *testing.T) {
+	t.Parallel()
+
+	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iam/token":
+			<-r.Context().Done()
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer api.Close()
+
+	start := time.Now()
+	_, err := bootstrapOAuthManager(context.Background(), 50*time.Millisecond, intersight.OAuthConfig{
+		TokenURL:     api.URL + "/iam/token",
+		ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
+		ClientID:     "id",
+		ClientSecret: "secret",
+		HTTPClient:   api.Client(),
+	})
+	if err == nil {
+		t.Fatalf("expected startup auth timeout")
+	}
+
+	var timeoutErr contracts.TimeoutError
+	if !errors.As(err, &timeoutErr) {
+		t.Fatalf("expected TimeoutError, got %T", err)
+	}
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Fatalf("bootstrapOAuthManager() took %v, want bounded timeout", elapsed)
 	}
 }
 

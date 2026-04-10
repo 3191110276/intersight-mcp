@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/mimaurer/intersight-mcp/generated"
 	internalpkg "github.com/mimaurer/intersight-mcp/internal"
@@ -60,7 +62,7 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 	}
 
 	logger := internalpkg.NewLogger(stderr, cfg.LogLevel, cfg.LogFullCode)
-	httpClient := &http.Client{}
+	httpClient := newHTTPClient(cfg.PerCallTimeout)
 	sandboxCfg := sandbox.Config{
 		SearchTimeout:   cfg.SearchTimeout,
 		GlobalTimeout:   cfg.Execution.GlobalTimeout,
@@ -78,7 +80,7 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 
 	var apiCaller sandbox.APICaller = unavailableClient{err: contracts.AuthError{Message: "Intersight credentials are not configured; search is available, but query and mutate require INTERSIGHT_CLIENT_ID and INTERSIGHT_CLIENT_SECRET"}}
 	if cfg.HasCredentials() {
-		oauthManager, authErr := intersight.NewOAuthManager(ctx, intersight.OAuthConfig{
+		oauthManager, authErr := bootstrapOAuthManager(ctx, cfg.PerCallTimeout, intersight.OAuthConfig{
 			TokenURL:     cfg.OAuthTokenURL,
 			ValidateURL:  cfg.APIBaseURL + "/iam/UserPreferences",
 			ClientID:     cfg.ClientID,
@@ -122,6 +124,28 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 	defer runtime.Close()
 
 	return runtime.Listen(ctx, stdin, stdout)
+}
+
+func newHTTPClient(timeout time.Duration) *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DialContext = (&net.Dialer{
+		Timeout:   timeout,
+		KeepAlive: 30 * time.Second,
+	}).DialContext
+	transport.TLSHandshakeTimeout = timeout
+	transport.ResponseHeaderTimeout = timeout
+	transport.ExpectContinueTimeout = time.Second
+
+	return &http.Client{
+		Timeout:   timeout,
+		Transport: transport,
+	}
+}
+
+func bootstrapOAuthManager(ctx context.Context, timeout time.Duration, cfg intersight.OAuthConfig) (*intersight.Manager, error) {
+	bootstrapCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return intersight.NewOAuthManager(bootstrapCtx, cfg)
 }
 
 type sandboxClient struct {
