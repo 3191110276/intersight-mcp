@@ -1,0 +1,10 @@
+package tools
+
+import (
+	mcpserver "github.com/mark3labs/mcp-go/server"
+	"github.com/mimaurer/intersight-mcp/sandbox"
+)
+
+func NewQueryTool(exec sandbox.Executor, limiter *Limiter) mcpserver.ServerTool {
+	return newServerTool(ToolQuery, queryTitle, queryDescription, sandbox.ModeQuery, exec, limiter, true, false)
+}

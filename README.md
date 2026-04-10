@@ -1,0 +1,153 @@
+# Intersight MCP Server
+
+`intersight-mcp` is a local stdio MCP server for Cisco Intersight. It exposes three tools:
+
+- `search` for exploring the generated search catalog, raw SDK catalog, rule metadata, and normalized OpenAPI spec
+- `query` for read-shaped SDK calls against the Intersight API and offline validation of write-shaped SDK calls without making API calls
+- `mutate` for persistent write-shaped SDK calls against the Intersight API
+
+The `search` discovery surface is resource-first: use `catalog.resources`, `catalog.resourceNames`, and `catalog.paths` to move from a resource family or REST path into the grouped operation set for that SDK stem. The public `search` view keeps `resource.operations` minimal: it is an array of supported verbs such as `["list", "get", "create", "update", "delete"]`. Operation defaults are documented once at the tool level instead of repeated on every resource: `create` requires a body, `delete` requires `path.Moid`, `get` requires `path.Moid` and supports standard get query parameters, `list` supports standard list query parameters, and `update` requires both `path.Moid` and a body. Its top-level `createFields` map is filtered to exclude read-only properties so the output stays focused on writable inputs. Use `resource.schema` with `spec.schemas[...]` for full normalized schema detail. When you need the fully-qualified SDK method from a public resource entry, derive it as `resourceKey + '.' + verb` where `resourceKey` is the parent map key and `verb` comes from `resource.operations`. When both POST-update and PATCH-update variants exist for the same resource, the public view also hides the redundant `post` alias and keeps `update`. Richer operation metadata is still retained in the generated artifacts and in `sdk.methods[...]` for direct OpenAPI correlation.
+
+Telemetry is an exception: generated `telemetry.*` resources are intentionally excluded from the OpenAPI-derived SDK surface, and query mode exposes a custom `sdk.telemetry.query(...)` helper for Apache Druid `groupBy` queries. The helper accepts groupBy fields as top-level inputs and injects `queryType: "groupBy"` internally.
+
+The binary is local-only, stdio-only, and configured exclusively through CLI flags plus environment variables. There is no config file support.
+
+## Requirements
+
+- Go 1.25.x
+- Cisco Intersight OAuth client credentials
+- A local checkout of this repository with the pinned raw spec in `third_party/intersight/openapi/raw/openapi.json`
+
+## Build
+
+From the repository root:
+
+```bash
+make generate
+make build
+```
+
+`make build` writes binaries for the default target set to `bin/`:
+
+- `bin/intersight-mcp-darwin-amd64`
+- `bin/intersight-mcp-darwin-arm64`
+- `bin/intersight-mcp-linux-amd64`
+- `bin/intersight-mcp-linux-arm64`
+- `bin/intersight-mcp-windows-amd64.exe`
+
+Override the target matrix when needed:
+
+```bash
+make build BUILD_TARGETS="linux/amd64 windows/amd64"
+```
+
+## Verify
+
+Run the full local verification harness with:
+
+```bash
+make verify
+```
+
+`make verify` is a thin wrapper around:
+
+```bash
+make generate
+GOCACHE=$PWD/.cache/go-build GOTMPDIR=$PWD/.tmp go test ./...
+make build
+```
+
+Use `make generate` instead of bare `go generate ./...` when your environment cannot write to the default Go build cache path.
+
+The tests include a local `httptest.Server` fake Intersight surface for auth bootstrap, collection reads, object reads, and mutate writes, plus a manual clock used by OAuth refresh/degraded-mode tests.
+
+## Run
+
+Set credentials in the environment, then start the stdio server:
+
+```bash
+export INTERSIGHT_CLIENT_ID=your-client-id
+export INTERSIGHT_CLIENT_SECRET=your-client-secret
+./bin/intersight-mcp-$(go env GOOS)-$(go env GOARCH) serve
+```
+
+The process communicates only over stdin/stdout. It does not expose an HTTP listener.
+
+## Configuration
+
+Supported configuration comes from flags and matching environment variables. Flags take precedence over environment variables.
+
+| Setting | Flag | Environment | Default |
+|---|---|---|---|
+| Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | `https://intersight.com` |
+| Global execution timeout | `--timeout` | `INTERSIGHT_TIMEOUT` | `40s` |
+| Max API calls per execution | `--max-api-calls` | `INTERSIGHT_MAX_API_CALLS` | `250` |
+| Max serialized output | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
+| Max concurrent `query`/`mutate` executions | `--max-concurrent` | `INTERSIGHT_MAX_CONCURRENT` | `50` |
+| Log level | `--log-level` | `INTERSIGHT_LOG_LEVEL` | `info` |
+
+Required environment variables:
+
+- `INTERSIGHT_CLIENT_ID`
+- `INTERSIGHT_CLIENT_SECRET`
+
+Endpoint validation rules:
+
+- Must be an absolute `http` or `https` URL
+- Must not include a query string or fragment
+- Must be the origin only; path components are rejected
+- OAuth and API base URLs are both derived from that origin
+
+Examples:
+
+```bash
+INTERSIGHT_CLIENT_ID=... \
+INTERSIGHT_CLIENT_SECRET=... \
+INTERSIGHT_ENDPOINT=https://intersight.com \
+./bin/intersight-mcp serve --log-level debug
+```
+
+```bash
+INTERSIGHT_CLIENT_ID=... \
+INTERSIGHT_CLIENT_SECRET=... \
+./bin/intersight-mcp serve --timeout 60s --max-output 1MB --max-concurrent 10
+```
+
+## MCP Client Setup
+
+Configure your MCP client to launch the binary as a local stdio command. Example shape:
+
+```json
+{
+  "command": "/absolute/path/to/implementation/bin/intersight-mcp",
+  "args": ["serve"],
+  "env": {
+    "INTERSIGHT_CLIENT_ID": "your-client-id",
+    "INTERSIGHT_CLIENT_SECRET": "your-client-secret",
+    "INTERSIGHT_ENDPOINT": "https://intersight.com"
+  }
+}
+```
+
+The server registers exactly three tools: `search`, `query`, and `mutate`.
+The public execution surface is `sdk` only. `search` also exposes a merged `catalog` discovery object plus raw `sdk`, `rules`, and `spec` globals.
+
+Example reverse lookup in `search`:
+
+```js
+const keys = catalog.paths['/vnic/FcNetworkPolicies'] || [];
+return keys.map(key => catalog.resources[key]);
+```
+
+## Spec Update Workflow
+
+When the pinned Cisco OpenAPI input, the generator, or core dependencies change:
+
+1. Replace `third_party/intersight/openapi/raw/openapi.json` with the new pinned raw spec.
+2. Update `third_party/intersight/openapi/manifest.json` so the published version, source URL, SHA-256, and retrieval date match the new raw file.
+3. Review `spec/filter.yaml` and adjust denylist entries only when there is an intentional routing change.
+4. Regenerate the embedded normalized artifact with `make generate`.
+5. Run the full verification harness with `make verify`.
+6. Commit the updated raw spec, manifest, and regenerated `generated/spec_resolved.json`, `generated/sdk_catalog.json`, `generated/rules.json`, and `generated/search_catalog.json` together.
+
+Do not fetch specs implicitly as part of build or generate. The workflow is local-only and reproducible from repository state.
