@@ -20,7 +20,7 @@ import (
 func TestServerToolsRegistration(t *testing.T) {
 	t.Parallel()
 
-	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3))
+	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), false)
 	if len(tools) != 3 {
 		t.Fatalf("len(ServerTools()) = %d, want 3", len(tools))
 	}
@@ -87,7 +87,7 @@ func TestSuccessMapping(t *testing.T) {
 	}
 }
 
-func TestTelemetrySuccessMappingAttachesMetricsApp(t *testing.T) {
+func TestTelemetrySuccessMappingIgnoresPresentationHints(t *testing.T) {
 	t.Parallel()
 
 	handler := NewToolHandler(sandbox.ModeQuery, stubExecutor{
@@ -106,28 +106,11 @@ func TestTelemetrySuccessMappingAttachesMetricsApp(t *testing.T) {
 	if err != nil {
 		t.Fatalf("handler() error = %v", err)
 	}
-	if result.Meta == nil || result.Meta.AdditionalFields["openai/outputTemplate"] != metricsAppResourceURI {
+	if result.Meta != nil {
 		t.Fatalf("unexpected result meta: %#v", result.Meta)
 	}
-	if len(result.Content) != 2 {
-		t.Fatalf("content count = %d, want 2", len(result.Content))
-	}
-	embedded, ok := result.Content[1].(mcp.EmbeddedResource)
-	if !ok {
-		t.Fatalf("metrics content type = %T", result.Content[1])
-	}
-	resource, ok := embedded.Resource.(mcp.TextResourceContents)
-	if !ok {
-		t.Fatalf("embedded resource type = %T", embedded.Resource)
-	}
-	if resource.URI != metricsAppResourceURI {
-		t.Fatalf("resource.URI = %q, want %q", resource.URI, metricsAppResourceURI)
-	}
-	if resource.MIMEType != metricsAppResourceMimeType {
-		t.Fatalf("resource.MIMEType = %q, want %q", resource.MIMEType, metricsAppResourceMimeType)
-	}
-	if !strings.Contains(resource.Text, "<iframe") {
-		t.Fatalf("expected iframe html, got %q", resource.Text)
+	if len(result.Content) != 1 {
+		t.Fatalf("content count = %d, want 1", len(result.Content))
 	}
 }
 
@@ -431,10 +414,8 @@ func assertTool(t *testing.T, tool mcp.Tool, title string, readOnly, destructive
 	}
 	assertJSONEq(t, string(tool.RawInputSchema), wantInputSchema)
 	assertJSONEq(t, string(tool.RawOutputSchema), string(outputSchemaJSON))
-	if tool.Name == ToolQuery {
-		if tool.Meta == nil || tool.Meta.AdditionalFields["openai/outputTemplate"] != metricsAppResourceURI {
-			t.Fatalf("query tool output template = %#v, want %q", tool.Meta, metricsAppResourceURI)
-		}
+	if tool.Name == ToolQuery && tool.Meta != nil {
+		t.Fatalf("query tool meta = %#v, want nil by default", tool.Meta)
 	}
 }
 

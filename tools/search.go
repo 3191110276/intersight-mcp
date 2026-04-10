@@ -6,5 +6,5 @@ import (
 )
 
 func NewSearchTool(exec sandbox.Executor) mcpserver.ServerTool {
-	return newServerTool(ToolSearch, searchTitle, searchDescription, sandbox.ModeSearch, exec, nil, true, false)
+	return newServerTool(ToolSearch, searchTitle, searchDescription, sandbox.ModeSearch, exec, nil, true, false, false)
 }

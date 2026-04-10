@@ -24,10 +24,11 @@ const (
 )
 
 type RuntimeConfig struct {
-	ServerName    string
-	ServerVersion string
-	MaxConcurrent int
-	Logger        *internalpkg.Logger
+	ServerName        string
+	ServerVersion     string
+	MaxConcurrent     int
+	ExposeMetricsApps bool
+	Logger            *internalpkg.Logger
 
 	SearchExecutor sandbox.Executor
 	QueryExecutor  sandbox.Executor
@@ -69,59 +70,11 @@ func NewRuntime(cfg RuntimeConfig) (*Runtime, error) {
 		mcpserver.WithRecovery(),
 		mcpserver.WithResourceCapabilities(false, false),
 	)
-	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent))
+	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent), cfg.ExposeMetricsApps)
 	for i := range serverTools {
 		serverTools[i].Handler = wrapToolHandler(serverTools[i].Tool.Name, serverTools[i].Handler, cfg.Logger)
 	}
 	srv.AddTools(serverTools...)
-	resource := mcp.NewResource(
-		tools.MetricsAppResourceURI(),
-		"Metrics App",
-		mcp.WithResourceDescription("Static iframe proof-of-concept for metrics query results."),
-		mcp.WithMIMEType(tools.MetricsAppResourceMIMEType()),
-	)
-	resource.Meta = mcp.NewMetaFromMap(map[string]any{
-		"openai/widgetDescription":   "Static metrics iframe proof-of-concept.",
-		"openai/widgetPrefersBorder": true,
-		"openai/widgetCSP": map[string]any{
-			"connect_domains":  []string{},
-			"resource_domains": []string{},
-		},
-		"ui": map[string]any{
-			"prefersBorder": true,
-			"csp": map[string]any{
-				"connectDomains":  []string{},
-				"resourceDomains": []string{},
-			},
-		},
-	})
-	srv.AddResource(
-		resource,
-		func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
-			return []mcp.ResourceContents{
-				mcp.TextResourceContents{
-					URI:      tools.MetricsAppResourceURI(),
-					MIMEType: tools.MetricsAppResourceMIMEType(),
-					Text:     tools.MetricsAppResourceHTML(),
-					Meta: map[string]any{
-						"openai/widgetDescription":   "Static metrics iframe proof-of-concept.",
-						"openai/widgetPrefersBorder": true,
-						"openai/widgetCSP": map[string]any{
-							"connect_domains":  []string{},
-							"resource_domains": []string{},
-						},
-						"ui": map[string]any{
-							"prefersBorder": true,
-							"csp": map[string]any{
-								"connectDomains":  []string{},
-								"resourceDomains": []string{},
-							},
-						},
-					},
-				},
-			}, nil
-		},
-	)
 
 	stdio := mcpserver.NewStdioServer(srv)
 	stdio.SetErrorLogger(log.New(io.Discard, "", 0))

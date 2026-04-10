@@ -167,15 +167,15 @@ func OutputSchema() json.RawMessage {
 	return append(json.RawMessage(nil), outputSchemaJSON...)
 }
 
-func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter) []mcpserver.ServerTool {
+func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, exposeMetricsApps bool) []mcpserver.ServerTool {
 	return []mcpserver.ServerTool{
 		NewSearchTool(searchExec),
-		NewQueryTool(queryExec, limiter),
+		NewQueryTool(queryExec, limiter, exposeMetricsApps),
 		NewMutateTool(mutateExec, limiter),
 	}
 }
 
-func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, readOnly, destructive bool) mcpserver.ServerTool {
+func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, readOnly, destructive, _ bool) mcpserver.ServerTool {
 	inputSchema := InputSchema()
 	if mode == sandbox.ModeMutate {
 		inputSchema = MutateInputSchema()
@@ -191,18 +191,6 @@ func newServerTool(name, title, description string, mode sandbox.Mode, exec sand
 			DestructiveHint: mcp.ToBoolPtr(destructive),
 		}),
 	)
-	if name == ToolQuery {
-		tool.Meta = mcp.NewMetaFromMap(map[string]any{
-			"openai/outputTemplate":          metricsAppResourceURI,
-			"openai/widgetAccessible":        true,
-			"openai/toolInvocation/invoking": "Loading metrics preview",
-			"openai/toolInvocation/invoked":  "Metrics preview ready",
-			"ui": map[string]any{
-				"resourceUri": metricsAppResourceURI,
-				"visibility":  []string{"app"},
-			},
-		})
-	}
 	tool.InputSchema = mcp.ToolInputSchema{}
 	tool.OutputSchema = mcp.ToolOutputSchema{}
 
@@ -261,45 +249,15 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter) 
 	}
 }
 
-func toolSuccessResult(toolName string, result sandbox.Result) *mcp.CallToolResult {
+func toolSuccessResult(_ string, result sandbox.Result) *mcp.CallToolResult {
 	envelope := contracts.Success(result.Value, result.Logs)
 	content := []mcp.Content{mcp.NewTextContent(renderSuccessText(envelope))}
-	var meta *mcp.Meta
-	if shouldAttachMetricsApp(toolName, result.Presentation) {
-		content = append(content, mcp.NewEmbeddedResource(mcp.TextResourceContents{
-			URI:      metricsAppResourceURI,
-			MIMEType: metricsAppResourceMimeType,
-			Text:     metricsAppResourceHTML,
-			Meta: map[string]any{
-				"openai/widgetDescription":   "Static metrics iframe proof-of-concept.",
-				"openai/widgetPrefersBorder": true,
-				"openai/widgetCSP": map[string]any{
-					"connect_domains":  []string{},
-					"resource_domains": []string{},
-				},
-				"ui": map[string]any{
-					"prefersBorder": true,
-					"csp": map[string]any{
-						"connectDomains":  []string{},
-						"resourceDomains": []string{},
-					},
-				},
-			},
-		}))
-		meta = mcp.NewMetaFromMap(map[string]any{
-			"openai/outputTemplate": metricsAppResourceURI,
-		})
-	}
 	return &mcp.CallToolResult{
-		Result:            mcp.Result{Meta: meta},
+		Result:            mcp.Result{},
 		Content:           content,
 		StructuredContent: envelope,
 		IsError:           false,
 	}
-}
-
-func shouldAttachMetricsApp(toolName string, presentation *sandbox.PresentationHint) bool {
-	return toolName == ToolQuery && presentation != nil && presentation.Kind == sandbox.PresentationKindMetricsApp
 }
 
 func toolErrorResult(err error, logs []string) *mcp.CallToolResult {

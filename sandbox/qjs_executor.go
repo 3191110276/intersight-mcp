@@ -90,12 +90,13 @@ func (e *qjsExecutor) Execute(ctx context.Context, code string, mode Mode) (Resu
 	}()
 
 	bridge := &apiBridge{
-		client:         e.client,
-		mode:           mode,
-		perCallTimeout: e.cfg.PerCallTimeout,
-		maxAPICalls:    e.cfg.MaxAPICalls,
-		spec:           e.spec,
-		sdk:            e.sdk,
+		client:            e.client,
+		mode:              mode,
+		perCallTimeout:    e.cfg.PerCallTimeout,
+		maxAPICalls:       e.cfg.MaxAPICalls,
+		enableMetricsApps: e.cfg.EnableMetricsApps,
+		spec:              e.spec,
+		sdk:               e.sdk,
 	}
 	if mode != ModeSearch {
 		if err := e.sdk.install(rt.Context(), execCtx, bridge); err != nil {

@@ -28,7 +28,10 @@ type PresentationHint struct {
 	Kind string
 }
 
-const PresentationKindMetricsApp = "metrics-app"
+const (
+	PresentationKindMetricsImage = "metrics-image"
+	PresentationKindMetricsApp   = "metrics-app"
+)
 
 type Executor interface {
 	Execute(ctx context.Context, code string, mode Mode) (Result, error)
@@ -55,6 +58,7 @@ type Config struct {
 	MaxAPICalls     int
 	MaxOutputBytes  int64
 	WASMMemoryBytes int
+	EnableMetricsApps bool
 }
 
 func DefaultConfig() Config {

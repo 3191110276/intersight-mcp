@@ -78,6 +78,7 @@ Available global: sdk
     dimensions: array,
     granularity: string | object,
     intervals: array,
+    render?: 'off',
     virtualColumns?: array,
     limitSpec?: object,
     having?: object,
@@ -90,7 +91,7 @@ Available global: sdk
 
 Read queries preserve spec-defined query parameters, including OData fields such as ` + "`$filter`" + `, ` + "`$select`" + `, ` + "`$orderby`" + `, ` + "`$top`" + `, ` + "`$skip`" + `, ` + "`$expand`" + `, and non-OData operation-specific query parameters.
 Write-shaped SDK calls return the same offline validation report shape used for local request checking, including ` + "`valid`" + `, ` + "`issues`" + `, and ` + "`layers`" + `.
-The custom ` + "`sdk.telemetry.query(...)`" + ` method is also available in ` + "`query`" + `: it accepts Apache Druid groupBy query fields as top-level inputs, validates the required ` + "`dataSource`" + `, ` + "`dimensions`" + `, ` + "`granularity`" + `, and ` + "`intervals`" + ` arguments, and emits a read-only telemetry POST with ` + "`queryType: 'groupBy'`" + ` internally. Successful telemetry queries also attach a static metrics app preview for clients that support embedded MCP app resources.
+The custom ` + "`sdk.telemetry.query(...)`" + ` method is also available in ` + "`query`" + `: it accepts Apache Druid groupBy query fields as top-level inputs, validates the required ` + "`dataSource`" + `, ` + "`dimensions`" + `, ` + "`granularity`" + `, and ` + "`intervals`" + ` arguments, and emits a read-only telemetry POST with ` + "`queryType: 'groupBy'`" + ` internally. Use the optional ` + "`render`" + ` field to declare whether chart presentation should be ` + "`'off'`" + `.
 Inside the JS runtime, SDK calls can surface auth, HTTP, network, timeout, limit, validation, and reference errors through the standard MCP error envelope.
 
 Examples:
@@ -130,6 +131,7 @@ Examples:
     dimensions: ['host'],
     intervals: ['2026-04-01/2026-04-09'],
     granularity: 'hour',
+    render: 'off',
     aggregations: [
       { type: 'longSum', name: 'total', fieldName: 'value' }
     ]

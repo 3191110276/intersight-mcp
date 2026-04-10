@@ -17,6 +17,7 @@ type apiBridge struct {
 	mode           Mode
 	perCallTimeout time.Duration
 	maxAPICalls    int
+	enableMetricsApps bool
 	callCount      atomic.Int64
 	spec           *dryRunSpecIndex
 	sdk            *sdkRuntime

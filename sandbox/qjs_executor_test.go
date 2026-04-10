@@ -703,8 +703,8 @@ return await sdk.telemetry.query({
 	if !ok {
 		t.Fatalf("unexpected result payload: %#v", result.Value)
 	}
-	if result.Presentation == nil || result.Presentation.Kind != PresentationKindMetricsApp {
-		t.Fatalf("presentation = %#v, want metrics app hint", result.Presentation)
+	if result.Presentation != nil {
+		t.Fatalf("presentation = %#v, want nil by default", result.Presentation)
 	}
 	switch got := payload["rows"].(type) {
 	case int:
@@ -760,6 +760,99 @@ return await sdk.telemetry.query({
 		t.Fatalf("expected ValidationError, got %T", err)
 	}
 	if !strings.Contains(validationErr.Error(), `only runs in query`) {
+		t.Fatalf("unexpected error: %v", validationErr)
+	}
+}
+
+func TestQueryCustomTelemetryQueryRejectsExplicitImageRenderMode(t *testing.T) {
+	t.Parallel()
+
+	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	if err != nil {
+		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
+	}
+
+	_, err = exec.Execute(context.Background(), `
+return await sdk.telemetry.query({
+  dataSource: 'fabric_port',
+  dimensions: ['switchId'],
+  granularity: 'hour',
+  intervals: ['2026-04-01/2026-04-09'],
+  render: 'image'
+});
+`, ModeQuery)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	var validationErr contracts.ValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
+	if !strings.Contains(validationErr.Error(), `render must be one of`) {
+		t.Fatalf("unexpected error: %v", validationErr)
+	}
+}
+
+func TestQueryCustomTelemetryQueryRejectsUnknownRenderMode(t *testing.T) {
+	t.Parallel()
+
+	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	if err != nil {
+		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
+	}
+
+	_, err = exec.Execute(context.Background(), `
+return await sdk.telemetry.query({
+  dataSource: 'fabric_port',
+  dimensions: ['switchId'],
+  granularity: 'hour',
+  intervals: ['2026-04-01/2026-04-09'],
+  render: 'app'
+});
+`, ModeQuery)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	var validationErr contracts.ValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
+	if !strings.Contains(validationErr.Error(), `render must be one of`) {
+		t.Fatalf("unexpected error: %v", validationErr)
+	}
+}
+
+func TestQueryCustomTelemetryQueryRejectsAppRenderModeEvenWhenEnabledInternally(t *testing.T) {
+	t.Parallel()
+
+	cfg := testConfig()
+	cfg.EnableMetricsApps = true
+
+	exec, err := NewQJSExecutorWithArtifacts(cfg, stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	if err != nil {
+		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
+	}
+
+	_, err = exec.Execute(context.Background(), `
+return await sdk.telemetry.query({
+  dataSource: 'fabric_port',
+  dimensions: ['switchId'],
+  granularity: 'hour',
+  intervals: ['2026-04-01/2026-04-09'],
+  render: 'app'
+});
+`, ModeQuery)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	var validationErr contracts.ValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
+	if !strings.Contains(validationErr.Error(), `render must be one of`) {
 		t.Fatalf("unexpected error: %v", validationErr)
 	}
 }

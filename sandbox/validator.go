@@ -89,14 +89,8 @@ func (b *apiBridge) callSDK(execCtx context.Context, sdkMethod string, args map[
 	}, nil
 }
 
-func (b *apiBridge) markPresentationForSDKMethod(sdkMethod string) {
-	if strings.TrimSpace(sdkMethod) == telemetryQuerySDKMethod {
-		b.presentation = &PresentationHint{Kind: PresentationKindMetricsApp}
-	}
-}
-
 func (b *apiBridge) callCustomSDK(execCtx context.Context, sdkMethod string, args map[string]any) (map[string]any, error) {
-	operation, err := b.sdk.compileCustomOperation(sdkMethod, args, b.mode)
+	operation, err := b.sdk.compileCustomOperation(sdkMethod, args, b.mode, b.enableMetricsApps)
 	if err != nil {
 		rejection, rejectErr := rejectionValue(err, b.perCallTimeout, b.maxAPICalls)
 		if rejectErr != nil {
@@ -135,7 +129,7 @@ func (b *apiBridge) callCustomSDK(execCtx context.Context, sdkMethod string, arg
 		}, nil
 	}
 
-	b.markPresentationForSDKMethod(sdkMethod)
+	b.presentation = telemetryPresentationHintWithApps(sdkMethod, args, b.enableMetricsApps)
 
 	return map[string]any{
 		"ok":    true,
@@ -154,10 +148,10 @@ func (r *sdkRuntime) sdkMethod(sdkMethod string) (contracts.SDKMethod, error) {
 	return method, nil
 }
 
-func (r *sdkRuntime) compileCustomOperation(sdkMethod string, args map[string]any, mode Mode) (contracts.OperationDescriptor, error) {
+func (r *sdkRuntime) compileCustomOperation(sdkMethod string, args map[string]any, mode Mode, enableMetricsApps bool) (contracts.OperationDescriptor, error) {
 	switch strings.TrimSpace(sdkMethod) {
 	case telemetryQuerySDKMethod:
-		return compileTelemetryQueryOperation(args, mode)
+		return compileTelemetryQueryOperation(args, mode, enableMetricsApps)
 	default:
 		return contracts.OperationDescriptor{}, contracts.ValidationError{
 			Message: fmt.Sprintf("unknown custom sdk method %q", sdkMethod),
@@ -469,7 +463,7 @@ func validateSDKArgs(args map[string]any, method contracts.SDKMethod) (map[strin
 	return args, nil
 }
 
-func compileTelemetryQueryOperation(args map[string]any, mode Mode) (contracts.OperationDescriptor, error) {
+func compileTelemetryQueryOperation(args map[string]any, mode Mode, enableMetricsApps bool) (contracts.OperationDescriptor, error) {
 	if mode != ModeQuery {
 		return contracts.OperationDescriptor{}, contracts.ValidationError{
 			Message: fmt.Sprintf("%q is a read-only telemetry query and only runs in query", telemetryQuerySDKMethod),
@@ -497,6 +491,7 @@ func compileTelemetryQueryOperation(args map[string]any, mode Mode) (contracts.O
 		"intervals":        {},
 		"subtotalsSpec":    {},
 		"context":          {},
+		"render":           {},
 	}
 	var unknown []string
 	for key := range args {
@@ -658,6 +653,10 @@ func compileTelemetryQueryOperation(args map[string]any, mode Mode) (contracts.O
 		}
 	}
 
+	if _, err := requireTelemetryRenderMode(args, enableMetricsApps); err != nil {
+		return contracts.OperationDescriptor{}, err
+	}
+
 	bodyObject := map[string]any{
 		"queryType":   "groupBy",
 		"dataSource":  dataSource,
@@ -683,6 +682,69 @@ func isArrayLike(value any) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+const (
+	telemetryRenderOff = "off"
+)
+
+func requireTelemetryRenderMode(args map[string]any, enableMetricsApps bool) (string, error) {
+	render, ok := telemetryRenderMode(args, enableMetricsApps)
+	if ok {
+		return render, nil
+	}
+
+	expected := []string{telemetryRenderOff}
+	message := fmt.Sprintf("sdk method %q render must be one of: %s", telemetryQuerySDKMethod, telemetryRenderOff)
+	actual := "<missing>"
+	if args != nil {
+		if value, exists := args["render"]; exists {
+			actual = fmt.Sprintf("%v", value)
+		}
+	}
+	return "", contracts.ValidationError{
+		Message: message,
+		Details: map[string]any{
+			"sdkMethod": telemetryQuerySDKMethod,
+			"issues": []validationIssue{{
+				Path:      "render",
+				Type:      "enum",
+				Source:    validationSourceSDKContract,
+				Message:   message,
+				Expected:  expected,
+				Actual:    actual,
+				SDKMethod: telemetryQuerySDKMethod,
+			}},
+			"layers": sdkContractFailureLayers(),
+		},
+	}
+}
+
+func telemetryPresentationHintWithApps(sdkMethod string, args map[string]any, enableMetricsApps bool) *PresentationHint {
+	return nil
+}
+
+func telemetryRenderMode(args map[string]any, enableMetricsApps bool) (string, bool) {
+	if args == nil {
+		return telemetryRenderOff, true
+	}
+
+	value, exists := args["render"]
+	if !exists || value == nil {
+		return telemetryRenderOff, true
+	}
+
+	render, ok := value.(string)
+	if !ok {
+		return "", false
+	}
+
+	switch strings.TrimSpace(render) {
+	case telemetryRenderOff:
+		return telemetryRenderOff, true
+	default:
+		return "", false
 	}
 }
 

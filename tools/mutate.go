@@ -6,5 +6,5 @@ import (
 )
 
 func NewMutateTool(exec sandbox.Executor, limiter *Limiter) mcpserver.ServerTool {
-	return newServerTool(ToolMutate, mutateTitle, mutateDescription, sandbox.ModeMutate, exec, limiter, false, true)
+	return newServerTool(ToolMutate, mutateTitle, mutateDescription, sandbox.ModeMutate, exec, limiter, false, true, false)
 }
