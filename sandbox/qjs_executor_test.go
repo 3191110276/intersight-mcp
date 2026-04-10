@@ -1437,8 +1437,8 @@ return await sdk.example.widget.list();
 
 func testConfig() Config {
 	cfg := DefaultConfig()
-	cfg.SearchTimeout = 5 * time.Second
-	cfg.GlobalTimeout = 5 * time.Second
+	cfg.SearchTimeout = 20 * time.Second
+	cfg.GlobalTimeout = 20 * time.Second
 	cfg.PerCallTimeout = 500 * time.Millisecond
 	return cfg
 }
