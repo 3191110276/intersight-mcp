@@ -3,7 +3,6 @@ package tools
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -336,17 +335,27 @@ func TestMutateHandlerRequiresChangeSummary(t *testing.T) {
 	t.Parallel()
 
 	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil)
-	_, err := handler(context.Background(), mcp.CallToolRequest{
+	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolMutate,
 			Arguments: map[string]any{"code": `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`},
 		},
 	})
-	if err == nil {
-		t.Fatalf("expected missing changeSummary error")
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
 	}
-	if err.Error() != `required argument "changeSummary" not found` {
-		t.Fatalf("unexpected error: %v", err)
+	if !result.IsError {
+		t.Fatalf("result.IsError = false, want true")
+	}
+	envelope, ok := result.StructuredContent.(contracts.ErrorEnvelope)
+	if !ok {
+		t.Fatalf("StructuredContent type = %T", result.StructuredContent)
+	}
+	if envelope.Error.Type != contracts.ErrorTypeValidation {
+		t.Fatalf("error.type = %q, want %q", envelope.Error.Type, contracts.ErrorTypeValidation)
+	}
+	if envelope.Error.Message != `required argument "changeSummary" not found` {
+		t.Fatalf("error.message = %q", envelope.Error.Message)
 	}
 }
 
@@ -354,12 +363,50 @@ func TestMutateHandlerRejectsBlankChangeSummary(t *testing.T) {
 	t.Parallel()
 
 	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil)
-	_, err := handler(context.Background(), mutateToolRequest("   ", `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`))
-	if err == nil {
-		t.Fatalf("expected blank changeSummary error")
+	result, err := handler(context.Background(), mutateToolRequest("   ", `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`))
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
 	}
-	if err.Error() != `required argument "changeSummary" not found` {
-		t.Fatalf("unexpected error: %v", err)
+	if !result.IsError {
+		t.Fatalf("result.IsError = false, want true")
+	}
+	envelope, ok := result.StructuredContent.(contracts.ErrorEnvelope)
+	if !ok {
+		t.Fatalf("StructuredContent type = %T", result.StructuredContent)
+	}
+	if envelope.Error.Type != contracts.ErrorTypeValidation {
+		t.Fatalf("error.type = %q, want %q", envelope.Error.Type, contracts.ErrorTypeValidation)
+	}
+	if envelope.Error.Message != `required argument "changeSummary" not found` {
+		t.Fatalf("error.message = %q", envelope.Error.Message)
+	}
+}
+
+func TestSearchHandlerRequiresCodeThroughErrorEnvelope(t *testing.T) {
+	t.Parallel()
+
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil)
+	result, err := handler(context.Background(), mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name:      ToolSearch,
+			Arguments: map[string]any{},
+		},
+	})
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
+	}
+	if !result.IsError {
+		t.Fatalf("result.IsError = false, want true")
+	}
+	envelope, ok := result.StructuredContent.(contracts.ErrorEnvelope)
+	if !ok {
+		t.Fatalf("StructuredContent type = %T", result.StructuredContent)
+	}
+	if envelope.Error.Type != contracts.ErrorTypeValidation {
+		t.Fatalf("error.type = %q, want %q", envelope.Error.Type, contracts.ErrorTypeValidation)
+	}
+	if envelope.Error.Message != `required argument "code" not found` {
+		t.Fatalf("error.message = %q", envelope.Error.Message)
 	}
 }
 
@@ -527,18 +574,27 @@ func TestToolHandlerPropagatesBindErrors(t *testing.T) {
 	t.Parallel()
 
 	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil)
-	_, err := handler(context.Background(), mcp.CallToolRequest{
+	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolSearch,
 			Arguments: []any{"not-an-object"},
 		},
 	})
-	if err == nil {
-		t.Fatalf("expected bind error")
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
 	}
-	var syntaxErr *json.UnmarshalTypeError
-	if !errors.As(err, &syntaxErr) && !strings.Contains(err.Error(), "cannot unmarshal") {
-		t.Fatalf("unexpected bind error: %v", err)
+	if !result.IsError {
+		t.Fatalf("result.IsError = false, want true")
+	}
+	envelope, ok := result.StructuredContent.(contracts.ErrorEnvelope)
+	if !ok {
+		t.Fatalf("StructuredContent type = %T", result.StructuredContent)
+	}
+	if envelope.Error.Type != contracts.ErrorTypeValidation {
+		t.Fatalf("error.type = %q, want %q", envelope.Error.Type, contracts.ErrorTypeValidation)
+	}
+	if !strings.Contains(envelope.Error.Message, "cannot unmarshal") {
+		t.Fatalf("unexpected error message: %q", envelope.Error.Message)
 	}
 }
 

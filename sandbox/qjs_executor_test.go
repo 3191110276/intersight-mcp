@@ -48,6 +48,36 @@ func TestQueryWrongGlobalReferenceError(t *testing.T) {
 	}
 }
 
+func TestNewQJSExecutorSupportsSDKQueries(t *testing.T) {
+	t.Parallel()
+
+	exec := NewQJSExecutor(testConfig(), stubAPICaller{
+		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
+			if operation.Method != http.MethodGet {
+				t.Fatalf("operation.Method = %q, want %q", operation.Method, http.MethodGet)
+			}
+			if operation.Path != "/api/v1/compute/RackUnits" {
+				t.Fatalf("operation.Path = %q", operation.Path)
+			}
+			return map[string]any{"Results": []any{map[string]any{"Moid": "rack-1"}}}, nil
+		},
+	})
+
+	result, err := exec.Execute(context.Background(), `return await sdk.compute.rackUnit.list();`, ModeQuery)
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	value, ok := result.Value.(map[string]any)
+	if !ok {
+		t.Fatalf("result.Value type = %T", result.Value)
+	}
+	results, ok := value["Results"].([]any)
+	if !ok || len(results) != 1 {
+		t.Fatalf("unexpected result.Value = %#v", result.Value)
+	}
+}
+
 func TestSearchDiscoveryGlobalsAvailable(t *testing.T) {
 	t.Parallel()
 

@@ -83,6 +83,112 @@ func TestServeStartsWhenAuthBootstrapFails(t *testing.T) {
 	}
 }
 
+func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
+	t.Parallel()
+
+	var allowAuth atomic.Bool
+	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iam/token":
+			if !allowAuth.Load() {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				_, _ = w.Write([]byte(`{"message":"bad credentials"}`))
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"token","expires_in":3600}`))
+		case "/api/v1/iam/UserPreferences":
+			if !allowAuth.Load() {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"Results":[]}`))
+		case "/api/v1/compute/RackUnits":
+			if auth := r.Header.Get("Authorization"); auth != "Bearer token" {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"Results":[{"Moid":"rack-1"}]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer api.Close()
+
+	env := []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+		"INTERSIGHT_ENDPOINT=" + api.URL,
+	}
+
+	stdinReader, stdinWriter := io.Pipe()
+	stdoutReader, stdoutWriter := io.Pipe()
+	defer stdoutReader.Close()
+
+	errCh := make(chan error, 1)
+	lineCh := make(chan string, 4)
+
+	go func() {
+		errCh <- serveWithIO(context.Background(), nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+		_ = stdoutWriter.Close()
+	}()
+	go func() {
+		scanner := bufio.NewScanner(stdoutReader)
+		for scanner.Scan() {
+			lineCh <- scanner.Text()
+		}
+		close(lineCh)
+	}()
+
+	writeJSONLine(t, stdinWriter, initializeRequest())
+	allowAuth.Store(true)
+	writeJSONLine(t, stdinWriter, toolCallRequest(2, "query", `return await sdk.compute.rackUnit.list();`))
+
+	lines := make([]string, 0, 2)
+	for len(lines) < 2 {
+		select {
+		case line, ok := <-lineCh:
+			if !ok {
+				t.Fatalf("stdout closed after %d responses, want 2", len(lines))
+			}
+			lines = append(lines, line)
+		case <-time.After(3 * time.Second):
+			t.Fatal("timed out waiting for MCP responses")
+		}
+	}
+	_ = stdinWriter.Close()
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			t.Fatalf("serveWithIO() error = %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for serveWithIO to return")
+	}
+
+	responses := indexResponsesByID(t, lines)
+	query := decodeToolResult(t, responses[2])
+	if query.IsError {
+		t.Fatalf("query IsError = true, want false")
+	}
+	envelope, ok := query.StructuredContent.(contracts.SuccessEnvelope)
+	if !ok {
+		t.Fatalf("unexpected query envelope type: %T", query.StructuredContent)
+	}
+	result, ok := envelope.Result.(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected query result type: %T", envelope.Result)
+	}
+	results, ok := result["Results"].([]any)
+	if !ok || len(results) != 1 {
+		t.Fatalf("unexpected query result payload: %#v", envelope.Result)
+	}
+}
+
 func TestBootstrapOAuthManagerTimesOutStalledStartupAuth(t *testing.T) {
 	t.Parallel()
 
@@ -97,7 +203,7 @@ func TestBootstrapOAuthManagerTimesOutStalledStartupAuth(t *testing.T) {
 	defer api.Close()
 
 	start := time.Now()
-	_, err := bootstrapOAuthManager(context.Background(), 50*time.Millisecond, intersight.OAuthConfig{
+	_, err := bootstrapOAuthManager(context.Background(), context.Background(), 50*time.Millisecond, intersight.OAuthConfig{
 		TokenURL:     api.URL + "/iam/token",
 		ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
 		ClientID:     "id",
@@ -144,7 +250,7 @@ func TestBootstrapOAuthManagerKeepsProactiveRefreshAlive(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	manager, err := bootstrapOAuthManager(ctx, time.Second, intersight.OAuthConfig{
+	manager, err := bootstrapOAuthManager(ctx, ctx, time.Second, intersight.OAuthConfig{
 		TokenURL:     api.URL + "/iam/token",
 		ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
 		ClientID:     "id",
@@ -172,6 +278,54 @@ func TestBootstrapOAuthManagerKeepsProactiveRefreshAlive(t *testing.T) {
 	}
 	if token != "refreshed-token" {
 		t.Fatalf("unexpected token after proactive refresh: %q", token)
+	}
+}
+
+func TestRetryingBootstrapClientHonorsRequestContextDuringBootstrap(t *testing.T) {
+	t.Parallel()
+
+	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iam/token":
+			<-r.Context().Done()
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer api.Close()
+
+	serverCtx, serverCancel := context.WithCancel(context.Background())
+	defer serverCancel()
+
+	client := &retryingBootstrapClient{
+		ctx:        serverCtx,
+		timeout:    time.Second,
+		httpClient: api.Client(),
+		baseURL:    api.URL + "/api/v1",
+		oauthCfg: intersight.OAuthConfig{
+			TokenURL:     api.URL + "/iam/token",
+			ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
+			ClientID:     "id",
+			ClientSecret: "secret",
+			HTTPClient:   api.Client(),
+		},
+	}
+
+	requestCtx, requestCancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer requestCancel()
+
+	start := time.Now()
+	_, err := client.Do(requestCtx, contracts.NewHTTPOperationDescriptor(http.MethodGet, "/api/v1/compute/RackUnits"))
+	if err == nil {
+		t.Fatal("expected bootstrap retry failure")
+	}
+
+	var timeoutErr contracts.TimeoutError
+	if !errors.As(err, &timeoutErr) {
+		t.Fatalf("expected TimeoutError, got %T", err)
+	}
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Fatalf("bootstrap retry took %v, want request-bound cancellation", elapsed)
 	}
 }
 

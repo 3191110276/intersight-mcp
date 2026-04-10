@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -80,15 +81,23 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 
 	var apiCaller sandbox.APICaller = unavailableClient{err: contracts.AuthError{Message: "Intersight credentials are not configured; search is available, but query and mutate require INTERSIGHT_CLIENT_ID and INTERSIGHT_CLIENT_SECRET"}}
 	if cfg.HasCredentials() {
-		oauthManager, authErr := bootstrapOAuthManager(ctx, cfg.PerCallTimeout, intersight.OAuthConfig{
+		oauthCfg := intersight.OAuthConfig{
 			TokenURL:     cfg.OAuthTokenURL,
 			ValidateURL:  cfg.APIBaseURL + "/iam/UserPreferences",
 			ClientID:     cfg.ClientID,
 			ClientSecret: cfg.ClientSecret,
 			HTTPClient:   httpClient,
-		})
+		}
+		oauthManager, authErr := bootstrapOAuthManager(ctx, ctx, cfg.PerCallTimeout, oauthCfg)
 		if authErr != nil {
-			apiCaller = unavailableClient{err: authErr}
+			apiCaller = &retryingBootstrapClient{
+				ctx:        ctx,
+				timeout:    cfg.PerCallTimeout,
+				httpClient: httpClient,
+				baseURL:    cfg.APIBaseURL,
+				oauthCfg:   oauthCfg,
+				lastErr:    authErr,
+			}
 		} else {
 			apiCaller = sandboxClient{client: intersight.NewClient(httpClient, cfg.APIBaseURL, oauthManager)}
 		}
@@ -142,11 +151,18 @@ func newHTTPClient(timeout time.Duration) *http.Client {
 	}
 }
 
-func bootstrapOAuthManager(ctx context.Context, timeout time.Duration, cfg intersight.OAuthConfig) (*intersight.Manager, error) {
-	bootstrapCtx, cancel := context.WithTimeout(ctx, timeout)
+func bootstrapOAuthManager(managerCtx, bootstrapBaseCtx context.Context, timeout time.Duration, cfg intersight.OAuthConfig) (*intersight.Manager, error) {
+	if managerCtx == nil {
+		managerCtx = context.Background()
+	}
+	if bootstrapBaseCtx == nil {
+		bootstrapBaseCtx = managerCtx
+	}
+
+	bootstrapCtx, cancel := context.WithTimeout(bootstrapBaseCtx, timeout)
 	defer cancel()
 	cfg.BootstrapContext = bootstrapCtx
-	return intersight.NewOAuthManager(ctx, cfg)
+	return intersight.NewOAuthManager(managerCtx, cfg)
 }
 
 type sandboxClient struct {
@@ -163,4 +179,49 @@ type unavailableClient struct {
 
 func (c unavailableClient) Do(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 	return nil, c.err
+}
+
+type retryingBootstrapClient struct {
+	ctx        context.Context
+	timeout    time.Duration
+	httpClient *http.Client
+	baseURL    string
+	oauthCfg   intersight.OAuthConfig
+
+	mu      sync.RWMutex
+	client  *intersight.Client
+	lastErr error
+}
+
+func (c *retryingBootstrapClient) Do(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
+	client, err := c.ensureClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return client.Do(ctx, operation)
+}
+
+func (c *retryingBootstrapClient) ensureClient(ctx context.Context) (*intersight.Client, error) {
+	c.mu.RLock()
+	client := c.client
+	c.mu.RUnlock()
+	if client != nil {
+		return client, nil
+	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.client != nil {
+		return c.client, nil
+	}
+
+	manager, err := bootstrapOAuthManager(c.ctx, ctx, c.timeout, c.oauthCfg)
+	if err != nil {
+		c.lastErr = err
+		return nil, err
+	}
+
+	c.client = intersight.NewClient(c.httpClient, c.baseURL, manager)
+	c.lastErr = nil
+	return c.client, nil
 }

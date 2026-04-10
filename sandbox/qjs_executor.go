@@ -8,18 +8,29 @@ import (
 	"strings"
 
 	"github.com/fastschema/qjs"
+	"github.com/mimaurer/intersight-mcp/generated"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 )
 
 type qjsExecutor struct {
-	cfg    Config
-	client APICaller
-	spec   *dryRunSpecIndex
-	sdk    *sdkRuntime
+	cfg     Config
+	client  APICaller
+	spec    *dryRunSpecIndex
+	sdk     *sdkRuntime
+	initErr error
 }
 
 func NewQJSExecutor(cfg Config, client APICaller) Executor {
-	return &qjsExecutor{cfg: normalizeConfig(cfg), client: client}
+	spec, specErr := loadDryRunSpecIndex(generated.ResolvedSpecBytes())
+	sdk, sdkErr := loadSDKRuntime(generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes())
+	initErr := errors.Join(specErr, sdkErr)
+	return &qjsExecutor{
+		cfg:     normalizeConfig(cfg),
+		client:  client,
+		spec:    spec,
+		sdk:     sdk,
+		initErr: initErr,
+	}
 }
 
 func NewQJSExecutorWithSpec(cfg Config, client APICaller, specJSON []byte) (Executor, error) {
@@ -64,6 +75,10 @@ func NewQJSExecutorFromBundle(cfg Config, client APICaller, bundle *ArtifactBund
 }
 
 func (e *qjsExecutor) Execute(ctx context.Context, code string, mode Mode) (Result, error) {
+	if e.initErr != nil {
+		return Result{}, contracts.InternalError{Message: "initialize embedded sandbox artifacts", Err: e.initErr}
+	}
+
 	timeout := e.cfg.GlobalTimeout
 	if mode == ModeSearch {
 		timeout = e.cfg.SearchTimeout

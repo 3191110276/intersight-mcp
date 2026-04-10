@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -203,7 +202,7 @@ func newServerTool(name, title, description string, mode sandbox.Mode, exec sand
 func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter) mcpserver.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if exec == nil {
-			return nil, errors.New("tool executor is not configured")
+			return toolErrorResult(contracts.InternalError{Message: "tool executor is not configured"}, nil), nil
 		}
 
 		var (
@@ -213,22 +212,22 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter) 
 		if mode == sandbox.ModeMutate {
 			var input mutateInput
 			if err := request.BindArguments(&input); err != nil {
-				return nil, err
+				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil), nil
 			}
 			if strings.TrimSpace(input.ChangeSummary) == "" {
-				return nil, errors.New(`required argument "changeSummary" not found`)
+				return toolErrorResult(contracts.ValidationError{Message: `required argument "changeSummary" not found`}, nil), nil
 			}
 			code = input.Code
 			changeSummary = input.ChangeSummary
 		} else {
 			var input codeInput
 			if err := request.BindArguments(&input); err != nil {
-				return nil, err
+				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil), nil
 			}
 			code = input.Code
 		}
 		if strings.TrimSpace(code) == "" {
-			return nil, errors.New(`required argument "code" not found`)
+			return toolErrorResult(contracts.ValidationError{Message: `required argument "code" not found`}, nil), nil
 		}
 
 		if limiter != nil {
