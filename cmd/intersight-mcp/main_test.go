@@ -1,22 +1,27 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/mimaurer/intersight-mcp/internal/contracts"
 	"github.com/mimaurer/intersight-mcp/internal/testutil"
 )
 
-func TestServeFailsOnMissingCredentials(t *testing.T) {
+func TestServeStartsWithoutCredentialsForOfflineSearch(t *testing.T) {
 	t.Parallel()
 
-	err := serveWithIO(context.Background(), nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, nil, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
-	if err == nil || !strings.Contains(err.Error(), "INTERSIGHT_CLIENT_ID") {
-		t.Fatalf("serveWithIO() error = %v, want missing credentials", err)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	if err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, nil, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
+		t.Fatalf("serveWithIO() error = %v", err)
 	}
 }
 
@@ -46,7 +51,7 @@ func TestServeFailsOnMalformedEmbeddedArtifacts(t *testing.T) {
 	}
 }
 
-func TestServeFailsOnAuthBootstrapFailure(t *testing.T) {
+func TestServeStartsWhenAuthBootstrapFails(t *testing.T) {
 	t.Parallel()
 
 	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -66,9 +71,73 @@ func TestServeFailsOnAuthBootstrapFailure(t *testing.T) {
 		"INTERSIGHT_CLIENT_SECRET=secret",
 		"INTERSIGHT_ENDPOINT=" + api.URL,
 	}
-	err := serveWithIO(context.Background(), nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
-	if err == nil || !strings.Contains(err.Error(), "HTTP 401") {
-		t.Fatalf("serveWithIO() error = %v, want auth bootstrap failure", err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	if err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
+		t.Fatalf("serveWithIO() error = %v", err)
+	}
+}
+
+func TestServeWithoutCredentialsQueryReturnsAuthError(t *testing.T) {
+	t.Parallel()
+
+	stdinReader, stdinWriter := io.Pipe()
+	stdoutReader, stdoutWriter := io.Pipe()
+	defer stdoutReader.Close()
+	errCh := make(chan error, 1)
+	lineCh := make(chan string, 4)
+
+	go func() {
+		errCh <- serveWithIO(context.Background(), nil, stdinReader, stdoutWriter, &bytes.Buffer{}, nil, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+		_ = stdoutWriter.Close()
+	}()
+	go func() {
+		scanner := bufio.NewScanner(stdoutReader)
+		for scanner.Scan() {
+			lineCh <- scanner.Text()
+		}
+		close(lineCh)
+	}()
+
+	writeJSONLine(t, stdinWriter, initializeRequest())
+	writeJSONLine(t, stdinWriter, toolCallRequest(2, "query", `return await sdk.compute.rackUnit.list();`))
+
+	lines := make([]string, 0, 2)
+	for len(lines) < 2 {
+		select {
+		case line, ok := <-lineCh:
+			if !ok {
+				t.Fatalf("stdout closed after %d responses, want 2", len(lines))
+			}
+			lines = append(lines, line)
+		case <-time.After(3 * time.Second):
+			t.Fatal("timed out waiting for MCP responses")
+		}
+	}
+	_ = stdinWriter.Close()
+
+	select {
+	case err := <-errCh:
+		if err != nil {
+			t.Fatalf("serveWithIO() error = %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("timed out waiting for serveWithIO to return")
+	}
+
+	responses := indexResponsesByID(t, lines)
+	query := decodeToolResult(t, responses[2])
+	if !query.IsError {
+		t.Fatalf("query IsError = false, want true")
+	}
+	envelope, ok := query.StructuredContent.(contracts.ErrorEnvelope)
+	if !ok {
+		t.Fatalf("unexpected query envelope type: %T", query.StructuredContent)
+	}
+	if envelope.Error.Type != contracts.ErrorTypeAuth {
+		t.Fatalf("error.type = %q, want %q", envelope.Error.Type, contracts.ErrorTypeAuth)
 	}
 }
 

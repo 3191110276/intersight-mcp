@@ -382,7 +382,7 @@ func TestWrapToolHandlerLogsOverloadRejection(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	logger := internalpkg.NewLogger(&buf, config.LogLevelDebug)
+	logger := internalpkg.NewLogger(&buf, config.LogLevelDebug, false)
 	handler := wrapToolHandler("query", func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		time.Sleep(10 * time.Millisecond)
 		return &mcp.CallToolResult{
@@ -420,7 +420,7 @@ func TestWrapToolHandlerLogsChangeSummary(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	logger := internalpkg.NewLogger(&buf, config.LogLevelDebug)
+	logger := internalpkg.NewLogger(&buf, config.LogLevelDebug, false)
 	handler := wrapToolHandler("mutate", func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return &mcp.CallToolResult{
 			IsError:           false,

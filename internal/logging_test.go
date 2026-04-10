@@ -14,7 +14,7 @@ func TestLoggerInfoLevel(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	logger := NewLogger(&buf, config.LogLevelInfo)
+	logger := NewLogger(&buf, config.LogLevelInfo, false)
 	ctx := WithExecutionID(WithSessionID(context.Background(), "session-1"), "exec-1")
 	logger.LogExecution(ctx, ExecutionRecord{
 		Tool:            "search",
@@ -44,11 +44,11 @@ func TestLoggerInfoLevel(t *testing.T) {
 	}
 }
 
-func TestLoggerDebugLevelIncludesCodeAndCalls(t *testing.T) {
+func TestLoggerDebugLevelOmitsCodeUnlessEnabled(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	logger := NewLogger(&buf, config.LogLevelDebug)
+	logger := NewLogger(&buf, config.LogLevelDebug, false)
 	logger.LogExecution(context.Background(), ExecutionRecord{
 		Tool:            "query",
 		Code:            "return await api.call('GET', '/api/v1/x')",
@@ -72,14 +72,37 @@ func TestLoggerDebugLevelIncludesCodeAndCalls(t *testing.T) {
 	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
 		t.Fatalf("unmarshal log entry: %v", err)
 	}
-	if payload["code"] == nil {
-		t.Fatalf("expected debug log to include full code: %#v", payload)
+	if payload["code"] != nil {
+		t.Fatalf("did not expect debug log to include full code by default: %#v", payload)
 	}
 	if payload["api_calls"] == nil {
 		t.Fatalf("expected debug log to include API call details: %#v", payload)
 	}
 	if payload["change_summary"] != "Inspect x" {
 		t.Fatalf("expected change_summary in logs: %#v", payload)
+	}
+}
+
+func TestLoggerDebugLevelIncludesCodeWhenEnabled(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	logger := NewLogger(&buf, config.LogLevelDebug, true)
+	logger.LogExecution(context.Background(), ExecutionRecord{
+		Tool:          "query",
+		Code:          "return await sdk.compute.rackUnit.list()",
+		Duration:      10 * time.Millisecond,
+		Success:       true,
+		APICallCount:  0,
+		ChangeSummary: "",
+	})
+
+	var payload map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal log entry: %v", err)
+	}
+	if payload["code"] == nil {
+		t.Fatalf("expected debug log to include full code when enabled: %#v", payload)
 	}
 }
 

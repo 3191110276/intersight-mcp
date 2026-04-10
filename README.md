@@ -63,7 +63,7 @@ The tests include a local `httptest.Server` fake Intersight surface for auth boo
 
 ## Run
 
-Set credentials in the environment, then start the stdio server:
+Set credentials in the environment when you need live reads or writes, then start the stdio server:
 
 ```bash
 export INTERSIGHT_CLIENT_ID=your-client-id
@@ -85,11 +85,14 @@ Supported configuration comes from flags and matching environment variables. Fla
 | Max serialized output | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
 | Max concurrent `query`/`mutate` executions | `--max-concurrent` | `INTERSIGHT_MAX_CONCURRENT` | `50` |
 | Log level | `--log-level` | `INTERSIGHT_LOG_LEVEL` | `info` |
+| Include full submitted code in logs | `--log-full-code` | `INTERSIGHT_LOG_FULL_CODE` | `false` |
 
-Required environment variables:
+Credentials required for live `query` reads and `mutate` writes:
 
 - `INTERSIGHT_CLIENT_ID`
 - `INTERSIGHT_CLIENT_SECRET`
+
+The server can still start without credentials so the offline `search` tool remains available. Write-shaped `query` validation also remains available because it runs locally.
 
 Endpoint validation rules:
 
@@ -131,6 +134,8 @@ Configure your MCP client to launch the binary as a local stdio command. Example
 
 The server registers exactly three tools: `search`, `query`, and `mutate`.
 The public execution surface is `sdk` only. `search` also exposes a merged `catalog` discovery object plus raw `sdk`, `rules`, and `spec` globals.
+
+If credentials are missing or initial OAuth bootstrap fails, the server still starts so `search` remains usable. Live `query` reads and `mutate` writes then return auth errors until credentials work again.
 
 Example reverse lookup in `search`:
 

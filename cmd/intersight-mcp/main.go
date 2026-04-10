@@ -59,21 +59,8 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 		return err
 	}
 
-	logger := internalpkg.NewLogger(stderr, cfg.LogLevel)
+	logger := internalpkg.NewLogger(stderr, cfg.LogLevel, cfg.LogFullCode)
 	httpClient := &http.Client{}
-
-	oauthManager, err := intersight.NewOAuthManager(ctx, intersight.OAuthConfig{
-		TokenURL:     cfg.OAuthTokenURL,
-		ValidateURL:  cfg.APIBaseURL + "/iam/UserPreferences",
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
-		HTTPClient:   httpClient,
-	})
-	if err != nil {
-		return err
-	}
-
-	apiClient := intersight.NewClient(httpClient, cfg.APIBaseURL, oauthManager)
 	sandboxCfg := sandbox.Config{
 		SearchTimeout:   cfg.SearchTimeout,
 		GlobalTimeout:   cfg.Execution.GlobalTimeout,
@@ -89,12 +76,28 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 		return err
 	}
 
-	queryExec, err := sandbox.NewQJSExecutorFromBundle(sandboxCfg, sandboxClient{client: apiClient}, artifacts)
+	var apiCaller sandbox.APICaller = unavailableClient{err: contracts.AuthError{Message: "Intersight credentials are not configured; search is available, but query and mutate require INTERSIGHT_CLIENT_ID and INTERSIGHT_CLIENT_SECRET"}}
+	if cfg.HasCredentials() {
+		oauthManager, authErr := intersight.NewOAuthManager(ctx, intersight.OAuthConfig{
+			TokenURL:     cfg.OAuthTokenURL,
+			ValidateURL:  cfg.APIBaseURL + "/iam/UserPreferences",
+			ClientID:     cfg.ClientID,
+			ClientSecret: cfg.ClientSecret,
+			HTTPClient:   httpClient,
+		})
+		if authErr != nil {
+			apiCaller = unavailableClient{err: authErr}
+		} else {
+			apiCaller = sandboxClient{client: intersight.NewClient(httpClient, cfg.APIBaseURL, oauthManager)}
+		}
+	}
+
+	queryExec, err := sandbox.NewQJSExecutorFromBundle(sandboxCfg, apiCaller, artifacts)
 	if err != nil {
 		_ = searchExec.Close()
 		return err
 	}
-	mutateExec, err := sandbox.NewQJSExecutorFromBundle(sandboxCfg, sandboxClient{client: apiClient}, artifacts)
+	mutateExec, err := sandbox.NewQJSExecutorFromBundle(sandboxCfg, apiCaller, artifacts)
 	if err != nil {
 		_ = searchExec.Close()
 		_ = queryExec.Close()
@@ -127,4 +130,12 @@ type sandboxClient struct {
 
 func (c sandboxClient) Do(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 	return c.client.Do(ctx, operation)
+}
+
+type unavailableClient struct {
+	err error
+}
+
+func (c unavailableClient) Do(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
+	return nil, c.err
 }

@@ -22,8 +22,9 @@ const (
 )
 
 type Logger struct {
-	slog  *slog.Logger
-	debug bool
+	slog            *slog.Logger
+	debug           bool
+	includeFullCode bool
 }
 
 type ExecutionRecord struct {
@@ -48,7 +49,7 @@ type APICallRecord struct {
 	DurationMS   int64  `json:"durationMs"`
 }
 
-func NewLogger(w io.Writer, level config.LogLevel) *Logger {
+func NewLogger(w io.Writer, level config.LogLevel, includeFullCode bool) *Logger {
 	slogLevel := slog.LevelInfo
 	if level == config.LogLevelDebug {
 		slogLevel = slog.LevelDebug
@@ -57,7 +58,8 @@ func NewLogger(w io.Writer, level config.LogLevel) *Logger {
 		slog: slog.New(slog.NewJSONHandler(w, &slog.HandlerOptions{
 			Level: slogLevel,
 		})),
-		debug: level == config.LogLevelDebug,
+		debug:           level == config.LogLevelDebug,
+		includeFullCode: includeFullCode,
 	}
 }
 
@@ -132,7 +134,9 @@ func (l *Logger) LogExecution(ctx context.Context, record ExecutionRecord) {
 		attrs = append(attrs, "error_message", record.ErrorMessage)
 	}
 	if l.debug {
-		attrs = append(attrs, "code", record.Code)
+		if l.includeFullCode {
+			attrs = append(attrs, "code", record.Code)
+		}
 		if len(record.APICalls) > 0 {
 			attrs = append(attrs, "api_calls", record.APICalls)
 		}

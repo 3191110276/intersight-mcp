@@ -28,6 +28,7 @@ type Config struct {
 	ClientID       string
 	ClientSecret   string
 	LogLevel       LogLevel
+	LogFullCode    bool
 	Execution      limits.Execution
 	SearchTimeout  time.Duration
 	PerCallTimeout time.Duration
@@ -61,6 +62,7 @@ func Load(args []string, environ []string) (Config, error) {
 	var maxOutputFlag string
 	var maxConcurrentFlag int
 	var logLevelFlag string
+	var logFullCodeFlag bool
 
 	fs.StringVar(&endpointFlag, "endpoint", "", "base Intersight endpoint origin")
 	fs.StringVar(&timeoutFlag, "timeout", "", "global execution timeout")
@@ -68,6 +70,7 @@ func Load(args []string, environ []string) (Config, error) {
 	fs.StringVar(&maxOutputFlag, "max-output", "", "maximum serialized output size")
 	fs.IntVar(&maxConcurrentFlag, "max-concurrent", 0, "maximum concurrent query/mutate executions")
 	fs.StringVar(&logLevelFlag, "log-level", "", "log level: info or debug")
+	fs.BoolVar(&logFullCodeFlag, "log-full-code", false, "include full submitted code in logs")
 
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
@@ -80,12 +83,6 @@ func Load(args []string, environ []string) (Config, error) {
 
 	cfg.ClientID = strings.TrimSpace(env["INTERSIGHT_CLIENT_ID"])
 	cfg.ClientSecret = strings.TrimSpace(env["INTERSIGHT_CLIENT_SECRET"])
-	if cfg.ClientID == "" {
-		return Config{}, errors.New("missing required INTERSIGHT_CLIENT_ID")
-	}
-	if cfg.ClientSecret == "" {
-		return Config{}, errors.New("missing required INTERSIGHT_CLIENT_SECRET")
-	}
 
 	endpointRaw := limits.DefaultEndpoint
 	if value := strings.TrimSpace(env["INTERSIGHT_ENDPOINT"]); value != "" {
@@ -170,11 +167,27 @@ func Load(args []string, environ []string) (Config, error) {
 		}
 	}
 
+	logFullCodeRaw := env["INTERSIGHT_LOG_FULL_CODE"]
+	if setFlags["log-full-code"] {
+		logFullCodeRaw = strconv.FormatBool(logFullCodeFlag)
+	}
+	if strings.TrimSpace(logFullCodeRaw) != "" {
+		value, err := strconv.ParseBool(strings.TrimSpace(logFullCodeRaw))
+		if err != nil {
+			return Config{}, fmt.Errorf("invalid log-full-code %q: must be true or false", logFullCodeRaw)
+		}
+		cfg.LogFullCode = value
+	}
+
 	return cfg, nil
 }
 
 func (c Config) DebugLoggingEnabled() bool {
 	return c.LogLevel == LogLevelDebug
+}
+
+func (c Config) HasCredentials() bool {
+	return c.ClientID != "" && c.ClientSecret != ""
 }
 
 func validateEndpoint(raw string) (*url.URL, error) {

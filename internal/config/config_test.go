@@ -37,6 +37,9 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.LogLevel != LogLevelInfo {
 		t.Fatalf("unexpected log level: %q", cfg.LogLevel)
 	}
+	if cfg.LogFullCode {
+		t.Fatalf("expected log full code to default to false")
+	}
 	if cfg.SearchTimeout != limits.SearchTimeout || cfg.PerCallTimeout != limits.PerCallTimeout {
 		t.Fatalf("unexpected hardcoded timeouts: %+v", cfg)
 	}
@@ -53,6 +56,7 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"--max-api-calls", "12",
 			"--max-concurrent", "7",
 			"--log-level", "debug",
+			"--log-full-code",
 		},
 		[]string{
 			"INTERSIGHT_CLIENT_ID=id",
@@ -86,6 +90,9 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 	}
 	if cfg.LogLevel != LogLevelDebug {
 		t.Fatalf("unexpected log level: %q", cfg.LogLevel)
+	}
+	if !cfg.LogFullCode {
+		t.Fatalf("expected log full code to be enabled")
 	}
 }
 
@@ -135,14 +142,29 @@ func TestLoadConfigInvalidPositiveInts(t *testing.T) {
 	}
 }
 
-func TestLoadConfigMissingCredentials(t *testing.T) {
+func TestLoadConfigMissingCredentialsAllowedForOfflineStartup(t *testing.T) {
 	t.Parallel()
 
-	_, err := Load(nil, nil)
+	cfg, err := Load(nil, nil)
 	if err == nil {
-		t.Fatalf("expected missing credentials error")
+		if cfg.HasCredentials() {
+			t.Fatalf("expected credentials to be absent")
+		}
+		return
 	}
-	if !strings.Contains(err.Error(), "INTERSIGHT_CLIENT_ID") {
+	t.Fatalf("Load() error = %v", err)
+}
+
+func TestLoadConfigInvalidLogFullCode(t *testing.T) {
+	t.Parallel()
+
+	_, err := Load(nil, []string{
+		"INTERSIGHT_LOG_FULL_CODE=maybe",
+	})
+	if err == nil {
+		t.Fatalf("expected invalid log-full-code error")
+	}
+	if !strings.Contains(err.Error(), "invalid log-full-code") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
