@@ -25,20 +25,22 @@ import (
 const resolvedSpecSoftLimit = 30 * 1024 * 1024
 
 type generator struct {
-	inPath     string
-	filterPath string
-	outPath    string
-	stdout     io.Writer
-	stderr     io.Writer
+	inPath      string
+	filterPath  string
+	metricsPath string
+	outPath     string
+	stdout      io.Writer
+	stderr      io.Writer
 }
 
-func newGenerator(inPath, filterPath, outPath string, stdout, stderr io.Writer) *generator {
+func newGenerator(inPath, filterPath, metricsPath, outPath string, stdout, stderr io.Writer) *generator {
 	return &generator{
-		inPath:     inPath,
-		filterPath: filterPath,
-		outPath:    outPath,
-		stdout:     stdout,
-		stderr:     stderr,
+		inPath:      inPath,
+		filterPath:  filterPath,
+		metricsPath: metricsPath,
+		outPath:     outPath,
+		stdout:      stdout,
+		stderr:      stderr,
 	}
 }
 
@@ -125,6 +127,12 @@ func (g *generator) Run() error {
 		return err
 	}
 
+	g.logStep("loading metrics catalog")
+	metricsCatalog, err := loadMetricsCatalog(g.metricsPath)
+	if err != nil {
+		return err
+	}
+
 	g.logStep("building OpenAPI model")
 	doc, err := libopenapi.NewDocument(rawBytes)
 	if err != nil {
@@ -168,7 +176,7 @@ func (g *generator) Run() error {
 	}
 
 	g.logStep("building search catalog")
-	searchCatalog, err := contracts.BuildSearchCatalog(spec, catalog, rules)
+	searchCatalog, err := contracts.BuildSearchCatalog(spec, catalog, rules, metricsCatalog)
 	if err != nil {
 		return err
 	}
@@ -247,6 +255,18 @@ func loadManifest(path string) (manifest, error) {
 		return mf, fmt.Errorf("parse manifest: %w", err)
 	}
 	return mf, nil
+}
+
+func loadMetricsCatalog(path string) (contracts.SearchMetricsCatalog, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return contracts.SearchMetricsCatalog{}, fmt.Errorf("read metrics catalog: %w", err)
+	}
+	catalog, err := contracts.LoadSearchMetricsCatalogJSON(data)
+	if err != nil {
+		return contracts.SearchMetricsCatalog{}, err
+	}
+	return catalog, nil
 }
 
 func validateManifest(raw []byte, mf manifest) error {

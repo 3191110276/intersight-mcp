@@ -61,6 +61,7 @@ func TestSearchDiscoveryGlobalsAvailable(t *testing.T) {
 return {
   catalogResources: Object.keys(catalog.resources || {}).length,
   catalogNames: Object.keys(catalog.resourceNames || {}).length,
+  catalogMetricGroups: Object.keys((catalog.metrics && catalog.metrics.groups) || {}).length,
   sdkMethods: Object.keys(sdk.methods || {}).length,
   ruleMethods: Object.keys(rules.methods || {}).length,
   specPaths: Object.keys(spec.paths || {}).length
@@ -74,7 +75,7 @@ return {
 	if !ok {
 		t.Fatalf("result.Value type = %T", result.Value)
 	}
-	if value["catalogResources"] == nil || value["catalogNames"] == nil || value["sdkMethods"] == nil || value["ruleMethods"] == nil || value["specPaths"] == nil {
+	if value["catalogResources"] == nil || value["catalogNames"] == nil || value["catalogMetricGroups"] == nil || value["sdkMethods"] == nil || value["ruleMethods"] == nil || value["specPaths"] == nil {
 		t.Fatalf("unexpected search discovery payload: %#v", result.Value)
 	}
 }
@@ -99,6 +100,7 @@ func TestExecutorsFromBundleProvideExpectedGlobals(t *testing.T) {
 	searchResult, err := searchExec.Execute(context.Background(), `
 return {
   catalogResources: Object.keys(catalog.resources || {}).length,
+  catalogMetricGroups: Object.keys((catalog.metrics && catalog.metrics.groups) || {}).length,
   sdkMethods: Object.keys(sdk.methods || {}).length
 };
 `, ModeSearch)
@@ -109,7 +111,7 @@ return {
 	if !ok {
 		t.Fatalf("search result.Value type = %T", searchResult.Value)
 	}
-	if searchValue["catalogResources"] == nil || searchValue["sdkMethods"] == nil {
+	if searchValue["catalogResources"] == nil || searchValue["catalogMetricGroups"] == nil || searchValue["sdkMethods"] == nil {
 		t.Fatalf("unexpected search payload: %#v", searchResult.Value)
 	}
 
@@ -138,6 +140,42 @@ return await sdk.ntp.policy.create({
 	}
 	if valid, _ := queryValue["valid"].(bool); !valid {
 		t.Fatalf("unexpected validation report: %#v", queryResult.Value)
+	}
+}
+
+func TestSearchMetricsCatalogAvailable(t *testing.T) {
+	t.Parallel()
+
+	exec, err := NewSearchExecutor(testConfig(), generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	if err != nil {
+		t.Fatalf("NewSearchExecutor() error = %v", err)
+	}
+	defer exec.Close()
+
+result, err := exec.Execute(context.Background(), `
+return {
+  metric: catalog.metrics.byName["system.cpu.utilization_user"],
+  group: catalog.metrics.groups["system.cpu"]
+};
+`, ModeSearch)
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	value, ok := result.Value.(map[string]any)
+	if !ok {
+		t.Fatalf("result.Value type = %T", result.Value)
+	}
+	if value["metric"] == nil || value["group"] == nil {
+		t.Fatalf("unexpected metrics payload: %#v", value)
+	}
+	metric, ok := value["metric"].(map[string]any)
+	if !ok {
+		t.Fatalf("metric payload type = %T", value["metric"])
+	}
+	dimensions, ok := metric["dimensions"].([]any)
+	if !ok || len(dimensions) == 0 {
+		t.Fatalf("metric dimensions = %#v, want inherited queryable dimensions", metric["dimensions"])
 	}
 }
 

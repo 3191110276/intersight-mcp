@@ -165,6 +165,9 @@ denylist:
 	if !slices.Contains(resource.Operations, "create") {
 		t.Fatalf("expected compute.rackUnit.create in search catalog resource: %#v", resource.Operations)
 	}
+	if _, ok := searchCatalog.Metrics.ByName["system.cpu.utilization_user"]; !ok {
+		t.Fatalf("expected fixture metric in search catalog")
+	}
 }
 
 func TestGeneratorExplicitDenylistPruning(t *testing.T) {
@@ -222,7 +225,15 @@ func TestGeneratorManifestMismatchFails(t *testing.T) {
 	}
 
 	outPath := filepath.Join(dir, "generated", "spec_resolved.json")
-	err := newGenerator(specPath, filterPath, outPath, &bytes.Buffer{}, &bytes.Buffer{}).Run()
+	metricsPath := filepath.Join(dir, "third_party", "intersight", "metrics", "search_metrics.json")
+	if err := os.MkdirAll(filepath.Dir(metricsPath), 0o755); err != nil {
+		t.Fatalf("mkdir metrics dir: %v", err)
+	}
+	if err := os.WriteFile(metricsPath, []byte(fixtureMetricsCatalog), 0o644); err != nil {
+		t.Fatalf("write metrics catalog: %v", err)
+	}
+
+	err := newGenerator(specPath, filterPath, metricsPath, outPath, &bytes.Buffer{}, &bytes.Buffer{}).Run()
 	if err == nil {
 		t.Fatalf("expected manifest mismatch error")
 	}
@@ -386,9 +397,17 @@ func runFixtureGenerator(t *testing.T, in fixtureInputs) ([]byte, []byte, []byte
 		t.Fatalf("write filter: %v", err)
 	}
 
+	metricsPath := filepath.Join(dir, "third_party", "intersight", "metrics", "search_metrics.json")
+	if err := os.MkdirAll(filepath.Dir(metricsPath), 0o755); err != nil {
+		t.Fatalf("mkdir metrics dir: %v", err)
+	}
+	if err := os.WriteFile(metricsPath, []byte(fixtureMetricsCatalog), 0o644); err != nil {
+		t.Fatalf("write metrics catalog: %v", err)
+	}
+
 	outPath := filepath.Join(dir, "generated", "spec_resolved.json")
 	var stdout, stderr bytes.Buffer
-	if err := newGenerator(specPath, filterPath, outPath, &stdout, &stderr).Run(); err != nil {
+	if err := newGenerator(specPath, filterPath, metricsPath, outPath, &stdout, &stderr).Run(); err != nil {
 		t.Fatalf("run generator: %v", err)
 	}
 
@@ -413,6 +432,48 @@ func runFixtureGenerator(t *testing.T, in fixtureInputs) ([]byte, []byte, []byte
 	}
 	return out, catalog, rules, search, stdout.Bytes(), stderr.Bytes()
 }
+
+const fixtureMetricsCatalog = `{
+  "groups": {
+    "system.cpu": {
+      "label": "System CPU",
+      "description": "Fixture CPU metrics.",
+      "dataSource": "PhysicalEntities",
+      "docsUrl": "https://example.com/system-cpu",
+      "dimensions": ["host.id"],
+      "metrics": ["system.cpu.utilization_user"]
+    }
+  },
+  "byName": {
+    "system.cpu.utilization_user": {
+      "name": "system.cpu.utilization_user",
+      "label": "User CPU Utilization",
+      "instrument": "system.cpu",
+      "description": "Fixture CPU utilization metric.",
+      "docsUrl": "https://example.com/system-cpu",
+      "dataSource": "PhysicalEntities",
+      "unit": "percent",
+      "dimensions": ["host.id"],
+      "supportedRollups": ["sum", "count"],
+      "queryFieldTemplates": {
+        "sum": "system.cpu.utilization_user",
+        "count": "system.cpu.utilization_user_count"
+      },
+      "defaultGroups": ["host.id"]
+    }
+  },
+  "examples": {
+    "cpu-breakdown": {
+      "description": "Fixture example.",
+      "metricNames": ["system.cpu.utilization_user"],
+      "query": {
+        "granularity": "hour",
+        "groups": ["host.id"],
+        "intervals": ["2026-04-01/2026-04-08"]
+      }
+    }
+  }
+}`
 
 const baseFixtureSpec = `{
   "openapi": "3.0.2",

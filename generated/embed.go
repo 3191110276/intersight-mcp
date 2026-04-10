@@ -2,7 +2,7 @@ package generated
 
 import _ "embed"
 
-//go:generate sh -c "mkdir -p ../.cache/go-build ../.tmp && GOCACHE=$(cd .. && pwd)/.cache/go-build GOTMPDIR=$(cd .. && pwd)/.tmp go -C .. run ./cmd/generate --in third_party/intersight/openapi/raw/openapi.json --filter spec/filter.yaml --out generated/spec_resolved.json"
+//go:generate sh -c "mkdir -p ../.cache/go-build ../.tmp && GOCACHE=$(cd .. && pwd)/.cache/go-build GOTMPDIR=$(cd .. && pwd)/.tmp go -C .. run ./cmd/generate --in third_party/intersight/openapi/raw/openapi.json --filter spec/filter.yaml --metrics third_party/intersight/metrics/search_metrics.json --out generated/spec_resolved.json"
 
 //go:embed spec_resolved.json
 var specResolvedJSON []byte

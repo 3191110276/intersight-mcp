@@ -1,6 +1,6 @@
 package tools
 
-const searchDescription = `Search the Intersight SDK discovery catalog. Start with ` + "`catalog.resources`" + ` because it returns the canonical resource-first discovery surface. Use ` + "`spec`" + ` only for deeper schema diagnosis or parity checks against the embedded normalized OpenAPI snapshot. The public ` + "`catalog`" + ` view keeps ` + "`resource.operations`" + ` minimal: it is an array of supported verbs such as ` + "`['list', 'get', 'create', 'update', 'delete']`" + `. Operation defaults are documented at the tool level instead of repeated on every resource: ` + "`create`" + ` requires a body, ` + "`delete`" + ` requires ` + "`path.Moid`" + `, ` + "`get`" + ` requires ` + "`path.Moid`" + ` and supports standard get query parameters, ` + "`list`" + ` supports standard list query parameters, and ` + "`update`" + ` requires both ` + "`path.Moid`" + ` and a body. ` + "`resource.createFields`" + ` is a compact create-focused subset of the full schema: it prefers the create request body when available, excludes read-only properties, inlines simple required/one-of constraints into field metadata, and may include relationship examples. Use ` + "`resource.schema`" + ` with ` + "`spec.schemas[resource.schema]`" + ` when you need the full normalized schema. When both POST-update and PATCH-update variants exist it hides the redundant ` + "`post`" + ` alias in favor of ` + "`update`" + `. When you need the fully-qualified SDK method from a public resource entry, derive it as ` + "`resourceKey + '.' + verb`" + ` where ` + "`resourceKey`" + ` is the parent map key and ` + "`verb`" + ` comes from ` + "`resource.operations`" + `. The fuller metadata remains available in the generated artifacts and in ` + "`sdk.methods[...]`" + ` for direct OpenAPI correlation.
+const searchDescription = `Search the Intersight discovery catalog. Start with ` + "`catalog.resources`" + ` for the canonical resource-first SDK discovery surface, and use ` + "`catalog.metrics`" + ` for metrics discovery and query-building guidance. Use ` + "`spec`" + ` only for deeper schema diagnosis or parity checks against the embedded normalized OpenAPI snapshot. The public ` + "`catalog.resources`" + ` view keeps ` + "`resource.operations`" + ` minimal: it is an array of supported verbs such as ` + "`['list', 'get', 'create', 'update', 'delete']`" + `. Operation defaults are documented at the tool level instead of repeated on every resource: ` + "`create`" + ` requires a body, ` + "`delete`" + ` requires ` + "`path.Moid`" + `, ` + "`get`" + ` requires ` + "`path.Moid`" + ` and supports standard get query parameters, ` + "`list`" + ` supports standard list query parameters, and ` + "`update`" + ` requires both ` + "`path.Moid`" + ` and a body. ` + "`resource.createFields`" + ` is a compact create-focused subset of the full schema: it prefers the create request body when available, excludes read-only properties, inlines simple required/one-of constraints into field metadata, and may include relationship examples. Use ` + "`resource.schema`" + ` with ` + "`spec.schemas[resource.schema]`" + ` when you need the full normalized schema. When both POST-update and PATCH-update variants exist it hides the redundant ` + "`post`" + ` alias in favor of ` + "`update`" + `. When you need the fully-qualified SDK method from a public resource entry, derive it as ` + "`resourceKey + '.' + verb`" + ` where ` + "`resourceKey`" + ` is the parent map key and ` + "`verb`" + ` comes from ` + "`resource.operations`" + `. The metrics catalog documents metric groups, metric names, resolved dimensions, rollups, and curated examples for building telemetry queries. ` + "`catalog.metrics.byName`" + ` is the primary query-construction surface: each metric entry includes its datasource and queryable dimensions, with group dimensions resolved onto the metric. ` + "`catalog.metrics.groups`" + ` remains the category index for browsing related metrics. The fuller metadata remains available in the generated artifacts and in ` + "`sdk.methods[...]`" + ` for direct OpenAPI correlation.
 
 Your code runs as the body of an async function. Use ` + "`return`" + ` to send results back.
 The return value is JSON-serialized.
@@ -10,6 +10,9 @@ Available globals:
   catalog.paths   — Record<string, string[]>
   catalog.resources — Record<string, SearchResource>
   catalog.resourceNames — string[]
+  catalog.metrics.groups — Record<string, SearchMetricsGroup>
+  catalog.metrics.byName — Record<string, SearchMetric>
+  catalog.metrics.examples — Record<string, SearchMetricsExample>
   spec.paths    — Record<string, Record<string, Operation>>
   spec.schemas  — Record<string, Schema>
   spec.tags     — Array<{ name: string, description: string }>
@@ -27,6 +30,15 @@ Examples:
   return catalog.resourceNames
     .filter(name => name.includes('ntp'))
     .map(name => catalog.resources[name]);
+
+  // Look up one metric by name
+  return catalog.metrics.byName['system.cpu.utilization_user'] || null;
+
+  // List metrics in a metrics group
+  return catalog.metrics.groups['system.cpu'] || null;
+
+  // Read the query-ready metadata for one metric
+  return catalog.metrics.byName['hw.fan.speed'] || null;
 
   // List writable operations in the vnic namespace with rule counts
   return Object.entries(catalog.resources)

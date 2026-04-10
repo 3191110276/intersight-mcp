@@ -58,6 +58,7 @@ func TestServeWithIOVerificationMatrix(t *testing.T) {
 	writeJSONLine(t, stdinWriter, toolCallRequest(3, "search", `
 return {
   hasCatalog: !!catalog.resources["compute.rackUnit"],
+  hasMetrics: !!catalog.metrics.byName["system.cpu.utilization_user"],
   hasCollection: !!spec.paths["/api/v1/compute/RackUnits"]?.get,
   hasObject: !!spec.paths["/api/v1/compute/RackUnits/{Moid}"]?.get,
   hasSchema: !!spec.schemas["compute.RackUnit"]

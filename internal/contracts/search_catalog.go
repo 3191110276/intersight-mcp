@@ -11,6 +11,7 @@ type SearchCatalog struct {
 	Resources     map[string]SearchResource `json:"resources"`
 	ResourceNames []string                  `json:"resourceNames"`
 	Paths         map[string][]string       `json:"paths,omitempty"`
+	Metrics       SearchMetricsCatalog      `json:"metrics,omitempty"`
 }
 
 type SearchResource struct {
@@ -34,9 +35,14 @@ type SearchField struct {
 	Example  any      `json:"example,omitempty"`
 }
 
-func BuildSearchCatalog(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatalog) (SearchCatalog, error) {
+func BuildSearchCatalog(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatalog, metrics SearchMetricsCatalog) (SearchCatalog, error) {
 	if spec.Metadata != catalog.Metadata || spec.Metadata != rules.Metadata {
 		return SearchCatalog{}, fmt.Errorf("search catalog generation failed: spec, sdk catalog, and rule metadata must share identical source metadata")
+	}
+
+	metrics = NormalizeSearchMetricsCatalog(metrics)
+	if err := ValidateSearchMetricsCatalog(metrics); err != nil {
+		return SearchCatalog{}, err
 	}
 
 	out := SearchCatalog{
@@ -44,6 +50,7 @@ func BuildSearchCatalog(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatal
 		Resources:     map[string]SearchResource{},
 		ResourceNames: []string{},
 		Paths:         map[string][]string{},
+		Metrics:       metrics,
 	}
 
 	for _, sdkMethod := range sortedKeys(catalog.Methods) {
@@ -89,12 +96,18 @@ func ValidateSearchCatalogAgainstArtifacts(spec NormalizedSpec, catalog SDKCatal
 		return fmt.Errorf("embedded artifact validation failed: spec, sdk catalog, rule metadata, and search catalog must share identical source metadata")
 	}
 
-	expected, err := BuildSearchCatalog(spec, catalog, rules)
+	search = normalizeSearchCatalog(search)
+	if err := ValidateSearchMetricsCatalog(search.Metrics); err != nil {
+		return err
+	}
+
+	expected, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
 	if err != nil {
 		return err
 	}
 	expected = normalizeSearchCatalog(expected)
-	search = normalizeSearchCatalog(search)
+	expected.Metrics = SearchMetricsCatalog{}
+	search.Metrics = SearchMetricsCatalog{}
 
 	if reflect.DeepEqual(expected, search) {
 		return nil
@@ -126,6 +139,7 @@ func normalizeSearchCatalog(catalog SearchCatalog) SearchCatalog {
 	if catalog.Paths == nil {
 		catalog.Paths = map[string][]string{}
 	}
+	catalog.Metrics = NormalizeSearchMetricsCatalog(catalog.Metrics)
 	for key, resource := range catalog.Resources {
 		resource = normalizeSearchResource(resource)
 		catalog.Resources[key] = resource

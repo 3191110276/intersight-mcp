@@ -74,7 +74,7 @@ func TestBuildSearchCatalogGroupsOperationsUnderResources(t *testing.T) {
 		},
 	}
 
-	search, err := BuildSearchCatalog(spec, catalog, rules)
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
 	if err != nil {
 		t.Fatalf("BuildSearchCatalog() error = %v", err)
 	}
@@ -151,7 +151,7 @@ func TestValidateSearchCatalogAgainstArtifactsRejectsMismatch(t *testing.T) {
 		},
 	}
 	rules := RuleCatalog{Metadata: meta, Methods: map[string]MethodRules{}}
-	search, err := BuildSearchCatalog(spec, catalog, rules)
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
 	if err != nil {
 		t.Fatalf("BuildSearchCatalog() error = %v", err)
 	}
@@ -224,7 +224,7 @@ func TestBuildSearchCatalogIndexesSharedPathsAsSortedResourceKeys(t *testing.T) 
 	}
 	rules := RuleCatalog{Metadata: meta, Methods: map[string]MethodRules{}}
 
-	search, err := BuildSearchCatalog(spec, catalog, rules)
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
 	if err != nil {
 		t.Fatalf("BuildSearchCatalog() error = %v", err)
 	}
@@ -292,7 +292,7 @@ func TestBuildSearchCatalogUsesCreateBodySubsetAndExcludesReadOnlyFields(t *test
 	}
 	rules := RuleCatalog{Metadata: meta, Methods: map[string]MethodRules{}}
 
-	search, err := BuildSearchCatalog(spec, catalog, rules)
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
 	if err != nil {
 		t.Fatalf("BuildSearchCatalog() error = %v", err)
 	}
@@ -303,6 +303,60 @@ func TestBuildSearchCatalogUsesCreateBodySubsetAndExcludesReadOnlyFields(t *test
 	}
 	if resource.CreateFields["Name"].Type != "string" {
 		t.Fatalf("createFields[Name] = %#v, want type string", resource.CreateFields["Name"])
+	}
+}
+
+func TestValidateSearchMetricsCatalogAcceptsConsistentIndexes(t *testing.T) {
+	t.Parallel()
+
+	catalog := SearchMetricsCatalog{
+		Groups: map[string]SearchMetricsGroup{
+			"system.cpu": {
+				Label:      "System CPU",
+				DataSource: "PhysicalEntities",
+				Dimensions: []string{"host.id", "host.name"},
+				Metrics:    []string{"system.cpu.utilization_user"},
+			},
+		},
+		ByName: map[string]SearchMetric{
+			"system.cpu.utilization_user": {
+				Name:       "system.cpu.utilization_user",
+				Instrument: "system.cpu",
+				DataSource: "PhysicalEntities",
+			},
+		},
+		Examples: map[string]SearchMetricsExample{
+			"cpu-breakdown": {
+				MetricNames: []string{"system.cpu.utilization_user"},
+			},
+		},
+	}
+
+	if err := ValidateSearchMetricsCatalog(catalog); err != nil {
+		t.Fatalf("ValidateSearchMetricsCatalog() error = %v", err)
+	}
+	normalized := NormalizeSearchMetricsCatalog(catalog)
+	metric := normalized.ByName["system.cpu.utilization_user"]
+	if got := strings.Join(metric.Dimensions, ","); got != "host.id,host.name" {
+		t.Fatalf("metric.Dimensions = %#v, want inherited group dimensions", metric.Dimensions)
+	}
+}
+
+func TestValidateSearchMetricsCatalogRejectsUnknownMetricReference(t *testing.T) {
+	t.Parallel()
+
+	catalog := SearchMetricsCatalog{
+		Groups: map[string]SearchMetricsGroup{
+			"system.cpu": {
+				Label:   "System CPU",
+				Metrics: []string{"system.cpu.utilization_user"},
+			},
+		},
+	}
+
+	err := ValidateSearchMetricsCatalog(catalog)
+	if err == nil || !strings.Contains(err.Error(), "unknown metric") {
+		t.Fatalf("ValidateSearchMetricsCatalog() error = %v, want unknown metric failure", err)
 	}
 }
 
@@ -385,7 +439,7 @@ func TestBuildSearchCatalogMergesCreateRulesIntoFieldMetadata(t *testing.T) {
 		},
 	}
 
-	search, err := BuildSearchCatalog(spec, catalog, rules)
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
 	if err != nil {
 		t.Fatalf("BuildSearchCatalog() error = %v", err)
 	}
@@ -470,7 +524,7 @@ func TestBuildSearchCatalogDedupesHoistedRulesAcrossWriteAliases(t *testing.T) {
 		},
 	}
 
-	search, err := BuildSearchCatalog(spec, catalog, rules)
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
 	if err != nil {
 		t.Fatalf("BuildSearchCatalog() error = %v", err)
 	}
@@ -565,7 +619,7 @@ func TestBuildSearchCatalogHoistsCollectionAndItemPathsToResourceLevel(t *testin
 	}
 	rules := RuleCatalog{Metadata: meta, Methods: map[string]MethodRules{}}
 
-	search, err := BuildSearchCatalog(spec, catalog, rules)
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
 	if err != nil {
 		t.Fatalf("BuildSearchCatalog() error = %v", err)
 	}
