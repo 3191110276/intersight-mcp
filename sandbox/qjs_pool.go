@@ -128,9 +128,11 @@ func (e *pooledSearchExecutor) Execute(ctx context.Context, code string, mode Mo
 
 	execCtx, cancel := context.WithTimeout(ctx, e.cfg.SearchTimeout)
 	defer cancel()
+	rtCtx, rtCancel := context.WithCancel(context.Background())
+	defer rtCancel()
 
 	rt, err := qjs.New(qjs.Option{
-		Context:            context.Background(),
+		Context:            rtCtx,
 		CloseOnContextDone: true,
 		MemoryLimit:        e.cfg.WASMMemoryBytes,
 	})
@@ -148,7 +150,8 @@ func (e *pooledSearchExecutor) Execute(ctx context.Context, code string, mode Mo
 	}
 
 	logs := &logBuffer{}
-	rt.Context().Context = execCtx
+	stopCancel := context.AfterFunc(execCtx, rtCancel)
+	defer stopCancel()
 	result, err := executeWithRuntime(execCtx, rt, code, mode, e.cfg.MaxCodeSize, e.cfg.MaxOutputBytes)
 	if err != nil {
 		if len(result.Logs) == 0 {
