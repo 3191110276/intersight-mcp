@@ -54,9 +54,6 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 	if err != nil {
 		return err
 	}
-	if err := server.ValidateEmbeddedArtifacts(specBytes, sdkCatalogBytes, rulesBytes, searchCatalogBytes); err != nil {
-		return err
-	}
 	artifacts, err := sandbox.LoadArtifactBundle(specBytes, sdkCatalogBytes, rulesBytes, searchCatalogBytes)
 	if err != nil {
 		return err

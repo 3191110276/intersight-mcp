@@ -33,16 +33,16 @@ func TestServeFailsOnInvalidConfig(t *testing.T) {
 	}
 }
 
-func TestServeFailsOnInvalidEmbeddedSpec(t *testing.T) {
+func TestServeFailsOnMalformedEmbeddedArtifacts(t *testing.T) {
 	t.Parallel()
 
 	env := []string{
 		"INTERSIGHT_CLIENT_ID=id",
 		"INTERSIGHT_CLIENT_SECRET=secret",
 	}
-	err := serveWithIO(context.Background(), nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, []byte(`{}`), []byte(`{}`), []byte(`{}`), []byte(`{}`))
+	err := serveWithIO(context.Background(), nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, []byte(`{`), []byte(`{}`), []byte(`{}`), []byte(`{}`))
 	if err == nil || !strings.Contains(err.Error(), "embedded") {
-		t.Fatalf("serveWithIO() error = %v, want embedded spec failure", err)
+		t.Fatalf("serveWithIO() error = %v, want embedded artifact failure", err)
 	}
 }
 
