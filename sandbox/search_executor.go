@@ -59,14 +59,18 @@ func NewSearchExecutorFromBundle(cfg Config, bundle *ArtifactBundle) (Executor, 
 }
 
 type searchExecutor struct {
-	cfg              Config
-	specJSON         []byte
-	catalogJSON      []byte
-	rulesJSON        []byte
-	publicSearchJSON []byte
+	cfg               Config
+	specJSON          []byte
+	catalogJSON       []byte
+	rulesJSON         []byte
+	publicSearchJSON  []byte
+	beforeLoadGlobals func(context.Context) error
 }
 
-func (e *searchExecutor) loadGlobals(rt *qjs.Runtime) error {
+func (e *searchExecutor) loadGlobals(ctx context.Context, rt *qjs.Runtime) error {
+	if err := ctx.Err(); err != nil {
+		return normalizeJSError(ctx, err)
+	}
 	spec := rt.Context().ParseJSON(string(e.specJSON))
 	sdk := rt.Context().ParseJSON(string(e.catalogJSON))
 	rules := rt.Context().ParseJSON(string(e.rulesJSON))
@@ -75,6 +79,9 @@ func (e *searchExecutor) loadGlobals(rt *qjs.Runtime) error {
 	rt.Context().Global().SetPropertyStr("spec", spec)
 	rt.Context().Global().SetPropertyStr("sdk", sdk)
 	rt.Context().Global().SetPropertyStr("rules", rules)
+	if err := ctx.Err(); err != nil {
+		return normalizeJSError(ctx, err)
+	}
 	if _, err := rt.Context().Eval("freeze_spec.js", qjs.Code(`
 const __freezeSeen = new WeakSet();
 function __deepFreeze(value) {
@@ -92,7 +99,7 @@ __deepFreeze(rules);
 __deepFreeze(catalog);
 __deepFreeze(spec);
 `)); err != nil {
-		return normalizeJSError(context.Background(), err)
+		return normalizeJSError(ctx, err)
 	}
 	return nil
 }
@@ -125,13 +132,24 @@ func redactSearchCatalogPublicFields(searchJSON []byte) ([]byte, error) {
 	return redacted, nil
 }
 
-func (e *searchExecutor) Execute(ctx context.Context, code string, mode Mode) (Result, error) {
+func (e *searchExecutor) Execute(ctx context.Context, code string, mode Mode) (result Result, err error) {
 	if mode != ModeSearch {
 		return Result{}, contracts.ValidationError{Message: "search executor only supports search mode"}
 	}
 
 	execCtx, cancel := context.WithTimeout(ctx, e.cfg.SearchTimeout)
 	defer cancel()
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = normalizePanic(execCtx, recovered)
+		}
+	}()
+	logs := &logBuffer{}
+	if e.beforeLoadGlobals != nil {
+		if err := e.beforeLoadGlobals(execCtx); err != nil {
+			return Result{}, normalizeJSError(execCtx, err)
+		}
+	}
 	rtCtx, rtCancel := context.WithCancel(context.Background())
 	defer rtCancel()
 
@@ -139,6 +157,8 @@ func (e *searchExecutor) Execute(ctx context.Context, code string, mode Mode) (R
 		Context:            rtCtx,
 		CloseOnContextDone: true,
 		MemoryLimit:        e.cfg.WASMMemoryBytes,
+		Stdout:             logs,
+		Stderr:             logs,
 	})
 	if err != nil {
 		return Result{}, contracts.InternalError{Message: "create search QuickJS runtime", Err: err}
@@ -149,14 +169,13 @@ func (e *searchExecutor) Execute(ctx context.Context, code string, mode Mode) (R
 		}()
 		rt.Close()
 	}()
-	if err := e.loadGlobals(rt); err != nil {
+	stopCancel := context.AfterFunc(execCtx, rtCancel)
+	defer stopCancel()
+	if err := e.loadGlobals(execCtx, rt); err != nil {
 		return Result{}, err
 	}
 
-	logs := &logBuffer{}
-	stopCancel := context.AfterFunc(execCtx, rtCancel)
-	defer stopCancel()
-	result, err := executeWithRuntime(execCtx, rt, code, mode, e.cfg.MaxCodeSize, e.cfg.MaxOutputBytes)
+	result, err = executeWithRuntime(execCtx, rt, code, mode, e.cfg.MaxCodeSize, e.cfg.MaxOutputBytes)
 	if err != nil {
 		if len(result.Logs) == 0 {
 			result.Logs = logs.Lines()

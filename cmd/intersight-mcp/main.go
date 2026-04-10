@@ -145,7 +145,8 @@ func newHTTPClient(timeout time.Duration) *http.Client {
 func bootstrapOAuthManager(ctx context.Context, timeout time.Duration, cfg intersight.OAuthConfig) (*intersight.Manager, error) {
 	bootstrapCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	return intersight.NewOAuthManager(bootstrapCtx, cfg)
+	cfg.BootstrapContext = bootstrapCtx
+	return intersight.NewOAuthManager(ctx, cfg)
 }
 
 type sandboxClient struct {

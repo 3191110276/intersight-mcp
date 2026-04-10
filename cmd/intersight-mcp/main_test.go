@@ -8,12 +8,13 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/mimaurer/intersight-mcp/intersight"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 	"github.com/mimaurer/intersight-mcp/internal/testutil"
+	"github.com/mimaurer/intersight-mcp/intersight"
 )
 
 func TestServeStartsWithoutCredentialsForOfflineSearch(t *testing.T) {
@@ -113,6 +114,64 @@ func TestBootstrapOAuthManagerTimesOutStalledStartupAuth(t *testing.T) {
 	}
 	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
 		t.Fatalf("bootstrapOAuthManager() took %v, want bounded timeout", elapsed)
+	}
+}
+
+func TestBootstrapOAuthManagerKeepsProactiveRefreshAlive(t *testing.T) {
+	t.Parallel()
+
+	clock := testutil.NewManualClock(time.Unix(0, 0))
+	var tokenCalls atomic.Int32
+
+	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iam/token":
+			token := "bootstrap-token"
+			if tokenCalls.Add(1) > 1 {
+				token = "refreshed-token"
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"` + token + `","expires_in":8}`))
+		case "/api/v1/iam/UserPreferences":
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"Results":[]}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer api.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	manager, err := bootstrapOAuthManager(ctx, time.Second, intersight.OAuthConfig{
+		TokenURL:     api.URL + "/iam/token",
+		ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
+		ClientID:     "id",
+		ClientSecret: "secret",
+		HTTPClient:   api.Client(),
+		Clock:        clock,
+	})
+	if err != nil {
+		t.Fatalf("bootstrapOAuthManager() error = %v", err)
+	}
+
+	clock.Advance(4 * time.Second)
+
+	deadline := time.Now().Add(time.Second)
+	for tokenCalls.Load() < 2 && time.Now().Before(deadline) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if got := tokenCalls.Load(); got < 2 {
+		t.Fatalf("expected proactive refresh after bootstrap, got %d token requests", got)
+	}
+
+	token, err := manager.Token(ctx)
+	if err != nil {
+		t.Fatalf("Token() error = %v", err)
+	}
+	if token != "refreshed-token" {
+		t.Fatalf("unexpected token after proactive refresh: %q", token)
 	}
 }
 

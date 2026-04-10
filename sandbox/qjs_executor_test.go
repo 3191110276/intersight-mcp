@@ -152,7 +152,7 @@ func TestSearchMetricsCatalogAvailable(t *testing.T) {
 	}
 	defer exec.Close()
 
-result, err := exec.Execute(context.Background(), `
+	result, err := exec.Execute(context.Background(), `
 return {
   metric: catalog.metrics.byName["system.cpu.utilization_user"],
   group: catalog.metrics.groups["system.cpu"]
@@ -1461,6 +1461,38 @@ func TestGlobalTimeout(t *testing.T) {
 	defer exec.Close()
 
 	_, err = exec.Execute(context.Background(), `while (true) {}`, ModeSearch)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	var timeoutErr contracts.TimeoutError
+	if !errors.As(err, &timeoutErr) {
+		t.Fatalf("expected TimeoutError, got %T (%v)", err, err)
+	}
+}
+
+func TestSearchTimeoutCoversSetupBeforeUserCode(t *testing.T) {
+	t.Parallel()
+
+	cfg := testConfig()
+	cfg.SearchTimeout = 40 * time.Millisecond
+
+	exec, err := NewSearchExecutor(cfg, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	if err != nil {
+		t.Fatalf("NewSearchExecutor() error = %v", err)
+	}
+	defer exec.Close()
+
+	searchExec, ok := exec.(*searchExecutor)
+	if !ok {
+		t.Fatalf("unexpected executor type: %T", exec)
+	}
+	searchExec.beforeLoadGlobals = func(ctx context.Context) error {
+		<-ctx.Done()
+		return ctx.Err()
+	}
+
+	_, err = exec.Execute(context.Background(), `return { ok: true };`, ModeSearch)
 	if err == nil {
 		t.Fatalf("expected error")
 	}

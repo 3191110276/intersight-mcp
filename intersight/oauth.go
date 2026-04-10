@@ -43,12 +43,13 @@ type TokenProvider interface {
 }
 
 type OAuthConfig struct {
-	TokenURL     string
-	ValidateURL  string
-	ClientID     string
-	ClientSecret string
-	HTTPClient   *http.Client
-	Clock        Clock
+	TokenURL         string
+	ValidateURL      string
+	ClientID         string
+	ClientSecret     string
+	HTTPClient       *http.Client
+	Clock            Clock
+	BootstrapContext context.Context
 }
 
 type Manager struct {
@@ -105,6 +106,10 @@ func NewOAuthManager(ctx context.Context, cfg OAuthConfig) (*Manager, error) {
 	if clock == nil {
 		clock = realClock{}
 	}
+	bootstrapCtx := cfg.BootstrapContext
+	if bootstrapCtx == nil {
+		bootstrapCtx = ctx
+	}
 
 	m := &Manager{
 		httpClient:            httpClient,
@@ -116,7 +121,7 @@ func NewOAuthManager(ctx context.Context, cfg OAuthConfig) (*Manager, error) {
 		proactiveRefreshAlive: true,
 	}
 
-	if _, err := m.refreshToken(ctx, true); err != nil {
+	if _, err := m.refreshToken(bootstrapCtx, true); err != nil {
 		return nil, err
 	}
 	go m.refreshLoop(ctx)
