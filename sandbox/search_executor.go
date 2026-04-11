@@ -144,7 +144,7 @@ func (e *searchExecutor) Execute(ctx context.Context, code string, mode Mode) (r
 			err = normalizePanic(execCtx, recovered)
 		}
 	}()
-	logs := &logBuffer{}
+	logs := newLogBuffer(e.cfg.MaxOutputBytes)
 	if e.beforeLoadGlobals != nil {
 		if err := e.beforeLoadGlobals(execCtx); err != nil {
 			return Result{}, normalizeJSError(execCtx, err)

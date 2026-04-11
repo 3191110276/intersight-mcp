@@ -318,6 +318,76 @@ func TestOAuthUsesExistingTokenDuringRefreshBackoff(t *testing.T) {
 	}
 }
 
+func TestOAuthUsesExistingTokenDuringDegradedCooldownIfStillValid(t *testing.T) {
+	t.Parallel()
+
+	clock := testutil.NewManualClock(time.Unix(0, 0))
+	var tokenCalls atomic.Int32
+	var failRefresh atomic.Bool
+
+	server := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iam/token":
+			call := tokenCalls.Add(1)
+			if call == 1 || !failRefresh.Load() {
+				writeJSON(t, w, http.StatusOK, map[string]any{
+					"access_token": "token-ok",
+					"expires_in":   120,
+				})
+				return
+			}
+			writeJSON(t, w, http.StatusUnauthorized, map[string]any{"message": "bad credentials"})
+		case "/api/v1/iam/UserPreferences":
+			writeJSON(t, w, http.StatusOK, map[string]any{"Results": []any{}})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	manager, err := NewOAuthManager(ctx, OAuthConfig{
+		TokenURL:     server.URL + "/iam/token",
+		ValidateURL:  server.URL + "/api/v1/iam/UserPreferences",
+		ClientID:     "id",
+		ClientSecret: "secret",
+		HTTPClient:   server.Client(),
+		Clock:        clock,
+	})
+	if err != nil {
+		t.Fatalf("NewOAuthManager() error = %v", err)
+	}
+
+	failRefresh.Store(true)
+	clock.Advance(60 * time.Second)
+	if token, err := manager.Token(ctx); err != nil || token != "token-ok" {
+		t.Fatalf("first refresh failure should still return cached token, got token=%q err=%v", token, err)
+	}
+
+	clock.Advance(1 * time.Second)
+	if token, err := manager.Token(ctx); err != nil || token != "token-ok" {
+		t.Fatalf("second refresh failure should still return cached token, got token=%q err=%v", token, err)
+	}
+
+	clock.Advance(2 * time.Second)
+	token, err := manager.Token(ctx)
+	if err != nil {
+		t.Fatalf("degraded cooldown should still return cached token while it is valid, got err=%v", err)
+	}
+	if token != "token-ok" {
+		t.Fatalf("unexpected token during degraded cooldown: %q", token)
+	}
+	if !manager.IsDegraded() {
+		t.Fatalf("expected degraded mode after three failures")
+	}
+
+	if got := tokenCalls.Load(); got != 4 {
+		t.Fatalf("expected one bootstrap request and three failed refreshes, got %d", got)
+	}
+}
+
 func writeJSON(t *testing.T, w http.ResponseWriter, status int, payload any) {
 	t.Helper()
 

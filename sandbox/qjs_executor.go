@@ -78,6 +78,9 @@ func (e *qjsExecutor) Execute(ctx context.Context, code string, mode Mode) (Resu
 	if e.initErr != nil {
 		return Result{}, contracts.InternalError{Message: "initialize embedded sandbox artifacts", Err: e.initErr}
 	}
+	if mode != ModeSearch && e.sdk == nil {
+		return Result{}, contracts.ValidationError{Message: "sdk runtime is not configured for query or mutate execution"}
+	}
 
 	timeout := e.cfg.GlobalTimeout
 	if mode == ModeSearch {
@@ -86,7 +89,7 @@ func (e *qjsExecutor) Execute(ctx context.Context, code string, mode Mode) (Resu
 	execCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	logs := &logBuffer{}
+	logs := newLogBuffer(e.cfg.MaxOutputBytes)
 	rt, err := qjs.New(qjs.Option{
 		Context:            execCtx,
 		CloseOnContextDone: true,
@@ -213,7 +216,10 @@ func executeWithRuntime(
 	}
 
 	value := raw["value"]
-	size, err := serializedSize(value)
+	size, err := serializedSize(map[string]any{
+		"value": value,
+		"logs":  logs,
+	})
 	if err != nil {
 		return Result{}, contracts.InternalError{Message: "serialize sandbox result", Err: err}
 	}

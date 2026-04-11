@@ -168,7 +168,7 @@ func OutputSchema() json.RawMessage {
 
 func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, exposeMetricsApps bool) []mcpserver.ServerTool {
 	return []mcpserver.ServerTool{
-		NewSearchTool(searchExec),
+		NewSearchTool(searchExec, limiter),
 		NewQueryTool(queryExec, limiter, exposeMetricsApps),
 		NewMutateTool(mutateExec, limiter),
 	}

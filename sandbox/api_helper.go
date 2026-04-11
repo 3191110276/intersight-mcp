@@ -72,24 +72,60 @@ func stringMapToMultiMap(in map[string]string) map[string][]string {
 }
 
 type logBuffer struct {
-	data []byte
+	data      []byte
+	limit     int
+	truncated bool
+}
+
+func newLogBuffer(limit int64) *logBuffer {
+	buf := &logBuffer{}
+	if limit > 0 {
+		if limit > int64(^uint(0)>>1) {
+			buf.limit = int(^uint(0) >> 1)
+		} else {
+			buf.limit = int(limit)
+		}
+	}
+	return buf
 }
 
 func (b *logBuffer) Write(p []byte) (int, error) {
+	if b.limit > 0 {
+		remaining := b.limit - len(b.data)
+		if remaining <= 0 {
+			b.truncated = true
+			return len(p), nil
+		}
+		if len(p) > remaining {
+			b.data = append(b.data, p[:remaining]...)
+			b.truncated = true
+			return len(p), nil
+		}
+	}
 	b.data = append(b.data, p...)
 	return len(p), nil
 }
 
 func (b *logBuffer) Lines() []string {
 	if len(b.data) == 0 {
+		if b.truncated {
+			return []string{"[logs truncated to fit output limit]"}
+		}
 		return []string{}
 	}
 
 	trimmed := strings.TrimRight(string(b.data), "\n")
-	if trimmed == "" {
+	lines := []string{}
+	if trimmed != "" {
+		lines = strings.Split(trimmed, "\n")
+	}
+	if b.truncated {
+		lines = append(lines, "[logs truncated to fit output limit]")
+	}
+	if len(lines) == 0 {
 		return []string{}
 	}
-	return strings.Split(trimmed, "\n")
+	return lines
 }
 
 func rejectionValue(err error, perCallTimeout time.Duration, maxAPICalls int) (map[string]any, error) {

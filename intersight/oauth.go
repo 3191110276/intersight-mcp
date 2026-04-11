@@ -129,21 +129,40 @@ func NewOAuthManager(ctx context.Context, cfg OAuthConfig) (*Manager, error) {
 }
 
 func (m *Manager) Token(ctx context.Context) (string, error) {
-	if err := m.ensureAvailable(ctx); err != nil {
-		return "", err
-	}
-
 	m.mu.RLock()
 	token := m.token
 	m.mu.RUnlock()
 	if token.Value == "" {
-		return "", contracts.AuthError{Message: "OAuth token unavailable"}
+		if err := m.ensureAvailable(ctx); err != nil {
+			return "", err
+		}
+		m.mu.RLock()
+		token = m.token
+		m.mu.RUnlock()
+		if token.Value == "" {
+			return "", contracts.AuthError{Message: "OAuth token unavailable"}
+		}
 	}
 	now := m.clock.Now()
+	if m.tokenStillUsable(token, now) && !m.shouldRefresh(token, now) {
+		return token.Value, nil
+	}
+	if !m.tokenStillUsable(token, now) {
+		if err := m.ensureAvailable(ctx); err != nil {
+			return "", err
+		}
+		m.mu.RLock()
+		token = m.token
+		m.mu.RUnlock()
+		if token.Value == "" {
+			return "", contracts.AuthError{Message: "OAuth token unavailable"}
+		}
+		now = m.clock.Now()
+	}
 	if m.shouldRefresh(token, now) {
 		refreshed, err := m.refreshToken(ctx, false)
 		if err != nil {
-			if m.tokenStillUsable(token, now) && !m.IsDegraded() {
+			if m.tokenStillUsable(token, now) {
 				return token.Value, nil
 			}
 			return "", err

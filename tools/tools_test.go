@@ -86,6 +86,58 @@ func TestSuccessMapping(t *testing.T) {
 	}
 }
 
+func TestSearchToolUsesSharedLimiter(t *testing.T) {
+	t.Parallel()
+
+	tool := NewSearchTool(stubExecutor{}, NewLimiter(1))
+	if tool.Tool.Name != ToolSearch {
+		t.Fatalf("tool name = %q, want %q", tool.Tool.Name, ToolSearch)
+	}
+
+	started := make(chan struct{}, 1)
+	blocked := make(chan struct{})
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{
+		execute: func(ctx context.Context, code string, mode sandbox.Mode) (sandbox.Result, error) {
+			started <- struct{}{}
+			<-blocked
+			return sandbox.Result{Value: map[string]any{"ok": true}}, nil
+		},
+	}, NewLimiter(1))
+
+	done := make(chan *mcp.CallToolResult, 1)
+	go func() {
+		result, err := handler(context.Background(), toolRequest(`return catalog.resourceNames;`))
+		if err != nil {
+			t.Errorf("first handler() error = %v", err)
+			return
+		}
+		done <- result
+	}()
+
+	<-started
+
+	second, err := handler(context.Background(), toolRequest(`return catalog.resourceNames;`))
+	if err != nil {
+		t.Fatalf("second handler() error = %v", err)
+	}
+	if !second.IsError {
+		t.Fatalf("second result.IsError = false, want true")
+	}
+	envelope, ok := second.StructuredContent.(contracts.ErrorEnvelope)
+	if !ok {
+		t.Fatalf("StructuredContent type = %T", second.StructuredContent)
+	}
+	if envelope.Error.Type != contracts.ErrorTypeLimit {
+		t.Fatalf("error.type = %q", envelope.Error.Type)
+	}
+	if envelope.Error.Message != "Concurrent execution limit reached (1)" {
+		t.Fatalf("error.message = %q", envelope.Error.Message)
+	}
+
+	close(blocked)
+	<-done
+}
+
 func TestTelemetrySuccessMappingIgnoresPresentationHints(t *testing.T) {
 	t.Parallel()
 

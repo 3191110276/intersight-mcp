@@ -68,6 +68,8 @@ func NewRuntime(cfg RuntimeConfig) (*Runtime, error) {
 		cfg.ServerName,
 		cfg.ServerVersion,
 		mcpserver.WithRecovery(),
+		// Resource support is intentionally left disabled until the metrics app
+		// placeholder is wired into a real MCP resource surface.
 		mcpserver.WithResourceCapabilities(false, false),
 	)
 	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent), cfg.ExposeMetricsApps)

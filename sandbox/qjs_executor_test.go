@@ -234,6 +234,51 @@ return { ok: true };
 	}
 }
 
+func TestConsoleLogsCountTowardOutputLimit(t *testing.T) {
+	t.Parallel()
+
+	cfg := testConfig()
+	cfg.MaxOutputBytes = 64
+
+	exec, err := NewSearchExecutor(cfg, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	if err != nil {
+		t.Fatalf("NewSearchExecutor() error = %v", err)
+	}
+	defer exec.Close()
+
+	_, err = exec.Execute(context.Background(), `
+console.log("abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz");
+return { ok: true };
+`, ModeSearch)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	var tooLarge contracts.OutputTooLarge
+	if !errors.As(err, &tooLarge) {
+		t.Fatalf("expected OutputTooLarge, got %T", err)
+	}
+}
+
+func TestConsoleLogsAreTruncatedToOutputLimit(t *testing.T) {
+	t.Parallel()
+
+	buf := newLogBuffer(12)
+	if _, err := buf.Write([]byte("hello world again")); err != nil {
+		t.Fatalf("Write() error = %v", err)
+	}
+	lines := buf.Lines()
+	if len(lines) != 2 {
+		t.Fatalf("len(lines) = %d, want 2 (%#v)", len(lines), lines)
+	}
+	if lines[0] != "hello world " {
+		t.Fatalf("unexpected first log line: %#v", lines[0])
+	}
+	if lines[1] != "[logs truncated to fit output limit]" {
+		t.Fatalf("unexpected truncation marker: %#v", lines[1])
+	}
+}
+
 func TestQueryAPICallIsReferenceError(t *testing.T) {
 	t.Parallel()
 
@@ -1553,6 +1598,28 @@ func TestOutputTooLarge(t *testing.T) {
 	var tooLarge contracts.OutputTooLarge
 	if !errors.As(err, &tooLarge) {
 		t.Fatalf("expected OutputTooLarge, got %T", err)
+	}
+}
+
+func TestSpecOnlyExecutorRejectsQueryMode(t *testing.T) {
+	t.Parallel()
+
+	exec, err := NewQJSExecutorWithSpec(testConfig(), stubAPICaller{}, []byte(testSDKSpec))
+	if err != nil {
+		t.Fatalf("NewQJSExecutorWithSpec() error = %v", err)
+	}
+
+	_, err = exec.Execute(context.Background(), `return await sdk.example.widget.list();`, ModeQuery)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	var validationErr contracts.ValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
+	if validationErr.Error() != "sdk runtime is not configured for query or mutate execution" {
+		t.Fatalf("unexpected error: %v", validationErr)
 	}
 }
 
