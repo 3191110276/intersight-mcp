@@ -1,10 +1,8 @@
 # Intersight MCP Server
 
-This is an MCP server for Cisco Intersight which exposes the entire API.
+This is a local-only MCP server for Cisco Intersight which exposes the entire API.
 
-The server is local-only and stdio-only. It does not expose an HTTP listener or use a config file.
-
-Developer workflow, source builds, and spec maintenance live in [DEVELOPMENT.md](/Users/mimaurer/Documents/GitHub/intersight-mcp/DEVELOPMENT.md).
+Developer workflow is documented in [DEVELOPMENT.md](/Users/mimaurer/Documents/GitHub/intersight-mcp/DEVELOPMENT.md).
 
 ## Setup
 
