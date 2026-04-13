@@ -36,7 +36,7 @@ Configuration variables:
 | Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | No | `512KB` |
 | Read-only mode | `--read-only` | — | No | `false` |
 
-The server does not inherit `HTTP_PROXY`, `HTTPS_PROXY`, or `NO_PROXY`. Proxying is enabled only through `--proxy` or `INTERSIGHT_PROXY_URL`.
+Note: The server does not inherit proxy settings from the host. Proxying is enabled only through `--proxy` or `INTERSIGHT_PROXY_URL`.
 
 ## Usage
 
@@ -48,4 +48,4 @@ By default the server registers three tools:
 
 With `--read-only`, it registers only `search` and `query`.
 
-The public execution surface is `sdk` for `query` and `mutate`. `search` exposes the `catalog` discovery object, including `catalog.schema(name)` for normalized schema drilldown.
+The MCP client will thus usually call `search` first to understand the API, then either `query` or `mutate` to read or perform changes respectively.
