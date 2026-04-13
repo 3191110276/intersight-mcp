@@ -11,7 +11,7 @@ To run the server on your machine, you need:
 - a local `intersight-mcp` binary for your platform
 - Cisco Intersight OAuth credentials if you want live reads or writes
 
-Configure your MCP client to launch the binary as a local stdio command:
+Configure your MCP client to launch the binary as a local stdio command. For example:
 
 ```json
 {
