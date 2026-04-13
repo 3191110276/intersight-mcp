@@ -25,6 +25,24 @@ Configure your MCP client to launch the binary as a local stdio command:
 }
 ```
 
+You can also pass settings as CLI flags in `args`:
+
+```json
+{
+  "command": "/absolute/path/to/bin/intersight-mcp",
+  "args": [
+    "serve",
+    "--endpoint", "intersight.example.com",
+    "--read-only",
+    "--max-output", "1MB"
+  ],
+  "env": {
+    "INTERSIGHT_CLIENT_ID": "your-client-id",
+    "INTERSIGHT_CLIENT_SECRET": "your-client-secret"
+  }
+}
+```
+
 Configuration variables:
 
 | Setting | Flag | Environment | Required | Default |
