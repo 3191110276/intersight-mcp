@@ -27,19 +27,16 @@ Configure your MCP client to launch the binary as a local stdio command:
 }
 ```
 
-Required environment variables for live `query` reads and `mutate` writes:
+Configuration variables:
 
-- `INTERSIGHT_CLIENT_ID`
-- `INTERSIGHT_CLIENT_SECRET`
-
-Common optional settings:
-
-| Setting | Flag | Environment | Default |
-|---|---|---|---|
-| Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | `https://intersight.com` |
-| Explicit outbound proxy URL | `--proxy` | `INTERSIGHT_PROXY_URL` | disabled |
-| Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
-| Read-only mode | `--read-only` | — | `false` |
+| Setting | Flag | Environment | Required | Default |
+|---|---|---|---|---|
+| Client ID | — | `INTERSIGHT_CLIENT_ID` | Yes, for live reads and writes | none |
+| Client secret | — | `INTERSIGHT_CLIENT_SECRET` | Yes, for live reads and writes | none |
+| Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | No | `https://intersight.com` |
+| Explicit outbound proxy URL | `--proxy` | `INTERSIGHT_PROXY_URL` | No | disabled |
+| Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | No | `512KB` |
+| Read-only mode | `--read-only` | — | No | `false` |
 
 Outbound OAuth and API traffic uses a proxy only when `--proxy` or `INTERSIGHT_PROXY_URL` is set explicitly
 
