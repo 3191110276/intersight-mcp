@@ -1,63 +1,34 @@
 package tools
 
-const searchDescription = `Search the Intersight discovery catalog. Start with ` + "`catalog.resources`" + ` for the canonical resource-first SDK discovery surface, and use ` + "`catalog.metrics`" + ` for metrics discovery and query-building guidance. Use ` + "`spec`" + ` only for deeper schema diagnosis or parity checks against the embedded normalized OpenAPI snapshot. The public ` + "`catalog.resources`" + ` view keeps ` + "`resource.operations`" + ` minimal: it is an array of supported verbs such as ` + "`['list', 'get', 'create', 'update', 'delete']`" + `. Operation defaults are documented at the tool level instead of repeated on every resource: ` + "`create`" + ` requires a body, ` + "`delete`" + ` requires ` + "`path.Moid`" + `, ` + "`get`" + ` requires ` + "`path.Moid`" + ` and supports standard get query parameters, ` + "`list`" + ` supports standard list query parameters, and ` + "`update`" + ` requires both ` + "`path.Moid`" + ` and a body. ` + "`resource.createFields`" + ` is a compact create-focused subset of the full schema: it prefers the create request body when available, excludes read-only properties, inlines simple required/one-of constraints into field metadata, and may include relationship examples. Use ` + "`resource.schema`" + ` with ` + "`spec.schemas[resource.schema]`" + ` when you need the full normalized schema. When both POST-update and PATCH-update variants exist it hides the redundant ` + "`post`" + ` alias in favor of ` + "`update`" + `. When you need the fully-qualified SDK method from a public resource entry, derive it as ` + "`resourceKey + '.' + verb`" + ` where ` + "`resourceKey`" + ` is the parent map key and ` + "`verb`" + ` comes from ` + "`resource.operations`" + `. The metrics catalog documents metric groups, metric names, resolved dimensions, rollups, and curated examples for building telemetry queries. ` + "`catalog.metrics.byName`" + ` is the primary query-construction surface: each metric entry includes its datasource and queryable dimensions, with group dimensions resolved onto the metric. ` + "`catalog.metrics.groups`" + ` remains the category index for browsing related metrics. The fuller metadata remains available in the generated artifacts and in ` + "`sdk.methods[...]`" + ` for direct OpenAPI correlation.
+const searchDescription = `Search the Intersight discovery catalog for resource and metrics discovery.
 
 Your code runs as the body of an async function. Use ` + "`return`" + ` to send results back.
 The return value is JSON-serialized.
 console.log() output appears as a separate text section after the result.
 
 Available globals:
-  catalog.paths   — Record<string, string[]>
   catalog.resources — Record<string, SearchResource>
-  catalog.resourceNames — string[]
+  catalog.paths — Record<string, string[]>
   catalog.metrics.groups — Record<string, SearchMetricsGroup>
   catalog.metrics.byName — Record<string, SearchMetric>
-  catalog.metrics.examples — Record<string, SearchMetricsExample>
-  spec.paths    — Record<string, Record<string, Operation>>
-  spec.schemas  — Record<string, Schema>
-  spec.tags     — Array<{ name: string, description: string }>
+
+Use ` + "`catalog.resources`" + ` as the primary discovery surface.
+Use ` + "`catalog.paths`" + ` to map a REST path to resource keys.
+For a resource entry, derive the SDK method as ` + "`resourceKey + '.' + verb`" + ` using ` + "`resource.operations`" + `.
 
 Examples:
 
-  // Get one resource entry with all grouped operations
+  // Get one resource entry
   return catalog.resources['vnic.ethIf'] || null;
 
-  // Find resource keys from a REST path shown in Cisco docs or examples
-  const keys = catalog.paths['/vnic/FcNetworkPolicies'] || [];
-  return keys.map(key => catalog.resources[key]);
-
-  // Find resources whose names contain "ntp"
-  return catalog.resourceNames
-    .filter(name => name.includes('ntp'))
-    .map(name => catalog.resources[name]);
+  // Find resource keys from a REST path
+  return catalog.paths['/vnic/FcNetworkPolicies'] || [];
 
   // Look up one metric by name
   return catalog.metrics.byName['system.cpu.utilization_user'] || null;
 
   // List metrics in a metrics group
-  return catalog.metrics.groups['system.cpu'] || null;
-
-  // Read the query-ready metadata for one metric
-  return catalog.metrics.byName['hw.fan.speed'] || null;
-
-  // List writable operations in the vnic namespace with rule counts
-  return Object.entries(catalog.resources)
-    .filter(([resourceKey]) => resourceKey.startsWith('vnic.'))
-    .flatMap(([resourceKey, resource]) => (resource.operations || [])
-      .filter(verb => verb === 'create' || verb === 'update' || verb === 'post')
-      .map(verb => ({
-        sdkMethod: resourceKey + '.' + verb,
-        bodyRequired: verb === 'create' || verb === 'update' || verb === 'post',
-        hasRules: !!(resource.rules && resource.rules.length)
-      })));
-
-  // Diagnose the backing schema for a resource entry
-  const resource = catalog.resources['compute.rackUnit'];
-  return {
-    schema: resource.schema,
-    operations: resource.operations || [],
-    createFields: resource.createFields || {}
-  };`
+  return catalog.metrics.groups['system.cpu'] || null;`
 
 const queryDescription = `Query Intersight with the generated ` + "`sdk`" + ` object. This tool is non-mutating: read-shaped SDK methods execute normally, while write-shaped SDK methods run offline validation and return a validation report without making API calls. Use ` + "`mutate`" + ` for persistent writes.
 

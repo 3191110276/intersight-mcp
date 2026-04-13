@@ -2,7 +2,6 @@ package sandbox
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"strings"
 	"testing"
@@ -33,10 +32,6 @@ func TestLoadArtifactBundleClonesInputsAndPreparesSharedState(t *testing.T) {
 	if bundle.sdk == nil {
 		t.Fatal("bundle.sdk is nil")
 	}
-	if !json.Valid(bundle.publicSearchJSON) {
-		t.Fatal("bundle.publicSearchJSON is not valid JSON")
-	}
-
 	searchExec, err := NewSearchExecutorFromBundle(testConfig(), bundle)
 	if err != nil {
 		t.Fatalf("NewSearchExecutorFromBundle() error = %v", err)

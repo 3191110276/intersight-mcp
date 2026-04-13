@@ -32,18 +32,14 @@ func NewSearchExecutor(cfg Config, specJSON, catalogJSON, rulesJSON, searchJSON 
 		return nil, err
 	}
 
-	exec := &searchExecutor{
-		cfg:              cfg,
-		specJSON:         append([]byte(nil), specJSON...),
-		catalogJSON:      append([]byte(nil), catalogJSON...),
-		rulesJSON:        append([]byte(nil), rulesJSON...),
-		publicSearchJSON: publicSearchJSON,
-	}
-	exec.search, err = loadSearchRuntime(specJSON, catalogJSON, rulesJSON, publicSearchJSON)
+	search, err := loadSearchRuntime(specJSON, catalogJSON, rulesJSON, publicSearchJSON)
 	if err != nil {
 		return nil, err
 	}
-	return exec, nil
+	return &searchExecutor{
+		cfg:    cfg,
+		search: search,
+	}, nil
 }
 
 // NewSearchExecutorFromBundle reuses the parsed immutable artifact bundle, but
@@ -54,21 +50,13 @@ func NewSearchExecutorFromBundle(cfg Config, bundle *ArtifactBundle) (Executor, 
 	}
 	cfg = normalizeConfig(cfg)
 	return &searchExecutor{
-		cfg:              cfg,
-		specJSON:         append([]byte(nil), bundle.specJSON...),
-		catalogJSON:      append([]byte(nil), bundle.catalogJSON...),
-		rulesJSON:        append([]byte(nil), bundle.rulesJSON...),
-		publicSearchJSON: append([]byte(nil), bundle.publicSearchJSON...),
-		search:           bundle.search,
+		cfg:    cfg,
+		search: bundle.search,
 	}, nil
 }
 
 type searchExecutor struct {
 	cfg               Config
-	specJSON          []byte
-	catalogJSON       []byte
-	rulesJSON         []byte
-	publicSearchJSON  []byte
 	search            *searchRuntime
 	beforeLoadGlobals func(context.Context) error
 }
@@ -77,19 +65,11 @@ func (e *searchExecutor) loadGlobals(ctx context.Context, rt *qjs.Runtime) error
 	if err := ctx.Err(); err != nil {
 		return normalizeJSError(ctx, err)
 	}
-	if e.search != nil {
-		if err := e.search.install(rt.Context()); err != nil {
-			return err
-		}
-	} else {
-		search := rt.Context().ParseJSON(string(e.publicSearchJSON))
-		rt.Context().Global().SetPropertyStr("catalog", search)
-		spec := rt.Context().ParseJSON(string(e.specJSON))
-		sdk := rt.Context().ParseJSON(string(e.catalogJSON))
-		rules := rt.Context().ParseJSON(string(e.rulesJSON))
-		rt.Context().Global().SetPropertyStr("spec", spec)
-		rt.Context().Global().SetPropertyStr("sdk", sdk)
-		rt.Context().Global().SetPropertyStr("rules", rules)
+	if e.search == nil {
+		return contracts.InternalError{Message: "search runtime is not configured"}
+	}
+	if err := e.search.install(rt.Context()); err != nil {
+		return err
 	}
 	if err := ctx.Err(); err != nil {
 		return normalizeJSError(ctx, err)

@@ -9,14 +9,9 @@ import (
 // ArtifactBundle holds immutable, pre-parsed startup artifacts that can be
 // shared safely across executor instances.
 type ArtifactBundle struct {
-	specJSON         []byte
-	catalogJSON      []byte
-	rulesJSON        []byte
-	searchJSON       []byte
-	publicSearchJSON []byte
-	specIndex        *dryRunSpecIndex
-	sdk              *sdkRuntime
-	search           *searchRuntime
+	specIndex *dryRunSpecIndex
+	sdk       *sdkRuntime
+	search    *searchRuntime
 }
 
 // LoadArtifactBundle parses and prepares the embedded artifacts once so later
@@ -35,20 +30,15 @@ func LoadArtifactBundle(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*A
 		return nil, contracts.ValidationError{Message: "embedded search catalog is not valid JSON"}
 	}
 
-	specCopy := append([]byte(nil), specJSON...)
-	catalogCopy := append([]byte(nil), catalogJSON...)
-	rulesCopy := append([]byte(nil), rulesJSON...)
-	searchCopy := append([]byte(nil), searchJSON...)
-
-	specIndex, err := loadDryRunSpecIndex(specCopy)
+	specIndex, err := loadDryRunSpecIndex(specJSON)
 	if err != nil {
 		return nil, err
 	}
-	sdk, err := loadSDKRuntime(specCopy, catalogCopy, rulesCopy)
+	sdk, err := loadSDKRuntime(specJSON, catalogJSON, rulesJSON)
 	if err != nil {
 		return nil, err
 	}
-	publicSearchJSON, err := redactSearchCatalogPublicFields(searchCopy)
+	publicSearchJSON, err := redactSearchCatalogPublicFields(searchJSON)
 	if err != nil {
 		return nil, err
 	}
@@ -59,13 +49,8 @@ func LoadArtifactBundle(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*A
 	search := newSearchRuntime(sdk.spec, sdk.catalog, sdk.rules, searchCatalog)
 
 	return &ArtifactBundle{
-		specJSON:         specCopy,
-		catalogJSON:      catalogCopy,
-		rulesJSON:        rulesCopy,
-		searchJSON:       searchCopy,
-		publicSearchJSON: publicSearchJSON,
-		specIndex:        specIndex,
-		sdk:              sdk,
-		search:           search,
+		specIndex: specIndex,
+		sdk:       sdk,
+		search:    search,
 	}, nil
 }
