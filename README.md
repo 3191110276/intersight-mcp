@@ -2,11 +2,11 @@
 
 `intersight-mcp` is a local stdio MCP server for Cisco Intersight. It exposes three tools:
 
-- `search` for exploring the generated search catalog, raw SDK catalog, rule metadata, and normalized OpenAPI spec
+- `search` for exploring the generated discovery catalog, including resources, paths, metrics, and normalized schemas through `catalog`
 - `query` for read-shaped SDK calls against the Intersight API and offline validation of write-shaped SDK calls without making API calls
 - `mutate` for persistent write-shaped SDK calls against the Intersight API
 
-The `search` discovery surface is resource-first: use `catalog.resources`, `catalog.resourceNames`, and `catalog.paths` to move from a resource family or REST path into the grouped operation set for that SDK stem. The public `search` view keeps `resource.operations` minimal: it is an array of supported verbs such as `["list", "get", "create", "update", "delete"]`. Operation defaults are documented once at the tool level instead of repeated on every resource: `create` requires a body, `delete` requires `path.Moid`, `get` requires `path.Moid` and supports standard get query parameters, `list` supports standard list query parameters, and `update` requires both `path.Moid` and a body. Its top-level `createFields` map is filtered to exclude read-only properties so the output stays focused on writable inputs. Use `resource.schema` with `spec.schemas[...]` for full normalized schema detail. When you need the fully-qualified SDK method from a public resource entry, derive it as `resourceKey + '.' + verb` where `resourceKey` is the parent map key and `verb` comes from `resource.operations`. When both POST-update and PATCH-update variants exist for the same resource, the public view also hides the redundant `post` alias and keeps `update`. Richer operation metadata is still retained in the generated artifacts and in `sdk.methods[...]` for direct OpenAPI correlation.
+The `search` discovery surface is resource-first: use `catalog.resources`, `catalog.resourceNames`, and `catalog.paths` to move from a resource family or REST path into the grouped operation set for that SDK stem. The public `search` view keeps `resource.operations` minimal: it is an array of supported verbs such as `["list", "get", "create", "update", "delete"]`. Operation defaults are documented once at the tool level instead of repeated on every resource: `create` requires a body, `delete` requires `path.Moid`, `get` requires `path.Moid` and supports standard get query parameters, `list` supports standard list query parameters, and `update` requires both `path.Moid` and a body. Its top-level `createFields` map is filtered to exclude read-only properties so the output stays focused on writable inputs. Use `resource.schema` with `catalog.schema(resource.schema)` for full normalized schema detail. When you need the fully-qualified SDK method from a public resource entry, derive it as `resourceKey + '.' + verb` where `resourceKey` is the parent map key and `verb` comes from `resource.operations`. When both POST-update and PATCH-update variants exist for the same resource, the public view also hides the redundant `post` alias and keeps `update`.
 
 Telemetry is an exception: generated `telemetry.*` resources are intentionally excluded from the OpenAPI-derived SDK surface, and query mode exposes a custom `sdk.telemetry.query(...)` helper for Apache Druid `groupBy` queries. The helper accepts groupBy fields as top-level inputs and injects `queryType: "groupBy"` internally.
 
@@ -172,7 +172,7 @@ Configure your MCP client to launch the binary as a local stdio command. Example
 ```
 
 By default the server registers three tools: `search`, `query`, and `mutate`. With `--read-only`, it registers only `search` and `query`.
-The public execution surface is `sdk` only. `search` also exposes a merged `catalog` discovery object plus raw `sdk`, `rules`, and `spec` globals.
+The public execution surface is `sdk` only for `query` and `mutate`. `search` exposes only the `catalog` discovery object, including `catalog.schema(name)` for normalized schema drilldown.
 
 If credentials are missing or initial OAuth bootstrap fails, the server still starts so `search` remains usable. Live `query` reads and `mutate` writes then return auth errors until credentials work again.
 
@@ -183,6 +183,13 @@ Example reverse lookup in `search`:
 ```js
 const keys = catalog.paths['/vnic/FcNetworkPolicies'] || [];
 return keys.map(key => catalog.resources[key]);
+```
+
+Example schema drilldown in `search`:
+
+```js
+const resource = catalog.resources['ntp.policy'];
+return resource ? catalog.schema(resource.schema) : null;
 ```
 
 ## Spec Update Workflow

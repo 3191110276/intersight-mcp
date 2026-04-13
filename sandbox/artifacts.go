@@ -46,7 +46,7 @@ func LoadArtifactBundle(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*A
 	if err := json.Unmarshal(publicSearchJSON, &searchCatalog); err != nil {
 		return nil, contracts.ValidationError{Message: "decode embedded search catalog", Err: err}
 	}
-	search := newSearchRuntime(searchCatalog)
+	search := newSearchRuntime(searchCatalog, sdk.spec.Schemas)
 
 	return &ArtifactBundle{
 		specIndex: specIndex,

@@ -75,7 +75,10 @@ func serveWithIOAndHTTPClient(ctx context.Context, args []string, stdin io.Reade
 		logger.LogServerMessage(context.Background(), "config", "unsafe full-code debug logging is enabled; submitted tool code may be written to logs with best-effort redaction. Use only for short-lived incident debugging on trusted machines.")
 	}
 	if httpClient == nil {
-		httpClient = newHTTPClient(cfg.PerCallTimeout, cfg.ProxyURL)
+		httpClient, err = newHTTPClient(cfg.PerCallTimeout, cfg.ProxyURL)
+		if err != nil {
+			return err
+		}
 	}
 	sandboxCfg := sandbox.Config{
 		SearchTimeout:   cfg.SearchTimeout,
@@ -158,13 +161,13 @@ func serveWithIOAndHTTPClient(ctx context.Context, args []string, stdin io.Reade
 	return runtime.Listen(ctx, stdin, stdout)
 }
 
-func newHTTPClient(timeout time.Duration, proxyURL string) *http.Client {
+func newHTTPClient(timeout time.Duration, proxyURL string) (*http.Client, error) {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.Proxy = nil
 	if strings.TrimSpace(proxyURL) != "" {
 		parsedProxy, err := url.Parse(proxyURL)
 		if err != nil {
-			panic(fmt.Sprintf("invalid proxy URL passed to newHTTPClient: %v", err))
+			return nil, fmt.Errorf("configure HTTP client proxy: invalid proxy URL %q: %w", proxyURL, err)
 		}
 		transport.Proxy = http.ProxyURL(parsedProxy)
 	}
@@ -179,7 +182,7 @@ func newHTTPClient(timeout time.Duration, proxyURL string) *http.Client {
 	return &http.Client{
 		Timeout:   timeout,
 		Transport: transport,
-	}
+	}, nil
 }
 
 func bootstrapOAuthManager(managerCtx, bootstrapBaseCtx context.Context, timeout time.Duration, cfg intersight.OAuthConfig) (*intersight.Manager, error) {

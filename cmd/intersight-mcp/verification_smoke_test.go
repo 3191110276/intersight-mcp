@@ -56,12 +56,15 @@ func TestServeWithIOVerificationMatrix(t *testing.T) {
 	writeJSONLine(t, stdinWriter, initializeRequest())
 	writeJSONLine(t, stdinWriter, toolsListRequest(2))
 	writeJSONLine(t, stdinWriter, toolCallRequest(3, "search", `
+const rackUnit = catalog.resources["compute.rackUnit"];
+const schema = rackUnit ? catalog.schema(rackUnit.schema) : null;
 return {
   hasCatalog: !!catalog.resources["compute.rackUnit"],
   hasMetrics: !!catalog.metrics.byName["system.cpu.utilization_user"],
-  hasCollection: !!spec.paths["/api/v1/compute/RackUnits"]?.get,
-  hasObject: !!spec.paths["/api/v1/compute/RackUnits/{Moid}"]?.get,
-  hasSchema: !!spec.schemas["compute.RackUnit"]
+  hasSchemaHelper: typeof catalog.schema === "function",
+  hasSchemaRef: !!rackUnit?.schema,
+  hasSchema: !!schema,
+  schemaType: schema?.type ?? null
 };
 `))
 	writeJSONLine(t, stdinWriter, toolCallRequest(4, "query", `
@@ -143,8 +146,11 @@ return await sdk.ntp.policy.create({
 		t.Fatalf("unexpected search envelope type: %T", search.StructuredContent)
 	}
 	searchResult := mustMap(t, searchEnvelope.Result)
-	if searchResult["hasCatalog"] != true || searchResult["hasCollection"] != true || searchResult["hasObject"] != true || searchResult["hasSchema"] != true {
+	if searchResult["hasCatalog"] != true || searchResult["hasSchemaHelper"] != true || searchResult["hasSchemaRef"] != true || searchResult["hasSchema"] != true {
 		t.Fatalf("unexpected search result: %#v", searchResult)
+	}
+	if searchResult["schemaType"] != "object" {
+		t.Fatalf("unexpected search schemaType: %#v", searchResult["schemaType"])
 	}
 
 	query := decodeToolResult(t, responses[4])

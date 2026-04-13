@@ -1010,7 +1010,7 @@ func guardSDKMethod(mode Mode, method, sdkMethod string) error {
 			return nil
 		}
 		return contracts.ValidationError{
-			Message: fmt.Sprintf("validate only accepts write-shaped sdk calls; %q is %s and should run in query", sdkMethod, normalizedMethod),
+			Message: fmt.Sprintf("offline validation only accepts write-shaped sdk calls; %q is %s and should run as a normal query", sdkMethod, normalizedMethod),
 			Details: map[string]any{
 				"sdkMethod": sdkMethod,
 				"method":    normalizedMethod,

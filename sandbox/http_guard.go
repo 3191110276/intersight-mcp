@@ -10,7 +10,7 @@ import (
 func guardMethod(mode Mode, method string, dryRun bool) error {
 	if mode == ModeValidate {
 		return contracts.ValidationError{
-			Message: "validate only supports write-shaped sdk calls; api.call is unavailable in validate",
+			Message: "offline validation only supports write-shaped sdk calls; direct HTTP requests are unavailable during offline validation",
 		}
 	}
 	if mode != ModeQuery {
@@ -18,7 +18,7 @@ func guardMethod(mode Mode, method string, dryRun bool) error {
 	}
 	if dryRun {
 		return contracts.ValidationError{
-			Message: "query no longer supports api.call dry-run previews; use validate for non-persisting write checks",
+			Message: "query no longer supports api.call dry-run previews; use write-shaped sdk methods in query for non-persisting validation or mutate for persistent writes",
 		}
 	}
 	normalized := strings.ToUpper(strings.TrimSpace(method))
@@ -26,6 +26,6 @@ func guardMethod(mode Mode, method string, dryRun bool) error {
 		return nil
 	}
 	return contracts.ValidationError{
-		Message: "query only allows GET requests; use validate for offline write validation or mutate for persistent writes",
+		Message: "query only allows GET requests; use write-shaped sdk methods in query for offline validation or mutate for persistent writes",
 	}
 }

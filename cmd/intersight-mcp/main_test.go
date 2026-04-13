@@ -7,7 +7,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"strings"
 	"sync/atomic"
@@ -89,7 +88,10 @@ func TestServeWarnsWhenUnsafeCodeLoggingEnabled(t *testing.T) {
 func TestNewHTTPClientDisablesAmbientProxyByDefault(t *testing.T) {
 	t.Parallel()
 
-	client := newHTTPClient(time.Second, "")
+	client, err := newHTTPClient(time.Second, "")
+	if err != nil {
+		t.Fatalf("newHTTPClient() error = %v", err)
+	}
 	transport, ok := client.Transport.(*http.Transport)
 	if !ok {
 		t.Fatalf("unexpected transport type: %T", client.Transport)
@@ -111,7 +113,10 @@ func TestNewHTTPClientDisablesAmbientProxyByDefault(t *testing.T) {
 func TestNewHTTPClientUsesExplicitProxy(t *testing.T) {
 	t.Parallel()
 
-	client := newHTTPClient(time.Second, "http://proxy.example.com:8080")
+	client, err := newHTTPClient(time.Second, "http://proxy.example.com:8080")
+	if err != nil {
+		t.Fatalf("newHTTPClient() error = %v", err)
+	}
 	transport, ok := client.Transport.(*http.Transport)
 	if !ok {
 		t.Fatalf("unexpected transport type: %T", client.Transport)
@@ -130,6 +135,18 @@ func TestNewHTTPClientUsesExplicitProxy(t *testing.T) {
 	}
 }
 
+func TestNewHTTPClientFailsOnInvalidProxy(t *testing.T) {
+	t.Parallel()
+
+	_, err := newHTTPClient(time.Second, "://bad-proxy")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+	if !strings.Contains(err.Error(), `configure HTTP client proxy: invalid proxy URL "://bad-proxy"`) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestServeFailsOnInvalidConfig(t *testing.T) {
 	t.Parallel()
 
@@ -140,6 +157,19 @@ func TestServeFailsOnInvalidConfig(t *testing.T) {
 	err := serveWithIO(context.Background(), []string{"--endpoint", "not-a-url/path"}, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
 	if err == nil || !strings.Contains(err.Error(), "invalid endpoint") {
 		t.Fatalf("serveWithIO() error = %v, want invalid endpoint failure", err)
+	}
+}
+
+func TestServeFailsOnInvalidProxyConfig(t *testing.T) {
+	t.Parallel()
+
+	env := []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+	}
+	err := serveWithIO(context.Background(), []string{"--proxy", "://bad-proxy"}, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+	if err == nil || !strings.Contains(err.Error(), "invalid proxy") {
+		t.Fatalf("serveWithIO() error = %v, want invalid proxy failure", err)
 	}
 }
 
@@ -169,7 +199,7 @@ func TestServeFailsOnMalformedEmbeddedArtifacts(t *testing.T) {
 func TestServeStartsWhenAuthBootstrapFails(t *testing.T) {
 	t.Parallel()
 
-	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := testutil.NewTCP4TLSServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			w.Header().Set("Content-Type", "application/json")
@@ -199,7 +229,7 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 	t.Parallel()
 
 	var allowAuth atomic.Bool
-	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := testutil.NewTCP4TLSServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			if !allowAuth.Load() {
@@ -304,7 +334,7 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 func TestRetryingBootstrapClientUsesRequestContextForBootstrap(t *testing.T) {
 	t.Parallel()
 
-	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			<-r.Context().Done()
@@ -349,7 +379,7 @@ func TestRetryingBootstrapClientUsesRequestContextForBootstrap(t *testing.T) {
 func TestBootstrapOAuthManagerTimesOutStalledStartupAuth(t *testing.T) {
 	t.Parallel()
 
-	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			<-r.Context().Done()
@@ -704,7 +734,7 @@ var validTestSearchCatalog = []byte(`{
 func TestServeWithIOGracefulOnClosedInput(t *testing.T) {
 	t.Parallel()
 
-	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := testutil.NewTCP4TLSServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			w.Header().Set("Content-Type", "application/json")

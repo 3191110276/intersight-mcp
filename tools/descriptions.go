@@ -11,16 +11,22 @@ Available globals:
   catalog.paths — Record<string, string[]>
   catalog.metrics.groups — Record<string, SearchMetricsGroup>
   catalog.metrics.byName — Record<string, SearchMetric>
+  catalog.schema(name) — Search for one normalized schema by name
 
 Use ` + "`catalog.resources`" + ` as the primary discovery surface.
 Use ` + "`catalog.paths`" + ` to map a REST path to resource keys.
+Use ` + "`catalog.schema(name)`" + ` to drill into the normalized schema for a discovered resource via ` + "`resource.schema`" + `.
 For a resource entry, derive the SDK method as ` + "`resourceKey + '.' + verb`" + ` using ` + "`resource.operations`" + `.
-Raw ` + "`spec`" + `, ` + "`sdk`" + `, and ` + "`rules`" + ` globals are not exposed in ` + "`search`" + `.
+Only the ` + "`catalog`" + ` global is exposed in ` + "`search`" + `.
 
 Examples:
 
   // Get one resource entry
   return catalog.resources['vnic.ethIf'] || null;
+
+  // Drill into the normalized schema for a discovered resource
+  const resource = catalog.resources['ntp.policy'];
+  return resource ? catalog.schema(resource.schema) : null;
 
   // Find resource keys from a REST path
   return catalog.paths['/vnic/FcNetworkPolicies'] || [];

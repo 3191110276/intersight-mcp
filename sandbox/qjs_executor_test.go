@@ -88,10 +88,17 @@ func TestSearchDiscoveryGlobalsAvailable(t *testing.T) {
 	defer exec.Close()
 
 	result, err := exec.Execute(context.Background(), `
+const resource = catalog.resources["compute.rackUnit"];
 return {
   catalogResources: Object.keys(catalog.resources || {}).length,
   catalogNames: Object.keys(catalog.resourceNames || {}).length,
-  catalogMetricGroups: Object.keys((catalog.metrics && catalog.metrics.groups) || {}).length
+  catalogMetricGroups: Object.keys((catalog.metrics && catalog.metrics.groups) || {}).length,
+  hasSchemaHelper: typeof catalog.schema === "function",
+  schemaName: resource ? resource.schema : null,
+  schemaType: resource ? catalog.schema(resource.schema)?.type ?? null : null,
+  legacySpecType: typeof spec,
+  legacySDKType: typeof sdk,
+  legacyRulesType: typeof rules
 };
 `, ModeSearch)
 	if err != nil {
@@ -104,6 +111,12 @@ return {
 	}
 	if value["catalogResources"] == nil || value["catalogNames"] == nil || value["catalogMetricGroups"] == nil {
 		t.Fatalf("unexpected search discovery payload: %#v", result.Value)
+	}
+	if value["hasSchemaHelper"] != true || value["schemaName"] == nil || value["schemaType"] == nil {
+		t.Fatalf("expected schema drilldown payload: %#v", result.Value)
+	}
+	if value["legacySpecType"] != "undefined" || value["legacySDKType"] != "undefined" || value["legacyRulesType"] != "undefined" {
+		t.Fatalf("expected legacy globals to be undefined: %#v", result.Value)
 	}
 }
 
@@ -212,6 +225,46 @@ return {
 	}
 	if value["example"] == nil {
 		t.Fatalf("unexpected example payload: %#v", value)
+	}
+}
+
+func TestSearchCatalogSchemaLookup(t *testing.T) {
+	t.Parallel()
+
+	exec, err := NewSearchExecutor(testConfig(), []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules), []byte(testSearchCatalog))
+	if err != nil {
+		t.Fatalf("NewSearchExecutor() error = %v", err)
+	}
+	defer exec.Close()
+
+	result, err := exec.Execute(context.Background(), `
+const resource = catalog.resources["example.widget"];
+return {
+  schemaName: resource?.schema ?? null,
+  schema: resource ? catalog.schema(resource.schema) : null,
+  missing: catalog.schema("missing.Schema")
+};
+`, ModeSearch)
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	value, ok := result.Value.(map[string]any)
+	if !ok {
+		t.Fatalf("result.Value type = %T", result.Value)
+	}
+	if value["schemaName"] != "example.Widget" {
+		t.Fatalf("schemaName = %#v, want example.Widget", value["schemaName"])
+	}
+	schema, ok := value["schema"].(map[string]any)
+	if !ok {
+		t.Fatalf("schema payload type = %T", value["schema"])
+	}
+	if schema["type"] != "object" {
+		t.Fatalf("schema.type = %#v, want object", schema["type"])
+	}
+	if _, ok := value["missing"]; ok && value["missing"] != nil {
+		t.Fatalf("missing schema = %#v, want nil/undefined", value["missing"])
 	}
 }
 
@@ -1347,7 +1400,7 @@ return await sdk.example.widget.get({
 	if !errors.As(err, &validationErr) {
 		t.Fatalf("expected ValidationError, got %T", err)
 	}
-	if !strings.Contains(validationErr.Error(), "should run in query") {
+	if !strings.Contains(validationErr.Error(), "should run as a normal query") {
 		t.Fatalf("unexpected error: %v", validationErr)
 	}
 }
