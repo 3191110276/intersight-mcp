@@ -26,6 +26,8 @@ Global: ` + "`sdk`" + `
 
 Read queries preserve spec-defined query params, including OData (` + "`$filter`" + `, ` + "`$select`" + `, ` + "`$orderby`" + `, ` + "`$top`" + `, ` + "`$skip`" + `, ` + "`$expand`" + `) and operation-specific params. Write-shaped calls return validation reports with ` + "`valid`" + `, ` + "`issues`" + `, ` + "`layers`" + `.
 
+Query results compact API objects by default to reduce low-signal metadata. Pass ` + "`compact: false`" + ` to keep the full raw API payload.
+
 ` + "`sdk.telemetry.query(...)`" + ` accepts top-level Apache Druid groupBy fields, requires ` + "`dataSource`" + `, ` + "`dimensions`" + `, ` + "`granularity`" + `, ` + "`intervals`" + `, and issues a read-only telemetry POST with internal ` + "`queryType: 'groupBy'`" + `. Errors use the standard MCP error envelope.
 
 Examples:
@@ -41,6 +43,8 @@ Global: ` + "`sdk`" + `
 - ` + "`await sdk.<namespace>.<resource>.<method>({ path?, query?, body?, ...headerArgs })`" + `
 
 If a request schema has exactly one valid discriminator, missing ` + "`ClassId`" + ` and ` + "`ObjectType`" + ` are auto-filled in the body and MoRef relationships; explicit values win.
+
+Mutate results compact API objects by default to reduce low-signal metadata. Pass ` + "`compact: false`" + ` to keep the full raw API payload.
 
 Examples:
 - ` + "`sdk.ntp.policy.create({ body: { Name: 'ntp-policy-01' } })`" + `

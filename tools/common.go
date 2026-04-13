@@ -69,12 +69,14 @@ var (
 )
 
 type codeInput struct {
-	Code string `json:"code"`
+	Code    string `json:"code"`
+	Compact *bool  `json:"compact,omitempty"`
 }
 
 type mutateInput struct {
 	ChangeSummary string `json:"changeSummary"`
 	Code          string `json:"code"`
+	Compact       *bool  `json:"compact,omitempty"`
 }
 
 type ContentMode struct {
@@ -122,11 +124,15 @@ func (l *Limiter) Limit() int {
 }
 
 func InputSchema(maxCodeSize int) json.RawMessage {
-	return buildInputSchema(maxCodeSize, false)
+	return buildInputSchema(maxCodeSize, false, false)
+}
+
+func QueryInputSchema(maxCodeSize int) json.RawMessage {
+	return buildInputSchema(maxCodeSize, false, true)
 }
 
 func MutateInputSchema(maxCodeSize int) json.RawMessage {
-	return buildInputSchema(maxCodeSize, true)
+	return buildInputSchema(maxCodeSize, true, true)
 }
 
 func OutputSchema() json.RawMessage {
@@ -146,6 +152,9 @@ func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Li
 
 func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, readOnly, destructive, _ bool, contentMode ContentMode) mcpserver.ServerTool {
 	inputSchema := InputSchema(maxCodeSize)
+	if mode == sandbox.ModeQuery {
+		inputSchema = QueryInputSchema(maxCodeSize)
+	}
 	if mode == sandbox.ModeMutate {
 		inputSchema = MutateInputSchema(maxCodeSize)
 	}
@@ -169,7 +178,7 @@ func newServerTool(name, title, description string, mode sandbox.Mode, exec sand
 	}
 }
 
-func buildInputSchema(maxCodeSize int, mutate bool) json.RawMessage {
+func buildInputSchema(maxCodeSize int, mutate, includeCompact bool) json.RawMessage {
 	if maxCodeSize <= 0 {
 		maxCodeSize = limits.MaxCodeSizeBytes
 	}
@@ -183,6 +192,12 @@ func buildInputSchema(maxCodeSize int, mutate bool) json.RawMessage {
 		},
 	}
 	required := []string{"code"}
+	if includeCompact {
+		properties["compact"] = map[string]any{
+			"type":        "boolean",
+			"description": "Return compacted API objects by default. Set false to keep full raw API fields.",
+		}
+	}
 	if mutate {
 		properties["changeSummary"] = map[string]any{
 			"type":        "string",
@@ -215,6 +230,7 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 		var (
 			code          string
 			changeSummary string
+			compact       = true
 		)
 		if mode == sandbox.ModeMutate {
 			var input mutateInput
@@ -226,12 +242,18 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 			}
 			code = input.Code
 			changeSummary = input.ChangeSummary
+			if input.Compact != nil {
+				compact = *input.Compact
+			}
 		} else {
 			var input codeInput
 			if err := request.BindArguments(&input); err != nil {
 				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil, contentMode), nil
 			}
 			code = input.Code
+			if input.Compact != nil {
+				compact = *input.Compact
+			}
 		}
 		if strings.TrimSpace(code) == "" {
 			return toolErrorResult(contracts.ValidationError{Message: `required argument "code" not found`}, nil, contentMode), nil
@@ -251,12 +273,12 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 		if err != nil {
 			return toolErrorResult(err, result.Logs, contentMode), nil
 		}
-		return toolSuccessResult(request.Params.Name, result, contentMode), nil
+		return toolSuccessResult(request.Params.Name, result, compact, contentMode), nil
 	}
 }
 
-func toolSuccessResult(_ string, result sandbox.Result, contentMode ContentMode) *mcp.CallToolResult {
-	envelope := contracts.Success(result.Value)
+func toolSuccessResult(tool string, result sandbox.Result, compact bool, contentMode ContentMode) *mcp.CallToolResult {
+	envelope := contracts.Success(compactToolResult(tool, result.Value, compact))
 	content := []mcp.Content{mcp.NewTextContent(renderSuccessText(envelope, contentMode))}
 	return &mcp.CallToolResult{
 		Result:            mcp.Result{},

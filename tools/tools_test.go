@@ -64,8 +64,9 @@ func TestServerToolsRegistrationReadOnlyOmitsMutate(t *testing.T) {
 func TestSchemasMatchArchitecture(t *testing.T) {
 	t.Parallel()
 
-	assertJSONEq(t, string(InputSchema(limits.MaxCodeSizeBytes)), string(buildInputSchema(limits.MaxCodeSizeBytes, false)))
-	assertJSONEq(t, string(MutateInputSchema(limits.MaxCodeSizeBytes)), string(buildInputSchema(limits.MaxCodeSizeBytes, true)))
+	assertJSONEq(t, string(InputSchema(limits.MaxCodeSizeBytes)), string(buildInputSchema(limits.MaxCodeSizeBytes, false, false)))
+	assertJSONEq(t, string(QueryInputSchema(limits.MaxCodeSizeBytes)), string(buildInputSchema(limits.MaxCodeSizeBytes, false, true)))
+	assertJSONEq(t, string(MutateInputSchema(limits.MaxCodeSizeBytes)), string(buildInputSchema(limits.MaxCodeSizeBytes, true, true)))
 	assertJSONEq(t, string(OutputSchema()), string(outputSchemaJSON))
 }
 
@@ -85,6 +86,23 @@ func TestInputSchemasUseConfiguredMaxCodeSize(t *testing.T) {
   "required": ["code"],
   "additionalProperties": false
 }`)
+	assertJSONEq(t, string(QueryInputSchema(2048)), `{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "JavaScript source to execute as the body of an async function."
+    },
+    "compact": {
+      "type": "boolean",
+      "description": "Return compacted API objects by default. Set false to keep full raw API fields."
+    }
+  },
+  "required": ["code"],
+  "additionalProperties": false
+}`)
 	assertJSONEq(t, string(MutateInputSchema(2048)), `{
   "type": "object",
   "properties": {
@@ -99,6 +117,10 @@ func TestInputSchemasUseConfiguredMaxCodeSize(t *testing.T) {
       "minLength": 1,
       "maxLength": 2048,
       "description": "JavaScript source to execute as the body of an async function."
+    },
+    "compact": {
+      "type": "boolean",
+      "description": "Return compacted API objects by default. Set false to keep full raw API fields."
     }
   },
   "required": ["changeSummary", "code"],
@@ -165,6 +187,172 @@ func TestSuccessMappingLegacyContentMirror(t *testing.T) {
 	}
 	if text.Text != "{\"ok\":true}" {
 		t.Fatalf("unexpected success text: %q", text.Text)
+	}
+}
+
+func TestQuerySuccessCanDisableCompaction(t *testing.T) {
+	t.Parallel()
+
+	handler := NewToolHandler(sandbox.ModeQuery, stubExecutor{
+		result: sandbox.Result{
+			Value: map[string]any{
+				"Results": []any{
+					map[string]any{
+						"Moid":        "rack-1",
+						"ObjectType":  "compute.RackUnit",
+						"AccountMoid": "acct-1",
+						"CreateTime":  "2026-04-01T00:00:00Z",
+						"RegisteredDevice": map[string]any{
+							"Moid":       "device-1",
+							"ObjectType": "asset.DeviceRegistration",
+							"ClassId":    "mo.MoRef",
+						},
+					},
+				},
+			},
+		},
+	}, nil, 0, ContentMode{})
+
+	result, err := handler(context.Background(), mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name: ToolQuery,
+			Arguments: map[string]any{
+				"code":    `return await sdk.compute.rackUnit.list();`,
+				"compact": false,
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
+	}
+
+	envelope, ok := result.StructuredContent.(contracts.SuccessEnvelope)
+	if !ok {
+		t.Fatalf("StructuredContent type = %T", result.StructuredContent)
+	}
+	payload, ok := envelope.Result.(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected result type: %T", envelope.Result)
+	}
+	results, ok := payload["Results"].([]any)
+	if !ok || len(results) != 1 {
+		t.Fatalf("unexpected Results payload: %#v", payload["Results"])
+	}
+	first, ok := results[0].(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected first result type: %T", results[0])
+	}
+	if first["AccountMoid"] != "acct-1" || first["CreateTime"] != "2026-04-01T00:00:00Z" {
+		t.Fatalf("top-level fields should be preserved when compact is false: %#v", first)
+	}
+	child, ok := first["RegisteredDevice"].(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected child result type: %T", first["RegisteredDevice"])
+	}
+	if child["ClassId"] != "mo.MoRef" {
+		t.Fatalf("relationship ClassId should be preserved when compact is false: %#v", child)
+	}
+}
+
+func TestQuerySuccessCompactsAPIObjectsRecursively(t *testing.T) {
+	t.Parallel()
+
+	handler := NewToolHandler(sandbox.ModeQuery, stubExecutor{
+		result: sandbox.Result{
+			Value: map[string]any{
+				"Results": []any{
+					map[string]any{
+						"Moid":        "rack-1",
+						"ObjectType":  "compute.RackUnit",
+						"ClassId":     "compute.RackUnit",
+						"Name":        "rack-alpha",
+						"AccountMoid": "acct-1",
+						"CreateTime":  "2026-04-01T00:00:00Z",
+						"RegisteredDevice": map[string]any{
+							"Moid":       "device-1",
+							"ObjectType": "asset.DeviceRegistration",
+							"ClassId":    "mo.MoRef",
+						},
+					},
+				},
+			},
+		},
+	}, nil, 0, ContentMode{})
+
+	result, err := handler(context.Background(), mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Name:      ToolQuery,
+			Arguments: map[string]any{"code": `return await sdk.compute.rackUnit.list();`},
+		},
+	})
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
+	}
+
+	envelope, ok := result.StructuredContent.(contracts.SuccessEnvelope)
+	if !ok {
+		t.Fatalf("StructuredContent type = %T", result.StructuredContent)
+	}
+	payload, ok := envelope.Result.(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected result type: %T", envelope.Result)
+	}
+	results, ok := payload["Results"].([]any)
+	if !ok || len(results) != 1 {
+		t.Fatalf("unexpected Results payload: %#v", payload["Results"])
+	}
+	first, ok := results[0].(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected first result type: %T", results[0])
+	}
+	if _, exists := first["AccountMoid"]; exists {
+		t.Fatalf("AccountMoid should be excluded: %#v", first)
+	}
+	if _, exists := first["CreateTime"]; exists {
+		t.Fatalf("CreateTime should be excluded: %#v", first)
+	}
+	if _, exists := first["ClassId"]; exists {
+		t.Fatalf("top-level ClassId should be excluded: %#v", first)
+	}
+	child, ok := first["RegisteredDevice"].(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected child result type: %T", first["RegisteredDevice"])
+	}
+	if _, exists := child["ClassId"]; exists {
+		t.Fatalf("relationship ClassId should be excluded: %#v", child)
+	}
+	if child["ObjectType"] != "asset.DeviceRegistration" {
+		t.Fatalf("relationship ObjectType should be preserved, got %#v", child["ObjectType"])
+	}
+}
+
+func TestSearchSuccessDoesNotCompactPayload(t *testing.T) {
+	t.Parallel()
+
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{
+		result: sandbox.Result{
+			Value: map[string]any{
+				"AccountMoid": "acct-1",
+				"CreateTime":  "2026-04-01T00:00:00Z",
+			},
+		},
+	}, nil, 0, ContentMode{})
+
+	result, err := handler(context.Background(), toolRequest(`return catalog.resourceNames;`))
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
+	}
+
+	envelope, ok := result.StructuredContent.(contracts.SuccessEnvelope)
+	if !ok {
+		t.Fatalf("StructuredContent type = %T", result.StructuredContent)
+	}
+	payload, ok := envelope.Result.(map[string]any)
+	if !ok {
+		t.Fatalf("unexpected result type: %T", envelope.Result)
+	}
+	if payload["AccountMoid"] != "acct-1" || payload["CreateTime"] != "2026-04-01T00:00:00Z" {
+		t.Fatalf("search payload should be unmodified: %#v", payload)
 	}
 }
 
@@ -609,6 +797,9 @@ func assertTool(t *testing.T, tool mcp.Tool, title string, readOnly, destructive
 		t.Fatalf("%s destructive = %#v, want %v", tool.Name, tool.Annotations.DestructiveHint, destructive)
 	}
 	wantInputSchema := string(InputSchema(maxCodeSize))
+	if tool.Name == ToolQuery {
+		wantInputSchema = string(QueryInputSchema(maxCodeSize))
+	}
 	if tool.Name == ToolMutate {
 		wantInputSchema = string(MutateInputSchema(maxCodeSize))
 	}

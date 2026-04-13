@@ -74,6 +74,8 @@ Additional operational tuning flags exist beyond the end-user setup documented i
 
 `--unsafe-log-full-code` and `INTERSIGHT_UNSAFE_LOG_FULL_CODE` are break-glass debugging options. When enabled together with `--log-level debug`, the server logs submitted tool code with best-effort redaction for bearer tokens, client secrets, and similar values, then emits a startup warning. Use this only temporarily on trusted machines; normal debug logging already captures code hashes, execution metadata, API call traces, and error details without storing submitted code.
 
+`query` and `mutate` compact API objects by default before returning results to clients. Callers can opt out per request with `compact: false` when they need the full raw payload.
+
 ## Spec Update Workflow
 
 When the pinned Cisco OpenAPI input, the generator, or core dependencies change:

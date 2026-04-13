@@ -49,3 +49,5 @@ By default the server registers three tools:
 With `--read-only`, it registers only `search` and `query`.
 
 The MCP client will thus usually call `search` first to understand the API, then either `query` or `mutate` to read or perform changes respectively.
+
+`query` and `mutate` compact API objects by default to remove low-signal metadata fields from results. Pass `compact: false` in a tool call when raw API output is needed.
