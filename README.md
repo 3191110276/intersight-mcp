@@ -31,8 +31,8 @@ Configuration variables:
 
 | Setting | Flag | Environment | Required | Default |
 |---|---|---|---|---|
-| Client ID | — | `INTERSIGHT_CLIENT_ID` | Yes, for live reads and writes | none |
-| Client secret | — | `INTERSIGHT_CLIENT_SECRET` | Yes, for live reads and writes | none |
+| Client ID | — | `INTERSIGHT_CLIENT_ID` | Yes | none |
+| Client secret | — | `INTERSIGHT_CLIENT_SECRET` | Yes | none |
 | Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | No | `https://intersight.com` |
 | Explicit outbound proxy URL | `--proxy` | `INTERSIGHT_PROXY_URL` | No | disabled |
 | Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | No | `512KB` |
