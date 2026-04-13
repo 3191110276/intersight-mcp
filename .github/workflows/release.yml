@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: Existing tag to release, for example v1.2.3
+        required: true
+        type: string
+      release_notes:
+        description: Optional release description shown on GitHub
+        required: false
+        type: string
 
 jobs:
   release:
@@ -11,12 +21,13 @@ jobs:
     permissions:
       contents: write
     env:
-      VERSION: ${{ github.ref_name }}
+      VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref_name }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -29,6 +40,8 @@ jobs:
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.VERSION }}
+          body: ${{ github.event_name == 'workflow_dispatch' && inputs.release_notes || '' }}
           files: |
             bin/intersight-mcp-darwin-amd64
             bin/intersight-mcp-darwin-arm64
