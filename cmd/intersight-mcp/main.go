@@ -121,11 +121,15 @@ func serveWithIOAndHTTPClient(ctx context.Context, args []string, stdin io.Reade
 		_ = searchExec.Close()
 		return err
 	}
-	mutateExec, err := sandbox.NewQJSExecutorFromBundle(sandboxCfg, apiCaller, artifacts)
-	if err != nil {
-		_ = searchExec.Close()
-		_ = queryExec.Close()
-		return err
+
+	var mutateExec sandbox.Executor
+	if !cfg.ReadOnly {
+		mutateExec, err = sandbox.NewQJSExecutorFromBundle(sandboxCfg, apiCaller, artifacts)
+		if err != nil {
+			_ = searchExec.Close()
+			_ = queryExec.Close()
+			return err
+		}
 	}
 
 	runtime, err := server.NewRuntime(server.RuntimeConfig{

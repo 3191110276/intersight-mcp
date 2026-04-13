@@ -36,7 +36,6 @@ func TestBuildSearchCatalogGroupsOperationsUnderResources(t *testing.T) {
 		Methods: map[string]SDKMethod{
 			"example.widget.list": {
 				SDKMethod: "example.widget.list",
-				Tags:      []string{"example"},
 				Resource:  "Error",
 				Descriptor: OperationDescriptor{
 					OperationID:  "ListExampleWidgets",
@@ -48,7 +47,6 @@ func TestBuildSearchCatalogGroupsOperationsUnderResources(t *testing.T) {
 			"example.widget.create": {
 				SDKMethod:           "example.widget.create",
 				Summary:             "Create widget",
-				Tags:                []string{"example"},
 				Resource:            "example.Widget",
 				RequestBodyRequired: true,
 				RequestBodyFields:   []string{"Name"},
@@ -88,9 +86,6 @@ func TestBuildSearchCatalogGroupsOperationsUnderResources(t *testing.T) {
 	}
 	if resource.Path != "/api/v1/example/Widgets" {
 		t.Fatalf("resource path = %q", resource.Path)
-	}
-	if strings.Join(resource.Tags, ",") != "example" {
-		t.Fatalf("tags = %#v", resource.Tags)
 	}
 	if len(resource.Rules) != 1 {
 		t.Fatalf("resource rules = %#v", resource.Rules)

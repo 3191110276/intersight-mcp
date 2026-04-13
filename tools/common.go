@@ -34,13 +34,9 @@ var (
       "type": "object",
       "properties": {
         "ok": { "const": true },
-        "result": {},
-        "logs": {
-          "type": "array",
-          "items": { "type": "string" }
-        }
+        "result": {}
       },
-      "required": ["ok", "result", "logs"],
+      "required": ["ok", "result"],
       "additionalProperties": false
     },
     {
@@ -65,7 +61,7 @@ var (
           "items": { "type": "string" }
         }
       },
-      "required": ["ok", "error", "logs"],
+      "required": ["ok", "error"],
       "additionalProperties": false
     }
   ]
@@ -260,7 +256,7 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 }
 
 func toolSuccessResult(_ string, result sandbox.Result, contentMode ContentMode) *mcp.CallToolResult {
-	envelope := contracts.Success(result.Value, result.Logs)
+	envelope := contracts.Success(result.Value)
 	content := []mcp.Content{mcp.NewTextContent(renderSuccessText(envelope, contentMode))}
 	return &mcp.CallToolResult{
 		Result:            mcp.Result{},
@@ -281,19 +277,10 @@ func toolErrorResult(err error, logs []string, contentMode ContentMode) *mcp.Cal
 
 func renderSuccessText(envelope contracts.SuccessEnvelope, contentMode ContentMode) string {
 	if !contentMode.MirrorStructuredContent {
-		if len(envelope.Logs) > 0 {
-			return fmt.Sprintf("Success. Full result is in structuredContent. Logs: %d line(s).", len(envelope.Logs))
-		}
 		return "Success. Full result is in structuredContent."
 	}
 
-	var buf bytes.Buffer
-	buf.WriteString(compactJSON(envelope.Result))
-	if len(envelope.Logs) > 0 {
-		buf.WriteString("\n\nLogs:\n")
-		buf.WriteString(strings.Join(envelope.Logs, "\n"))
-	}
-	return buf.String()
+	return compactJSON(envelope.Result)
 }
 
 func renderErrorText(envelope contracts.ErrorEnvelope, contentMode ContentMode) string {

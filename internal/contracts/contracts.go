@@ -19,15 +19,14 @@ const (
 )
 
 type SuccessEnvelope struct {
-	OK     bool     `json:"ok"`
-	Result any      `json:"result"`
-	Logs   []string `json:"logs"`
+	OK     bool `json:"ok"`
+	Result any  `json:"result"`
 }
 
 type ErrorEnvelope struct {
 	OK    bool             `json:"ok"`
 	Error OutwardToolError `json:"error"`
-	Logs  []string         `json:"logs"`
+	Logs  []string         `json:"logs,omitempty"`
 }
 
 type OutwardToolError struct {
@@ -39,11 +38,10 @@ type OutwardToolError struct {
 	Details   any    `json:"details,omitempty"`
 }
 
-func Success(result any, logs []string) SuccessEnvelope {
+func Success(result any) SuccessEnvelope {
 	return SuccessEnvelope{
 		OK:     true,
 		Result: result,
-		Logs:   cloneLogs(logs),
 	}
 }
 
@@ -134,11 +132,14 @@ func NormalizeError(err error, logs []string) ErrorEnvelope {
 		}
 	}
 
-	return ErrorEnvelope{
+	envelope := ErrorEnvelope{
 		OK:    false,
 		Error: normalized,
-		Logs:  cloneLogs(logs),
 	}
+	if cloned := cloneLogs(logs); len(cloned) > 0 {
+		envelope.Logs = cloned
+	}
+	return envelope
 }
 
 type AuthError struct {

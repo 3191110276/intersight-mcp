@@ -176,7 +176,7 @@ func (b *apiBridge) validateSDKOffline(sdkMethod string, args map[string]any) (m
 		}
 		return map[string]any{
 			"ok":    true,
-			"value": b.sdk.validationFailureReport(sdkMethod, args, validationErr),
+			"value": b.sdk.validationFailureReport(sdkMethod, validationErr),
 		}, nil
 	}
 
@@ -301,14 +301,13 @@ func (r *sdkRuntime) validationSuccessReport(sdkMethod string, operation contrac
 			"method":       operation.Method,
 			"path":         operation.Path,
 			"pathTemplate": operation.PathTemplate,
-			"body":         operation.Body,
 		},
 		"issues": []validationIssue{},
 		"layers": defaultValidationLayers(operation.Body != nil),
 	}
 }
 
-func (r *sdkRuntime) validationFailureReport(sdkMethod string, args map[string]any, err contracts.ValidationError) map[string]any {
+func (r *sdkRuntime) validationFailureReport(sdkMethod string, err contracts.ValidationError) map[string]any {
 	issues := []validationIssue{{
 		Type:      "sdk_contract",
 		Source:    validationSourceSDKContract,
@@ -330,7 +329,6 @@ func (r *sdkRuntime) validationFailureReport(sdkMethod string, args map[string]a
 	return map[string]any{
 		"valid":     false,
 		"sdkMethod": sdkMethod,
-		"input":     args,
 		"issues":    issues,
 		"layers":    layers,
 	}

@@ -136,7 +136,7 @@ func TestSuccessMapping(t *testing.T) {
 	if !ok {
 		t.Fatalf("content type = %T", result.Content[0])
 	}
-	if text.Text != "Success. Full result is in structuredContent. Logs: 2 line(s)." {
+	if text.Text != "Success. Full result is in structuredContent." {
 		t.Fatalf("unexpected success text: %q", text.Text)
 	}
 	if result.Meta != nil {
@@ -163,7 +163,7 @@ func TestSuccessMappingLegacyContentMirror(t *testing.T) {
 	if !ok {
 		t.Fatalf("content type = %T", result.Content[0])
 	}
-	if text.Text != "{\"ok\":true}\n\nLogs:\nhello\nworld" {
+	if text.Text != "{\"ok\":true}" {
 		t.Fatalf("unexpected success text: %q", text.Text)
 	}
 }

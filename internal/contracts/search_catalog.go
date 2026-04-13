@@ -15,7 +15,6 @@ type SearchCatalog struct {
 }
 
 type SearchResource struct {
-	Tags         []string               `json:"tags,omitempty"`
 	Schema       string                 `json:"schema,omitempty"`
 	CreateFields map[string]SearchField `json:"createFields,omitempty"`
 	Path         string                 `json:"path,omitempty"`
@@ -67,7 +66,6 @@ func BuildSearchCatalog(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatal
 			}
 		}
 
-		resource.Tags = append(resource.Tags, method.Tags...)
 		resource.Schema = selectSearchResourceSchema(spec, resource.Schema, method)
 		methodRules := rules.Methods[sdkMethod]
 		if leaf == "create" {
@@ -82,7 +80,6 @@ func BuildSearchCatalog(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatal
 
 	for _, resourceKey := range sortedKeys(out.Resources) {
 		resource := out.Resources[resourceKey]
-		resource.Tags = uniqueSortedStrings(resource.Tags)
 		resource = normalizeSearchResource(resource)
 		out.Resources[resourceKey] = resource
 		out.ResourceNames = append(out.ResourceNames, resourceKey)
@@ -152,7 +149,6 @@ func normalizeSearchCatalog(catalog SearchCatalog) SearchCatalog {
 }
 
 func normalizeSearchResource(resource SearchResource) SearchResource {
-	resource.Tags = uniqueSortedStrings(resource.Tags)
 	resource.Schema = strings.TrimSpace(resource.Schema)
 	resource.CreateFields = normalizeSearchFields(resource.CreateFields)
 	resource.Path = strings.TrimSpace(resource.Path)

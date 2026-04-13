@@ -58,7 +58,7 @@ func NewRuntime(cfg RuntimeConfig) (*Runtime, error) {
 	if cfg.QueryExecutor == nil {
 		return nil, errors.New("query executor is required")
 	}
-	if cfg.MutateExecutor == nil {
+	if !cfg.ReadOnly && cfg.MutateExecutor == nil {
 		return nil, errors.New("mutate executor is required")
 	}
 	if cfg.ServerName == "" {

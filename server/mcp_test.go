@@ -52,7 +52,6 @@ func TestNewRuntimeReadOnlyOmitsMutateTool(t *testing.T) {
 	rt, err := NewRuntime(RuntimeConfig{
 		SearchExecutor: stubExecutor{},
 		QueryExecutor:  stubExecutor{},
-		MutateExecutor: stubExecutor{},
 		MaxConcurrent:  3,
 		ReadOnly:       true,
 	})
@@ -503,7 +502,7 @@ func TestWrapToolHandlerLogsChangeSummary(t *testing.T) {
 	handler := wrapToolHandler("mutate", func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return &mcp.CallToolResult{
 			IsError:           false,
-			StructuredContent: contracts.Success(map[string]any{"ok": true}, nil),
+			StructuredContent: contracts.Success(map[string]any{"ok": true}),
 		}, nil
 	}, logger)
 
