@@ -7,8 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: Existing tag to release, for example v1.2.3
+        description: Tag to create and release, for example v1.2.3
         required: true
+        type: string
+      target_commitish:
+        description: Branch, tag, or commit to release from
+        required: false
+        default: main
         type: string
       release_notes:
         description: Optional release description shown on GitHub
@@ -27,12 +32,25 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag_name || github.ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.target_commitish || github.ref }}
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+
+      - name: Create and push tag
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
+            echo "tag ${VERSION} already exists"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "${VERSION}"
+          git push origin "refs/tags/${VERSION}"
 
       - name: Build release artifacts
         run: make build VERSION="${VERSION}"
