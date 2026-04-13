@@ -46,6 +46,35 @@ func TestNewRuntimeRegistersExactlyThreeTools(t *testing.T) {
 	}
 }
 
+func TestNewRuntimeReadOnlyOmitsMutateTool(t *testing.T) {
+	t.Parallel()
+
+	rt, err := NewRuntime(RuntimeConfig{
+		SearchExecutor: stubExecutor{},
+		QueryExecutor:  stubExecutor{},
+		MutateExecutor: stubExecutor{},
+		MaxConcurrent:  3,
+		ReadOnly:       true,
+	})
+	if err != nil {
+		t.Fatalf("NewRuntime() error = %v", err)
+	}
+	defer rt.Close()
+
+	tools := rt.MCPServer().ListTools()
+	if len(tools) != 2 {
+		t.Fatalf("len(ListTools()) = %d, want 2", len(tools))
+	}
+	for _, name := range []string{"search", "query"} {
+		if tools[name] == nil {
+			t.Fatalf("missing tool %q", name)
+		}
+	}
+	if tools["mutate"] != nil {
+		t.Fatalf("mutate tool should be omitted in read-only mode")
+	}
+}
+
 func TestRuntimeSuccessfulStdioStartup(t *testing.T) {
 	t.Parallel()
 

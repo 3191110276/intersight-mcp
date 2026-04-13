@@ -15,6 +15,7 @@ Available globals:
 Use ` + "`catalog.resources`" + ` as the primary discovery surface.
 Use ` + "`catalog.paths`" + ` to map a REST path to resource keys.
 For a resource entry, derive the SDK method as ` + "`resourceKey + '.' + verb`" + ` using ` + "`resource.operations`" + `.
+Raw ` + "`spec`" + `, ` + "`sdk`" + `, and ` + "`rules`" + ` globals are not exposed in ` + "`search`" + `.
 
 Examples:
 
@@ -118,7 +119,6 @@ Examples:
   });`
 
 const mutateDescription = `Modify Intersight with the generated ` + "`sdk`" + ` object. Use this tool for persistent write-shaped SDK operations only. ` + "`query`" + ` runs the same mandatory local validation without making API calls.
-Include a required ` + "`changeSummary`" + ` argument describing the persistent change in human-readable terms.
 
 Your code runs as the body of an async function. Use ` + "`return`" + ` to send results back.
 The return value is JSON-serialized.

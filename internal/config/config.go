@@ -24,10 +24,12 @@ const (
 type Config struct {
 	Endpoint            string
 	Origin              string
+	ProxyURL            string
 	OAuthTokenURL       string
 	APIBaseURL          string
 	ClientID            string
 	ClientSecret        string
+	ReadOnly            bool
 	LogLevel            LogLevel
 	UnsafeLogFullCode   bool
 	LegacyContentMirror bool
@@ -59,11 +61,13 @@ func Load(args []string, environ []string) (Config, error) {
 	fs.SetOutput(os.Stderr)
 
 	var endpointFlag string
+	var proxyFlag string
 	var timeoutFlag string
 	var maxAPICallsFlag int
 	var maxOutputFlag string
 	var maxConcurrentFlag int
 	var logLevelFlag string
+	var readOnlyFlag bool
 	var unsafeLogFullCodeFlag bool
 	var legacyContentMirrorFlag bool
 	var searchTimeoutFlag string
@@ -72,11 +76,13 @@ func Load(args []string, environ []string) (Config, error) {
 	var wasmMemoryFlag string
 
 	fs.StringVar(&endpointFlag, "endpoint", "", "base Intersight endpoint origin")
+	fs.StringVar(&proxyFlag, "proxy", "", "explicit proxy URL for outbound OAuth and API traffic")
 	fs.StringVar(&timeoutFlag, "timeout", "", "global execution timeout")
 	fs.IntVar(&maxAPICallsFlag, "max-api-calls", 0, "maximum API calls per execution")
 	fs.StringVar(&maxOutputFlag, "max-output", "", "maximum serialized output size")
 	fs.IntVar(&maxConcurrentFlag, "max-concurrent", 0, "maximum concurrent tool executions across search, query, and mutate")
 	fs.StringVar(&logLevelFlag, "log-level", "", "log level: info or debug")
+	fs.BoolVar(&readOnlyFlag, "read-only", false, "disable persistent write operations by omitting the mutate tool")
 	fs.BoolVar(&unsafeLogFullCodeFlag, "unsafe-log-full-code", false, "include submitted tool code in debug logs with best-effort redaction; use only for short-lived incident debugging")
 	fs.BoolVar(&legacyContentMirrorFlag, "legacy-content-mirror", false, "mirror full results into text content for legacy MCP clients")
 	fs.StringVar(&searchTimeoutFlag, "search-timeout", "", "timeout for search executions")
@@ -112,6 +118,18 @@ func Load(args []string, environ []string) (Config, error) {
 	cfg.Origin = parsedEndpoint.Scheme + "://" + parsedEndpoint.Host
 	cfg.OAuthTokenURL = cfg.Origin + "/iam/token"
 	cfg.APIBaseURL = cfg.Origin + "/api/v1"
+
+	proxyRaw := env["INTERSIGHT_PROXY_URL"]
+	if setFlags["proxy"] {
+		proxyRaw = proxyFlag
+	}
+	if strings.TrimSpace(proxyRaw) != "" {
+		parsedProxy, err := validateProxyURL(proxyRaw)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.ProxyURL = parsedProxy.String()
+	}
 
 	timeoutRaw := env["INTERSIGHT_TIMEOUT"]
 	if setFlags["timeout"] {
@@ -209,6 +227,10 @@ func Load(args []string, environ []string) (Config, error) {
 		}
 	}
 
+	if setFlags["read-only"] {
+		cfg.ReadOnly = readOnlyFlag
+	}
+
 	unsafeLogFullCodeRaw := env["INTERSIGHT_UNSAFE_LOG_FULL_CODE"]
 	if setFlags["unsafe-log-full-code"] {
 		unsafeLogFullCodeRaw = strconv.FormatBool(unsafeLogFullCodeFlag)
@@ -270,18 +292,31 @@ func (c Config) HasCredentials() bool {
 
 func validateEndpoint(raw string) (*url.URL, error) {
 	raw = strings.TrimSpace(raw)
-	parsed, err := url.Parse(raw)
+	if raw == "" {
+		return nil, fmt.Errorf("invalid endpoint %q: host is required", raw)
+	}
+
+	candidate := raw
+	hasScheme := strings.Contains(candidate, "://")
+	if !hasScheme {
+		candidate = "https://" + candidate
+	}
+
+	parsed, err := url.Parse(candidate)
 	if err != nil {
 		return nil, fmt.Errorf("invalid endpoint %q: %w", raw, err)
 	}
 	if !parsed.IsAbs() {
 		return nil, fmt.Errorf("invalid endpoint %q: must be an absolute URL", raw)
 	}
-	if parsed.Scheme != "http" && parsed.Scheme != "https" {
-		return nil, fmt.Errorf("invalid endpoint %q: scheme must be http or https", raw)
+	if hasScheme && parsed.Scheme != "https" {
+		return nil, fmt.Errorf("invalid endpoint %q: scheme must be https when provided", raw)
 	}
 	if parsed.Host == "" {
 		return nil, fmt.Errorf("invalid endpoint %q: host is required", raw)
+	}
+	if parsed.User != nil {
+		return nil, fmt.Errorf("invalid endpoint %q: user info is not allowed", raw)
 	}
 	if parsed.RawQuery != "" {
 		return nil, fmt.Errorf("invalid endpoint %q: query is not allowed", raw)
@@ -292,8 +327,39 @@ func validateEndpoint(raw string) (*url.URL, error) {
 	if parsed.Path != "" && parsed.Path != "/" {
 		return nil, fmt.Errorf("invalid endpoint %q: path is not allowed; use the origin only", raw)
 	}
+	parsed.Scheme = "https"
 	parsed.Path = ""
 	parsed.RawPath = ""
+	return parsed, nil
+}
+
+func validateProxyURL(raw string) (*url.URL, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, fmt.Errorf("invalid proxy %q: URL is required", raw)
+	}
+
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("invalid proxy %q: %w", raw, err)
+	}
+	if !parsed.IsAbs() {
+		return nil, fmt.Errorf("invalid proxy %q: must be an absolute URL", raw)
+	}
+	if parsed.Host == "" {
+		return nil, fmt.Errorf("invalid proxy %q: host is required", raw)
+	}
+	switch strings.ToLower(parsed.Scheme) {
+	case "http", "https", "socks5":
+	default:
+		return nil, fmt.Errorf("invalid proxy %q: scheme must be http, https, or socks5", raw)
+	}
+	if parsed.RawQuery != "" {
+		return nil, fmt.Errorf("invalid proxy %q: query is not allowed", raw)
+	}
+	if parsed.Fragment != "" {
+		return nil, fmt.Errorf("invalid proxy %q: fragment is not allowed", raw)
+	}
 	return parsed, nil
 }
 

@@ -29,6 +29,7 @@ type RuntimeConfig struct {
 	MaxCodeSize       int
 	MaxConcurrent     int
 	MaxOutputBytes    int64
+	ReadOnly          bool
 	ExposeMetricsApps bool
 	ContentMode       tools.ContentMode
 	Logger            *internalpkg.Logger
@@ -76,7 +77,7 @@ func NewRuntime(cfg RuntimeConfig) (*Runtime, error) {
 		// resource surface and tool response metadata wiring.
 		mcpserver.WithResourceCapabilities(false, false),
 	)
-	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent), cfg.MaxCodeSize, cfg.MaxOutputBytes, cfg.ExposeMetricsApps, cfg.ContentMode)
+	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent), cfg.MaxCodeSize, cfg.MaxOutputBytes, cfg.ExposeMetricsApps, cfg.ReadOnly, cfg.ContentMode)
 	for i := range serverTools {
 		serverTools[i].Handler = wrapToolHandler(serverTools[i].Tool.Name, serverTools[i].Handler, cfg.Logger)
 	}

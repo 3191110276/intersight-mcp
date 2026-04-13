@@ -137,12 +137,15 @@ func OutputSchema() json.RawMessage {
 	return append(json.RawMessage(nil), outputSchemaJSON...)
 }
 
-func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, exposeMetricsApps bool, contentMode ContentMode) []mcpserver.ServerTool {
-	return []mcpserver.ServerTool{
+func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, exposeMetricsApps bool, readOnly bool, contentMode ContentMode) []mcpserver.ServerTool {
+	tools := []mcpserver.ServerTool{
 		NewSearchTool(searchExec, limiter, maxCodeSize, maxOutputBytes, contentMode),
 		NewQueryTool(queryExec, limiter, maxCodeSize, maxOutputBytes, exposeMetricsApps, contentMode),
-		NewMutateTool(mutateExec, limiter, maxCodeSize, maxOutputBytes, contentMode),
 	}
+	if !readOnly {
+		tools = append(tools, NewMutateTool(mutateExec, limiter, maxCodeSize, maxOutputBytes, contentMode))
+	}
+	return tools
 }
 
 func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, readOnly, destructive, _ bool, contentMode ContentMode) mcpserver.ServerTool {

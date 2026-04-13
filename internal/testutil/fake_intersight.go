@@ -3,6 +3,7 @@ package testutil
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
@@ -12,7 +13,7 @@ const FakeAccessToken = "test-token"
 
 type FakeIntersight struct {
 	t      *testing.T
-	server *TCP4Server
+	server *httptest.Server
 
 	mu                sync.Mutex
 	rackUnits         map[string]map[string]any
@@ -47,7 +48,7 @@ func NewFakeIntersight(t *testing.T) *FakeIntersight {
 		},
 	}
 
-	f.server = NewTCP4Server(t, http.HandlerFunc(f.serveHTTP))
+	f.server = httptest.NewTLSServer(http.HandlerFunc(f.serveHTTP))
 	return f
 }
 

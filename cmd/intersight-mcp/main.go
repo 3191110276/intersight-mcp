@@ -6,8 +6,10 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -55,6 +57,10 @@ func serve(args []string) error {
 }
 
 func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string, specBytes, sdkCatalogBytes, rulesBytes, searchCatalogBytes []byte) error {
+	return serveWithIOAndHTTPClient(ctx, args, stdin, stdout, stderr, environ, specBytes, sdkCatalogBytes, rulesBytes, searchCatalogBytes, nil)
+}
+
+func serveWithIOAndHTTPClient(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string, specBytes, sdkCatalogBytes, rulesBytes, searchCatalogBytes []byte, httpClient *http.Client) error {
 	cfg, err := config.Load(args, environ)
 	if err != nil {
 		return err
@@ -68,7 +74,9 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 	if cfg.LogLevel == config.LogLevelDebug && cfg.UnsafeLogFullCode {
 		logger.LogServerMessage(context.Background(), "config", "unsafe full-code debug logging is enabled; submitted tool code may be written to logs with best-effort redaction. Use only for short-lived incident debugging on trusted machines.")
 	}
-	httpClient := newHTTPClient(cfg.PerCallTimeout)
+	if httpClient == nil {
+		httpClient = newHTTPClient(cfg.PerCallTimeout, cfg.ProxyURL)
+	}
 	sandboxCfg := sandbox.Config{
 		SearchTimeout:   cfg.SearchTimeout,
 		GlobalTimeout:   cfg.Execution.GlobalTimeout,
@@ -126,6 +134,7 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 		MaxCodeSize:    cfg.MaxCodeSize,
 		MaxConcurrent:  cfg.Execution.MaxConcurrent,
 		MaxOutputBytes: cfg.Execution.MaxOutputBytes,
+		ReadOnly:       cfg.ReadOnly,
 		ContentMode: tools.ContentMode{
 			MirrorStructuredContent: cfg.LegacyContentMirror,
 		},
@@ -145,8 +154,16 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 	return runtime.Listen(ctx, stdin, stdout)
 }
 
-func newHTTPClient(timeout time.Duration) *http.Client {
+func newHTTPClient(timeout time.Duration, proxyURL string) *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.Proxy = nil
+	if strings.TrimSpace(proxyURL) != "" {
+		parsedProxy, err := url.Parse(proxyURL)
+		if err != nil {
+			panic(fmt.Sprintf("invalid proxy URL passed to newHTTPClient: %v", err))
+		}
+		transport.Proxy = http.ProxyURL(parsedProxy)
+	}
 	transport.DialContext = (&net.Dialer{
 		Timeout:   timeout,
 		KeepAlive: 30 * time.Second,

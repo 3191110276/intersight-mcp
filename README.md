@@ -89,25 +89,41 @@ Optional settings most users might care about:
 | Setting | Flag | Environment | Default |
 |---|---|---|---|
 | Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | `https://intersight.com` |
+| Explicit outbound proxy URL | `--proxy` | `INTERSIGHT_PROXY_URL` | disabled |
 | Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
 
 The server can still start without credentials so the offline `search` tool remains available. Write-shaped `query` validation also remains available because it runs locally.
 
 `--max-output` applies to the serialized tool payload produced by sandbox execution, before MCP response wrapping. It does not count the duplicated MCP envelope fields on top of that payload.
 
+Proxy configuration:
+
+- The server does not inherit `HTTP_PROXY`, `HTTPS_PROXY`, or `NO_PROXY` from the host environment.
+- Outbound OAuth and API traffic uses a proxy only when `--proxy` or `INTERSIGHT_PROXY_URL` is set explicitly.
+- Supported proxy URL schemes are `http`, `https`, and `socks5`.
+
 Endpoint validation rules:
 
-- Must be an absolute `http` or `https` URL
-- Must not include a query string or fragment
+- Accepts either a bare host like `intersight.example.com` or an origin-like value
+- Bare hosts are normalized to `https://`
+- If you provide a scheme explicitly, it must be `https://`
+- Must not include user info, a query string, or a fragment
 - Must be the origin only; path components are rejected
-- OAuth and API base URLs are both derived from that origin
+- OAuth and API base URLs are both derived from that HTTPS origin
 
 Examples:
 
 ```bash
 INTERSIGHT_CLIENT_ID=... \
 INTERSIGHT_CLIENT_SECRET=... \
-INTERSIGHT_ENDPOINT=https://intersight.com \
+INTERSIGHT_ENDPOINT=intersight.com \
+./bin/intersight-mcp serve
+```
+
+```bash
+INTERSIGHT_CLIENT_ID=... \
+INTERSIGHT_CLIENT_SECRET=... \
+INTERSIGHT_PROXY_URL=http://proxy.example.com:8080 \
 ./bin/intersight-mcp serve
 ```
 
@@ -127,14 +143,17 @@ These settings are available, but they are operational tuning knobs rather than 
 | Search execution timeout | `--search-timeout` | `INTERSIGHT_SEARCH_TIMEOUT` | `15s` |
 | Per-call HTTP/bootstrap timeout | `--per-call-timeout` | `INTERSIGHT_PER_CALL_TIMEOUT` | `15s` |
 | Max API calls per execution | `--max-api-calls` | `INTERSIGHT_MAX_API_CALLS` | `250` |
-| Max concurrent tool executions | `--max-concurrent` | `INTERSIGHT_MAX_CONCURRENT` | `40` |
+| Max concurrent tool executions | `--max-concurrent` | `INTERSIGHT_MAX_CONCURRENT` | `25` |
+| Read-only mode | `--read-only` | — | `false` |
 | Max submitted code size | `--max-code-size` | `INTERSIGHT_MAX_CODE_SIZE` | `100KB` |
 | QuickJS memory limit | `--wasm-memory` | `INTERSIGHT_WASM_MEMORY` | `64MB` |
 | Log level | `--log-level` | `INTERSIGHT_LOG_LEVEL` | `info` |
 | Include submitted tool code in debug logs with best-effort redaction | `--unsafe-log-full-code` | `INTERSIGHT_UNSAFE_LOG_FULL_CODE` | `false` |
 | Mirror structured content into text for legacy clients | `--legacy-content-mirror` | `INTERSIGHT_LEGACY_CONTENT_MIRROR` | `false` |
 
-`--max-concurrent` is a shared process-wide limiter across `search`, `query`, and `mutate`. The default limit is `40` in-flight tool executions.
+`--max-concurrent` is a shared process-wide limiter across `search`, `query`, and `mutate`. The default limit is `25` in-flight tool executions.
+
+When `--read-only` is set, the server omits the `mutate` tool entirely and exposes only `search` and `query`. This is the recommended mode when you want discovery and read access without allowing persistent writes.
 
 ## MCP Client Setup
 
@@ -147,12 +166,12 @@ Configure your MCP client to launch the binary as a local stdio command. Example
   "env": {
     "INTERSIGHT_CLIENT_ID": "your-client-id",
     "INTERSIGHT_CLIENT_SECRET": "your-client-secret",
-    "INTERSIGHT_ENDPOINT": "https://intersight.com"
+    "INTERSIGHT_ENDPOINT": "intersight.com"
   }
 }
 ```
 
-The server registers exactly three tools: `search`, `query`, and `mutate`.
+By default the server registers three tools: `search`, `query`, and `mutate`. With `--read-only`, it registers only `search` and `query`.
 The public execution surface is `sdk` only. `search` also exposes a merged `catalog` discovery object plus raw `sdk`, `rules`, and `spec` globals.
 
 If credentials are missing or initial OAuth bootstrap fails, the server still starts so `search` remains usable. Live `query` reads and `mutate` writes then return auth errors until credentials work again.

@@ -91,10 +91,7 @@ func TestSearchDiscoveryGlobalsAvailable(t *testing.T) {
 return {
   catalogResources: Object.keys(catalog.resources || {}).length,
   catalogNames: Object.keys(catalog.resourceNames || {}).length,
-  catalogMetricGroups: Object.keys((catalog.metrics && catalog.metrics.groups) || {}).length,
-  sdkMethods: Object.keys(sdk.methods || {}).length,
-  ruleMethods: Object.keys(rules.methods || {}).length,
-  specPaths: Object.keys(spec.paths || {}).length
+  catalogMetricGroups: Object.keys((catalog.metrics && catalog.metrics.groups) || {}).length
 };
 `, ModeSearch)
 	if err != nil {
@@ -105,7 +102,7 @@ return {
 	if !ok {
 		t.Fatalf("result.Value type = %T", result.Value)
 	}
-	if value["catalogResources"] == nil || value["catalogNames"] == nil || value["catalogMetricGroups"] == nil || value["sdkMethods"] == nil || value["ruleMethods"] == nil || value["specPaths"] == nil {
+	if value["catalogResources"] == nil || value["catalogNames"] == nil || value["catalogMetricGroups"] == nil {
 		t.Fatalf("unexpected search discovery payload: %#v", result.Value)
 	}
 }
@@ -130,8 +127,7 @@ func TestExecutorsFromBundleProvideExpectedGlobals(t *testing.T) {
 	searchResult, err := searchExec.Execute(context.Background(), `
 return {
   catalogResources: Object.keys(catalog.resources || {}).length,
-  catalogMetricGroups: Object.keys((catalog.metrics && catalog.metrics.groups) || {}).length,
-  sdkMethods: Object.keys(sdk.methods || {}).length
+  catalogMetricGroups: Object.keys((catalog.metrics && catalog.metrics.groups) || {}).length
 };
 `, ModeSearch)
 	if err != nil {
@@ -141,7 +137,7 @@ return {
 	if !ok {
 		t.Fatalf("search result.Value type = %T", searchResult.Value)
 	}
-	if searchValue["catalogResources"] == nil || searchValue["catalogMetricGroups"] == nil || searchValue["sdkMethods"] == nil {
+	if searchValue["catalogResources"] == nil || searchValue["catalogMetricGroups"] == nil {
 		t.Fatalf("unexpected search payload: %#v", searchResult.Value)
 	}
 
@@ -551,7 +547,7 @@ const testSearchCatalogWithPostUpdate = `{
   }
 }`
 
-func TestSearchCatalogHidesOperationMetadataButSDKRetainsIt(t *testing.T) {
+func TestSearchCatalogHidesOperationMetadata(t *testing.T) {
 	t.Parallel()
 
 	exec, err := NewSearchExecutor(testConfig(), []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules), []byte(testSearchCatalog))
@@ -566,8 +562,7 @@ return {
   catalogSchema: resource.schema ?? null,
   catalogCreateFields: resource.createFields ?? null,
   catalogRules: resource.rules ?? null,
-  catalogOperations: resource.operations ?? null,
-  sdkOperationId: sdk.methods["example.widget.create"].descriptor.operationId
+  catalogOperations: resource.operations ?? null
 };
 `, ModeSearch)
 	if err != nil {
@@ -600,9 +595,6 @@ return {
 	}
 	if got := fmt.Sprint(operations); got != "[create list]" {
 		t.Fatalf("catalog operations = %v, want [create list]", operations)
-	}
-	if got := value["sdkOperationId"]; got != "CreateExampleWidget" {
-		t.Fatalf("sdk operationId = %#v, want CreateExampleWidget", got)
 	}
 }
 
@@ -679,7 +671,7 @@ return {
 	}
 }
 
-func TestSearchSpecAndSDKLazyProxiesSupportEnumerationAndLookup(t *testing.T) {
+func TestSearchDoesNotExposeRawDiscoveryGlobals(t *testing.T) {
 	t.Parallel()
 
 	exec, err := NewSearchExecutor(testConfig(), []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules), []byte(testSearchCatalog))
@@ -690,14 +682,9 @@ func TestSearchSpecAndSDKLazyProxiesSupportEnumerationAndLookup(t *testing.T) {
 
 	result, err := exec.Execute(context.Background(), `
 return {
-  schemaKeys: Object.keys(spec.schemas || {}),
-  specPathKeys: Object.keys(spec.paths || {}),
-  sdkMethodKeys: Object.keys(sdk.methods || {}),
-  ruleMethodKeys: Object.keys(rules.methods || {}),
-  schemaType: spec.schemas["example.Widget"]?.type ?? null,
-  specPathGet: spec.paths["/api/v1/example/Widgets"]?.get?.operationId ?? null,
-  sdkMethodId: sdk.methods["example.widget.create"]?.descriptor?.operationId ?? null,
-  ruleMethodId: rules.methods["example.widget.create"]?.operationId ?? null
+  hasSpec: typeof spec !== "undefined",
+  hasSDK: typeof sdk !== "undefined",
+  hasRules: typeof rules !== "undefined"
 };
 `, ModeSearch)
 	if err != nil {
@@ -708,29 +695,14 @@ return {
 	if !ok {
 		t.Fatalf("result.Value type = %T", result.Value)
 	}
-	if got := fmt.Sprint(value["schemaKeys"]); got != "[example.Widget]" {
-		t.Fatalf("schemaKeys = %v, want [example.Widget]", value["schemaKeys"])
+	if got := value["hasSpec"]; got != false {
+		t.Fatalf("hasSpec = %#v, want false", got)
 	}
-	if got := fmt.Sprint(value["specPathKeys"]); got != "[/api/v1/example/Widgets /api/v1/example/Widgets/{Moid}]" {
-		t.Fatalf("specPathKeys = %v, want both example widget paths", value["specPathKeys"])
+	if got := value["hasSDK"]; got != false {
+		t.Fatalf("hasSDK = %#v, want false", got)
 	}
-	if got := fmt.Sprint(value["sdkMethodKeys"]); got != "[example.widget.create example.widget.get example.widget.list example.widget.update]" {
-		t.Fatalf("sdkMethodKeys = %v, want all example widget methods", value["sdkMethodKeys"])
-	}
-	if got := fmt.Sprint(value["ruleMethodKeys"]); got != "[example.widget.create]" {
-		t.Fatalf("ruleMethodKeys = %v, want [example.widget.create]", value["ruleMethodKeys"])
-	}
-	if got := value["schemaType"]; got != "object" {
-		t.Fatalf("schemaType = %#v, want object", got)
-	}
-	if got := value["specPathGet"]; got != "GetExampleWidgetList" {
-		t.Fatalf("specPathGet = %#v, want GetExampleWidgetList", got)
-	}
-	if got := value["sdkMethodId"]; got != "CreateExampleWidget" {
-		t.Fatalf("sdkMethodId = %#v, want CreateExampleWidget", got)
-	}
-	if got := value["ruleMethodId"]; got != "CreateExampleWidget" {
-		t.Fatalf("ruleMethodId = %#v, want CreateExampleWidget", got)
+	if got := value["hasRules"]; got != false {
+		t.Fatalf("hasRules = %#v, want false", got)
 	}
 }
 

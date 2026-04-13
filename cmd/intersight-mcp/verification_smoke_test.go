@@ -37,7 +37,7 @@ func TestServeWithIOVerificationMatrix(t *testing.T) {
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- serveWithIO(ctx, nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+		errCh <- serveWithIOAndHTTPClient(ctx, nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes(), fake.Client())
 		_ = stdoutWriter.Close()
 	}()
 

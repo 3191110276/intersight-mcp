@@ -26,6 +26,9 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.OAuthTokenURL != "https://intersight.com/iam/token" {
 		t.Fatalf("unexpected oauth token URL: %q", cfg.OAuthTokenURL)
 	}
+	if cfg.ProxyURL != "" {
+		t.Fatalf("unexpected proxy URL: %q", cfg.ProxyURL)
+	}
 	if cfg.APIBaseURL != "https://intersight.com/api/v1" {
 		t.Fatalf("unexpected API base URL: %q", cfg.APIBaseURL)
 	}
@@ -61,6 +64,7 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 	cfg, err := Load(
 		[]string{
 			"--endpoint", "https://flag.example.com",
+			"--proxy", "http://proxy.flag.example.com:8080",
 			"--timeout", "55s",
 			"--max-output", "1MB",
 			"--max-api-calls", "12",
@@ -70,6 +74,7 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"--max-code-size", "256KB",
 			"--wasm-memory", "96MB",
 			"--log-level", "debug",
+			"--read-only",
 			"--unsafe-log-full-code",
 			"--legacy-content-mirror",
 		},
@@ -77,6 +82,7 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"INTERSIGHT_CLIENT_ID=id",
 			"INTERSIGHT_CLIENT_SECRET=secret",
 			"INTERSIGHT_ENDPOINT=https://env.example.com",
+			"INTERSIGHT_PROXY_URL=http://proxy.env.example.com:8080",
 			"INTERSIGHT_TIMEOUT=15s",
 			"INTERSIGHT_MAX_OUTPUT=2048",
 			"INTERSIGHT_MAX_API_CALLS=9",
@@ -92,8 +98,14 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 		t.Fatalf("Load() error = %v", err)
 	}
 
+	if cfg.Endpoint != "https://flag.example.com" {
+		t.Fatalf("unexpected endpoint: %q", cfg.Endpoint)
+	}
 	if cfg.Origin != "https://flag.example.com" {
 		t.Fatalf("unexpected origin: %q", cfg.Origin)
+	}
+	if cfg.ProxyURL != "http://proxy.flag.example.com:8080" {
+		t.Fatalf("unexpected proxy URL: %q", cfg.ProxyURL)
 	}
 	if cfg.Execution.GlobalTimeout != 55*time.Second {
 		t.Fatalf("unexpected timeout: %v", cfg.Execution.GlobalTimeout)
@@ -122,6 +134,9 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 	if cfg.LogLevel != LogLevelDebug {
 		t.Fatalf("unexpected log level: %q", cfg.LogLevel)
 	}
+	if !cfg.ReadOnly {
+		t.Fatalf("expected read-only mode to be enabled")
+	}
 	if !cfg.UnsafeLogFullCode {
 		t.Fatalf("expected log full code to be enabled")
 	}
@@ -143,6 +158,57 @@ func TestLoadConfigInvalidEndpoint(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "invalid endpoint") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestLoadConfigInvalidProxy(t *testing.T) {
+	t.Parallel()
+
+	_, err := Load([]string{"--proxy", "mailto://proxy"}, []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+	})
+	if err == nil {
+		t.Fatalf("expected invalid proxy error")
+	}
+	if !strings.Contains(err.Error(), "invalid proxy") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestLoadConfigRejectsHTTPEndpoint(t *testing.T) {
+	t.Parallel()
+
+	_, err := Load(nil, []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+		"INTERSIGHT_ENDPOINT=http://example.com",
+	})
+	if err == nil {
+		t.Fatalf("expected invalid endpoint error")
+	}
+	if !strings.Contains(err.Error(), "scheme must be https") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestLoadConfigNormalizesEndpointToHTTPS(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := Load(nil, []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+		"INTERSIGHT_ENDPOINT=example.com:8443",
+	})
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if cfg.Endpoint != "https://example.com:8443" {
+		t.Fatalf("unexpected endpoint: %q", cfg.Endpoint)
+	}
+	if cfg.Origin != "https://example.com:8443" {
+		t.Fatalf("unexpected origin: %q", cfg.Origin)
 	}
 }
 

@@ -7,6 +7,8 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -25,6 +27,43 @@ func TestServeStartsWithoutCredentialsForOfflineSearch(t *testing.T) {
 
 	if err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, nil, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
 		t.Fatalf("serveWithIO() error = %v", err)
+	}
+}
+
+func TestServeReadOnlyOmitsMutateTool(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	stdinReader, stdinWriter := io.Pipe()
+	var stdout bytes.Buffer
+
+	go func() {
+		writeJSONLine(t, stdinWriter, initializeRequest())
+		writeJSONLine(t, stdinWriter, toolsListRequest(2))
+		_ = stdinWriter.Close()
+	}()
+
+	if err := serveWithIO(ctx, []string{"--read-only"}, stdinReader, &stdout, &bytes.Buffer{}, nil, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
+		t.Fatalf("serveWithIO() error = %v", err)
+	}
+
+	lines := splitLines(stdout.String())
+	if len(lines) != 2 {
+		t.Fatalf("response count = %d, want 2", len(lines))
+	}
+
+	responses := indexResponsesByID(t, lines)
+	tools := decodeToolsListResult(t, responses[2])
+	if len(tools) != 2 {
+		t.Fatalf("tool count = %d, want 2", len(tools))
+	}
+	if !tools["search"] || !tools["query"] {
+		t.Fatalf("unexpected tools list: %#v", tools)
+	}
+	if tools["mutate"] {
+		t.Fatalf("mutate tool should be omitted in read-only mode")
 	}
 }
 
@@ -47,6 +86,50 @@ func TestServeWarnsWhenUnsafeCodeLoggingEnabled(t *testing.T) {
 	}
 }
 
+func TestNewHTTPClientDisablesAmbientProxyByDefault(t *testing.T) {
+	t.Parallel()
+
+	client := newHTTPClient(time.Second, "")
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("unexpected transport type: %T", client.Transport)
+	}
+	if transport.Proxy == nil {
+		return
+	}
+
+	req := &http.Request{URL: mustParseURL(t, "https://intersight.com/api/v1/compute/RackUnits")}
+	proxyURL, err := transport.Proxy(req)
+	if err != nil {
+		t.Fatalf("transport.Proxy() error = %v", err)
+	}
+	if proxyURL != nil {
+		t.Fatalf("expected no proxy, got %q", proxyURL)
+	}
+}
+
+func TestNewHTTPClientUsesExplicitProxy(t *testing.T) {
+	t.Parallel()
+
+	client := newHTTPClient(time.Second, "http://proxy.example.com:8080")
+	transport, ok := client.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("unexpected transport type: %T", client.Transport)
+	}
+	if transport.Proxy == nil {
+		t.Fatal("expected explicit proxy function")
+	}
+
+	req := &http.Request{URL: mustParseURL(t, "https://intersight.com/api/v1/compute/RackUnits")}
+	proxyURL, err := transport.Proxy(req)
+	if err != nil {
+		t.Fatalf("transport.Proxy() error = %v", err)
+	}
+	if proxyURL == nil || proxyURL.String() != "http://proxy.example.com:8080" {
+		t.Fatalf("unexpected proxy URL: %#v", proxyURL)
+	}
+}
+
 func TestServeFailsOnInvalidConfig(t *testing.T) {
 	t.Parallel()
 
@@ -54,10 +137,20 @@ func TestServeFailsOnInvalidConfig(t *testing.T) {
 		"INTERSIGHT_CLIENT_ID=id",
 		"INTERSIGHT_CLIENT_SECRET=secret",
 	}
-	err := serveWithIO(context.Background(), []string{"--endpoint", "not-a-url"}, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+	err := serveWithIO(context.Background(), []string{"--endpoint", "not-a-url/path"}, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
 	if err == nil || !strings.Contains(err.Error(), "invalid endpoint") {
 		t.Fatalf("serveWithIO() error = %v, want invalid endpoint failure", err)
 	}
+}
+
+func mustParseURL(t *testing.T, raw string) *url.URL {
+	t.Helper()
+
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		t.Fatalf("url.Parse(%q) error = %v", raw, err)
+	}
+	return parsed
 }
 
 func TestServeFailsOnMalformedEmbeddedArtifacts(t *testing.T) {
@@ -76,7 +169,7 @@ func TestServeFailsOnMalformedEmbeddedArtifacts(t *testing.T) {
 func TestServeStartsWhenAuthBootstrapFails(t *testing.T) {
 	t.Parallel()
 
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			w.Header().Set("Content-Type", "application/json")
@@ -97,7 +190,7 @@ func TestServeStartsWhenAuthBootstrapFails(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	if err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
+	if err := serveWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client()); err != nil {
 		t.Fatalf("serveWithIO() error = %v", err)
 	}
 }
@@ -106,7 +199,7 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 	t.Parallel()
 
 	var allowAuth atomic.Bool
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			if !allowAuth.Load() {
@@ -151,7 +244,7 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 	lineCh := make(chan string, 4)
 
 	go func() {
-		errCh <- serveWithIO(context.Background(), nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+		errCh <- serveWithIOAndHTTPClient(context.Background(), nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client())
 		_ = stdoutWriter.Close()
 	}()
 	go func() {
@@ -211,7 +304,7 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 func TestRetryingBootstrapClientUsesRequestContextForBootstrap(t *testing.T) {
 	t.Parallel()
 
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			<-r.Context().Done()
@@ -256,7 +349,7 @@ func TestRetryingBootstrapClientUsesRequestContextForBootstrap(t *testing.T) {
 func TestBootstrapOAuthManagerTimesOutStalledStartupAuth(t *testing.T) {
 	t.Parallel()
 
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			<-r.Context().Done()
@@ -611,7 +704,7 @@ var validTestSearchCatalog = []byte(`{
 func TestServeWithIOGracefulOnClosedInput(t *testing.T) {
 	t.Parallel()
 
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	api := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/iam/token":
 			w.Header().Set("Content-Type", "application/json")
@@ -633,7 +726,7 @@ func TestServeWithIOGracefulOnClosedInput(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	if err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
+	if err := serveWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client()); err != nil {
 		t.Fatalf("serveWithIO() error = %v", err)
 	}
 }

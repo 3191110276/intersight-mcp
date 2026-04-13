@@ -20,7 +20,7 @@ import (
 func TestServerToolsRegistration(t *testing.T) {
 	t.Parallel()
 
-	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), limits.MaxCodeSizeBytes, 0, false, ContentMode{})
+	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), limits.MaxCodeSizeBytes, 0, false, false, ContentMode{})
 	if len(tools) != 3 {
 		t.Fatalf("len(ServerTools()) = %d, want 3", len(tools))
 	}
@@ -39,6 +39,26 @@ func TestServerToolsRegistration(t *testing.T) {
 	assertPublicSDKOnly(t, searchDescription)
 	assertPublicSDKOnly(t, queryDescription)
 	assertPublicSDKOnly(t, mutateDescription)
+}
+
+func TestServerToolsRegistrationReadOnlyOmitsMutate(t *testing.T) {
+	t.Parallel()
+
+	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), limits.MaxCodeSizeBytes, 0, false, true, ContentMode{})
+	if len(tools) != 2 {
+		t.Fatalf("len(ServerTools()) = %d, want 2", len(tools))
+	}
+
+	byName := map[string]mcp.Tool{}
+	for _, tool := range tools {
+		byName[tool.Tool.Name] = tool.Tool
+	}
+
+	assertTool(t, byName[ToolSearch], searchTitle, true, false, limits.MaxCodeSizeBytes)
+	assertTool(t, byName[ToolQuery], queryTitle, true, false, limits.MaxCodeSizeBytes)
+	if byName[ToolMutate].Name != "" {
+		t.Fatalf("mutate tool should be omitted in read-only mode")
+	}
 }
 
 func TestSchemasMatchArchitecture(t *testing.T) {
