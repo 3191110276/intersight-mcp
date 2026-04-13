@@ -114,6 +114,10 @@ type mutateInput struct {
 	Code          string `json:"code"`
 }
 
+type ContentMode struct {
+	MirrorStructuredContent bool
+}
+
 type Limiter struct {
 	slots chan struct{}
 }
@@ -166,15 +170,15 @@ func OutputSchema() json.RawMessage {
 	return append(json.RawMessage(nil), outputSchemaJSON...)
 }
 
-func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, exposeMetricsApps bool) []mcpserver.ServerTool {
+func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, exposeMetricsApps bool, contentMode ContentMode) []mcpserver.ServerTool {
 	return []mcpserver.ServerTool{
-		NewSearchTool(searchExec, limiter, maxOutputBytes),
-		NewQueryTool(queryExec, limiter, maxOutputBytes, exposeMetricsApps),
-		NewMutateTool(mutateExec, limiter, maxOutputBytes),
+		NewSearchTool(searchExec, limiter, maxOutputBytes, contentMode),
+		NewQueryTool(queryExec, limiter, maxOutputBytes, exposeMetricsApps, contentMode),
+		NewMutateTool(mutateExec, limiter, maxOutputBytes, contentMode),
 	}
 }
 
-func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, readOnly, destructive, _ bool) mcpserver.ServerTool {
+func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, readOnly, destructive, _ bool, contentMode ContentMode) mcpserver.ServerTool {
 	inputSchema := InputSchema()
 	if mode == sandbox.ModeMutate {
 		inputSchema = MutateInputSchema()
@@ -195,14 +199,14 @@ func newServerTool(name, title, description string, mode sandbox.Mode, exec sand
 
 	return mcpserver.ServerTool{
 		Tool:    tool,
-		Handler: NewToolHandler(mode, exec, limiter, maxOutputBytes),
+		Handler: NewToolHandler(mode, exec, limiter, maxOutputBytes, contentMode),
 	}
 }
 
-func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64) mcpserver.ToolHandlerFunc {
+func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, contentMode ContentMode) mcpserver.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if exec == nil {
-			return toolErrorResult(contracts.InternalError{Message: "tool executor is not configured"}, nil), nil
+			return toolErrorResult(contracts.InternalError{Message: "tool executor is not configured"}, nil, contentMode), nil
 		}
 
 		var (
@@ -212,29 +216,29 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 		if mode == sandbox.ModeMutate {
 			var input mutateInput
 			if err := request.BindArguments(&input); err != nil {
-				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil), nil
+				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil, contentMode), nil
 			}
 			if strings.TrimSpace(input.ChangeSummary) == "" {
-				return toolErrorResult(contracts.ValidationError{Message: `required argument "changeSummary" not found`}, nil), nil
+				return toolErrorResult(contracts.ValidationError{Message: `required argument "changeSummary" not found`}, nil, contentMode), nil
 			}
 			code = input.Code
 			changeSummary = input.ChangeSummary
 		} else {
 			var input codeInput
 			if err := request.BindArguments(&input); err != nil {
-				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil), nil
+				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil, contentMode), nil
 			}
 			code = input.Code
 		}
 		if strings.TrimSpace(code) == "" {
-			return toolErrorResult(contracts.ValidationError{Message: `required argument "code" not found`}, nil), nil
+			return toolErrorResult(contracts.ValidationError{Message: `required argument "code" not found`}, nil, contentMode), nil
 		}
 
 		if limiter != nil {
 			if !limiter.Acquire() {
 				return toolErrorResult(contracts.LimitError{
 					Message: fmt.Sprintf("Concurrent execution limit reached (%d)", limiter.Limit()),
-				}, nil), nil
+				}, nil, contentMode), nil
 			}
 			defer limiter.Release()
 		}
@@ -242,15 +246,15 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 		_ = changeSummary
 		result, err := exec.Execute(ctx, code, mode)
 		if err != nil {
-			return toolErrorResult(err, result.Logs), nil
+			return toolErrorResult(err, result.Logs, contentMode), nil
 		}
-		return toolSuccessResult(request.Params.Name, result), nil
+		return toolSuccessResult(request.Params.Name, result, contentMode), nil
 	}
 }
 
-func toolSuccessResult(_ string, result sandbox.Result) *mcp.CallToolResult {
+func toolSuccessResult(_ string, result sandbox.Result, contentMode ContentMode) *mcp.CallToolResult {
 	envelope := contracts.Success(result.Value, result.Logs)
-	content := []mcp.Content{mcp.NewTextContent(renderSuccessText(envelope))}
+	content := []mcp.Content{mcp.NewTextContent(renderSuccessText(envelope, contentMode))}
 	return &mcp.CallToolResult{
 		Result:            mcp.Result{},
 		Content:           content,
@@ -259,16 +263,23 @@ func toolSuccessResult(_ string, result sandbox.Result) *mcp.CallToolResult {
 	}
 }
 
-func toolErrorResult(err error, logs []string) *mcp.CallToolResult {
+func toolErrorResult(err error, logs []string, contentMode ContentMode) *mcp.CallToolResult {
 	envelope := contracts.NormalizeError(err, logs)
 	return &mcp.CallToolResult{
-		Content:           []mcp.Content{mcp.NewTextContent(renderErrorText(envelope))},
+		Content:           []mcp.Content{mcp.NewTextContent(renderErrorText(envelope, contentMode))},
 		StructuredContent: envelope,
 		IsError:           true,
 	}
 }
 
-func renderSuccessText(envelope contracts.SuccessEnvelope) string {
+func renderSuccessText(envelope contracts.SuccessEnvelope, contentMode ContentMode) string {
+	if !contentMode.MirrorStructuredContent {
+		if len(envelope.Logs) > 0 {
+			return fmt.Sprintf("Success. Full result is in structuredContent. Logs: %d line(s).", len(envelope.Logs))
+		}
+		return "Success. Full result is in structuredContent."
+	}
+
 	var buf bytes.Buffer
 	buf.WriteString(compactJSON(envelope.Result))
 	if len(envelope.Logs) > 0 {
@@ -278,7 +289,22 @@ func renderSuccessText(envelope contracts.SuccessEnvelope) string {
 	return buf.String()
 }
 
-func renderErrorText(envelope contracts.ErrorEnvelope) string {
+func renderErrorText(envelope contracts.ErrorEnvelope, contentMode ContentMode) string {
+	if !contentMode.MirrorStructuredContent {
+		var buf bytes.Buffer
+		buf.WriteString(envelope.Error.Type)
+		buf.WriteString(": ")
+		buf.WriteString(envelope.Error.Message)
+		if envelope.Error.Hint != "" {
+			buf.WriteString("\nHint: ")
+			buf.WriteString(envelope.Error.Hint)
+		}
+		if len(envelope.Logs) > 0 {
+			buf.WriteString(fmt.Sprintf("\nLogs: %d line(s) in structuredContent.", len(envelope.Logs)))
+		}
+		return buf.String()
+	}
+
 	var buf bytes.Buffer
 	buf.WriteString("error.type: ")
 	buf.WriteString(envelope.Error.Type)

@@ -22,19 +22,20 @@ const (
 )
 
 type Config struct {
-	Endpoint       string
-	Origin         string
-	OAuthTokenURL  string
-	APIBaseURL     string
-	ClientID       string
-	ClientSecret   string
-	LogLevel       LogLevel
-	LogFullCode    bool
-	Execution      limits.Execution
-	SearchTimeout  time.Duration
-	PerCallTimeout time.Duration
-	MaxCodeSize    int
-	WASMMemory     uint64
+	Endpoint            string
+	Origin              string
+	OAuthTokenURL       string
+	APIBaseURL          string
+	ClientID            string
+	ClientSecret        string
+	LogLevel            LogLevel
+	LogFullCode         bool
+	LegacyContentMirror bool
+	Execution           limits.Execution
+	SearchTimeout       time.Duration
+	PerCallTimeout      time.Duration
+	MaxCodeSize         int
+	WASMMemory          uint64
 }
 
 func Load(args []string, environ []string) (Config, error) {
@@ -64,6 +65,7 @@ func Load(args []string, environ []string) (Config, error) {
 	var maxConcurrentFlag int
 	var logLevelFlag string
 	var logFullCodeFlag bool
+	var legacyContentMirrorFlag bool
 	var searchTimeoutFlag string
 	var perCallTimeoutFlag string
 	var maxCodeSizeFlag string
@@ -73,9 +75,10 @@ func Load(args []string, environ []string) (Config, error) {
 	fs.StringVar(&timeoutFlag, "timeout", "", "global execution timeout")
 	fs.IntVar(&maxAPICallsFlag, "max-api-calls", 0, "maximum API calls per execution")
 	fs.StringVar(&maxOutputFlag, "max-output", "", "maximum serialized output size")
-	fs.IntVar(&maxConcurrentFlag, "max-concurrent", 0, "maximum concurrent query/mutate executions")
+	fs.IntVar(&maxConcurrentFlag, "max-concurrent", 0, "maximum concurrent tool executions across search, query, and mutate")
 	fs.StringVar(&logLevelFlag, "log-level", "", "log level: info or debug")
 	fs.BoolVar(&logFullCodeFlag, "log-full-code", false, "include full submitted code in logs")
+	fs.BoolVar(&legacyContentMirrorFlag, "legacy-content-mirror", false, "mirror full results into text content for legacy MCP clients")
 	fs.StringVar(&searchTimeoutFlag, "search-timeout", "", "timeout for search executions")
 	fs.StringVar(&perCallTimeoutFlag, "per-call-timeout", "", "timeout for individual HTTP and bootstrap calls")
 	fs.StringVar(&maxCodeSizeFlag, "max-code-size", "", "maximum submitted code size")
@@ -216,6 +219,18 @@ func Load(args []string, environ []string) (Config, error) {
 			return Config{}, fmt.Errorf("invalid log-full-code %q: must be true or false", logFullCodeRaw)
 		}
 		cfg.LogFullCode = value
+	}
+
+	legacyContentMirrorRaw := env["INTERSIGHT_LEGACY_CONTENT_MIRROR"]
+	if setFlags["legacy-content-mirror"] {
+		legacyContentMirrorRaw = strconv.FormatBool(legacyContentMirrorFlag)
+	}
+	if strings.TrimSpace(legacyContentMirrorRaw) != "" {
+		value, err := strconv.ParseBool(strings.TrimSpace(legacyContentMirrorRaw))
+		if err != nil {
+			return Config{}, fmt.Errorf("invalid legacy-content-mirror %q: must be true or false", legacyContentMirrorRaw)
+		}
+		cfg.LegacyContentMirror = value
 	}
 
 	maxCodeSizeRaw := env["INTERSIGHT_MAX_CODE_SIZE"]

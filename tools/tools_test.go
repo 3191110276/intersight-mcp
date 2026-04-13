@@ -19,7 +19,7 @@ import (
 func TestServerToolsRegistration(t *testing.T) {
 	t.Parallel()
 
-	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), 0, false)
+	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), 0, false, ContentMode{})
 	if len(tools) != 3 {
 		t.Fatalf("len(ServerTools()) = %d, want 3", len(tools))
 	}
@@ -56,7 +56,7 @@ func TestSuccessMapping(t *testing.T) {
 			Value: map[string]any{"ok": true},
 			Logs:  []string{"hello", "world"},
 		},
-	}, nil, 0)
+	}, nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), toolRequest(`return { ok: true };`))
 	if err != nil {
@@ -78,7 +78,7 @@ func TestSuccessMapping(t *testing.T) {
 	if !ok {
 		t.Fatalf("content type = %T", result.Content[0])
 	}
-	if text.Text != "{\"ok\":true}\n\nLogs:\nhello\nworld" {
+	if text.Text != "Success. Full result is in structuredContent. Logs: 2 line(s)." {
 		t.Fatalf("unexpected success text: %q", text.Text)
 	}
 	if result.Meta != nil {
@@ -86,10 +86,34 @@ func TestSuccessMapping(t *testing.T) {
 	}
 }
 
+func TestSuccessMappingLegacyContentMirror(t *testing.T) {
+	t.Parallel()
+
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{
+		result: sandbox.Result{
+			Value: map[string]any{"ok": true},
+			Logs:  []string{"hello", "world"},
+		},
+	}, nil, 0, ContentMode{MirrorStructuredContent: true})
+
+	result, err := handler(context.Background(), toolRequest(`return { ok: true };`))
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
+	}
+
+	text, ok := result.Content[0].(mcp.TextContent)
+	if !ok {
+		t.Fatalf("content type = %T", result.Content[0])
+	}
+	if text.Text != "{\"ok\":true}\n\nLogs:\nhello\nworld" {
+		t.Fatalf("unexpected success text: %q", text.Text)
+	}
+}
+
 func TestSearchToolUsesSharedLimiter(t *testing.T) {
 	t.Parallel()
 
-	tool := NewSearchTool(stubExecutor{}, NewLimiter(1), 0)
+	tool := NewSearchTool(stubExecutor{}, NewLimiter(1), 0, ContentMode{})
 	if tool.Tool.Name != ToolSearch {
 		t.Fatalf("tool name = %q, want %q", tool.Tool.Name, ToolSearch)
 	}
@@ -102,7 +126,7 @@ func TestSearchToolUsesSharedLimiter(t *testing.T) {
 			<-blocked
 			return sandbox.Result{Value: map[string]any{"ok": true}}, nil
 		},
-	}, NewLimiter(1), 0)
+	}, NewLimiter(1), 0, ContentMode{})
 
 	done := make(chan *mcp.CallToolResult, 1)
 	go func() {
@@ -146,7 +170,7 @@ func TestTelemetrySuccessMappingIgnoresPresentationHints(t *testing.T) {
 			Value:        map[string]any{"rows": 3},
 			Presentation: &sandbox.PresentationHint{Kind: sandbox.PresentationKindMetricsApp},
 		},
-	}, nil, 0)
+	}, nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -171,7 +195,7 @@ func TestErrorMapping(t *testing.T) {
 	handler := NewToolHandler(sandbox.ModeQuery, stubExecutor{
 		err:    contracts.ReferenceError{Message: "spec is not defined"},
 		result: sandbox.Result{Logs: []string{"trace 1"}},
-	}, nil, 0)
+	}, nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), toolRequest(`return spec;`))
 	if err != nil {
@@ -196,10 +220,10 @@ func TestErrorMapping(t *testing.T) {
 	if !ok {
 		t.Fatalf("content type = %T", result.Content[0])
 	}
-	if !strings.Contains(text.Text, "error.type: ReferenceError") {
+	if !strings.Contains(text.Text, "ReferenceError: spec is not defined") {
 		t.Fatalf("unexpected error text: %q", text.Text)
 	}
-	if !strings.Contains(text.Text, "\n\nLogs:\ntrace 1") {
+	if !strings.Contains(text.Text, "\nLogs: 1 line(s) in structuredContent.") {
 		t.Fatalf("missing logs in error text: %q", text.Text)
 	}
 }
@@ -219,7 +243,7 @@ func TestQueryHTTPFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
-	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0)
+	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
 	if err != nil {
@@ -255,7 +279,7 @@ func TestQueryNetworkFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
-	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0)
+	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
 	if err != nil {
@@ -288,7 +312,7 @@ func TestQueryAuthFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
-	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0)
+	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
 	if err != nil {
@@ -313,7 +337,7 @@ func TestQueryAuthFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 func TestQueryAPICallReturnsReferenceErrorEnvelope(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeQuery, sandbox.NewQJSExecutor(toolTestConfig(), stubAPICaller{}), nil, 0)
+	handler := NewToolHandler(sandbox.ModeQuery, sandbox.NewQJSExecutor(toolTestConfig(), stubAPICaller{}), nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), toolRequest(`return await api.call('GET', '/api/v1/test');`))
 	if err != nil {
@@ -347,7 +371,7 @@ func TestOverloadRejection(t *testing.T) {
 			return sandbox.Result{Value: map[string]any{"done": true}}, nil
 		},
 	}
-	handler := NewToolHandler(sandbox.ModeQuery, exec, NewLimiter(1), 0)
+	handler := NewToolHandler(sandbox.ModeQuery, exec, NewLimiter(1), 0, ContentMode{})
 
 	done := make(chan *mcp.CallToolResult, 1)
 	go func() {
@@ -386,7 +410,7 @@ func TestOverloadRejection(t *testing.T) {
 func TestMutateHandlerRequiresChangeSummary(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil, 0)
+	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil, 0, ContentMode{})
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolMutate,
@@ -414,7 +438,7 @@ func TestMutateHandlerRequiresChangeSummary(t *testing.T) {
 func TestMutateHandlerRejectsBlankChangeSummary(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil, 0)
+	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil, 0, ContentMode{})
 	result, err := handler(context.Background(), mutateToolRequest("   ", `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`))
 	if err != nil {
 		t.Fatalf("handler() error = %v", err)
@@ -437,7 +461,7 @@ func TestMutateHandlerRejectsBlankChangeSummary(t *testing.T) {
 func TestSearchHandlerRequiresCodeThroughErrorEnvelope(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0)
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0, ContentMode{})
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolSearch,
@@ -475,7 +499,7 @@ func TestMutateHandlerPassesOnlyCodeToExecutor(t *testing.T) {
 			gotMode = mode
 			return sandbox.Result{Value: map[string]any{"ok": true}}, nil
 		},
-	}, nil, 0)
+	}, nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), mutateToolRequest("Delete the NTP policy", `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`))
 	if err != nil {
@@ -500,7 +524,7 @@ func TestToolHandlerDoesNotRecountDuplicatedMCPEnvelopeSize(t *testing.T) {
 			Value: map[string]any{"data": strings.Repeat("a", 80)},
 			Logs:  []string{"trace"},
 		},
-	}, nil, 120)
+	}, nil, 120, ContentMode{})
 
 	result, err := handler(context.Background(), toolRequest(`return { ok: true };`))
 	if err != nil {
@@ -615,7 +639,7 @@ func (s stubExecutor) Execute(ctx context.Context, code string, mode sandbox.Mod
 func (s stubExecutor) Close() error { return nil }
 
 var _ sandbox.Executor = stubExecutor{}
-var _ mcpserver.ToolHandlerFunc = NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0)
+var _ mcpserver.ToolHandlerFunc = NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0, ContentMode{})
 
 type stubAPICaller struct {
 	do func(ctx context.Context, operation contracts.OperationDescriptor) (any, error)
@@ -631,7 +655,7 @@ func (s stubAPICaller) Do(ctx context.Context, operation contracts.OperationDesc
 func TestToolErrorResultHandlesNil(t *testing.T) {
 	t.Parallel()
 
-	result := toolErrorResult(nil, nil)
+	result := toolErrorResult(nil, nil, ContentMode{})
 	envelope, ok := result.StructuredContent.(contracts.ErrorEnvelope)
 	if !ok {
 		t.Fatalf("StructuredContent type = %T", result.StructuredContent)
@@ -644,7 +668,7 @@ func TestToolErrorResultHandlesNil(t *testing.T) {
 func TestToolHandlerPropagatesBindErrors(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0)
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0, ContentMode{})
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolSearch,

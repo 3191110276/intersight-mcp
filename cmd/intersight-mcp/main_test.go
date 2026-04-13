@@ -189,6 +189,51 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 	}
 }
 
+func TestRetryingBootstrapClientUsesRequestContextForBootstrap(t *testing.T) {
+	t.Parallel()
+
+	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iam/token":
+			<-r.Context().Done()
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer api.Close()
+
+	client := &retryingBootstrapClient{
+		ctx:        context.Background(),
+		timeout:    time.Second,
+		httpClient: api.Client(),
+		baseURL:    api.URL + "/api/v1",
+		oauthCfg: intersight.OAuthConfig{
+			TokenURL:     api.URL + "/iam/token",
+			ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
+			ClientID:     "id",
+			ClientSecret: "secret",
+			HTTPClient:   api.Client(),
+		},
+	}
+
+	requestCtx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+
+	start := time.Now()
+	_, err := client.ensureClient(requestCtx)
+	if err == nil {
+		t.Fatalf("expected bootstrap error")
+	}
+
+	var timeoutErr contracts.TimeoutError
+	if !errors.As(err, &timeoutErr) {
+		t.Fatalf("expected TimeoutError, got %T", err)
+	}
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Fatalf("ensureClient() took %v, want request-bounded timeout", elapsed)
+	}
+}
+
 func TestBootstrapOAuthManagerTimesOutStalledStartupAuth(t *testing.T) {
 	t.Parallel()
 

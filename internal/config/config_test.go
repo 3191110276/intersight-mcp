@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"strings"
 	"testing"
 	"time"
@@ -40,6 +41,9 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.LogFullCode {
 		t.Fatalf("expected log full code to default to false")
 	}
+	if cfg.LegacyContentMirror {
+		t.Fatalf("expected legacy content mirror to default to false")
+	}
 	if cfg.SearchTimeout != limits.SearchTimeout || cfg.PerCallTimeout != limits.PerCallTimeout {
 		t.Fatalf("unexpected hardcoded timeouts: %+v", cfg)
 	}
@@ -67,6 +71,7 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"--wasm-memory", "96MB",
 			"--log-level", "debug",
 			"--log-full-code",
+			"--legacy-content-mirror",
 		},
 		[]string{
 			"INTERSIGHT_CLIENT_ID=id",
@@ -119,6 +124,9 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 	}
 	if !cfg.LogFullCode {
 		t.Fatalf("expected log full code to be enabled")
+	}
+	if !cfg.LegacyContentMirror {
+		t.Fatalf("expected legacy content mirror to be enabled")
 	}
 }
 
@@ -244,5 +252,35 @@ func TestLoadConfigInvalidLogFullCode(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "invalid log-full-code") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestLoadConfigInvalidLegacyContentMirror(t *testing.T) {
+	t.Parallel()
+
+	_, err := Load(nil, []string{
+		"INTERSIGHT_LEGACY_CONTENT_MIRROR=maybe",
+	})
+	if err == nil {
+		t.Fatalf("expected invalid legacy-content-mirror error")
+	}
+	if !strings.Contains(err.Error(), "invalid legacy-content-mirror") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestServeFlagHelpMentionsSharedToolConcurrency(t *testing.T) {
+	t.Parallel()
+
+	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
+	var maxConcurrent int
+	fs.IntVar(&maxConcurrent, "max-concurrent", 0, "maximum concurrent tool executions across search, query, and mutate")
+
+	flagInfo := fs.Lookup("max-concurrent")
+	if flagInfo == nil {
+		t.Fatalf("expected max-concurrent flag to be registered")
+	}
+	if !strings.Contains(flagInfo.Usage, "search, query, and mutate") {
+		t.Fatalf("unexpected usage text: %q", flagInfo.Usage)
 	}
 }

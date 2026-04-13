@@ -19,6 +19,7 @@ import (
 	"github.com/mimaurer/intersight-mcp/intersight"
 	"github.com/mimaurer/intersight-mcp/sandbox"
 	"github.com/mimaurer/intersight-mcp/server"
+	"github.com/mimaurer/intersight-mcp/tools"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -121,6 +122,9 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 		ServerVersion:  version,
 		MaxConcurrent:  cfg.Execution.MaxConcurrent,
 		MaxOutputBytes: cfg.Execution.MaxOutputBytes,
+		ContentMode: tools.ContentMode{
+			MirrorStructuredContent: cfg.LegacyContentMirror,
+		},
 		Logger:         logger,
 		SearchExecutor: searchExec,
 		QueryExecutor:  queryExec,
@@ -220,7 +224,7 @@ func (c *retryingBootstrapClient) ensureClient(ctx context.Context) (*intersight
 			return client, nil
 		}
 
-		manager, err := bootstrapOAuthManager(c.ctx, c.ctx, c.timeout, c.oauthCfg)
+		manager, err := bootstrapOAuthManager(c.ctx, ctx, c.timeout, c.oauthCfg)
 		if err != nil {
 			c.mu.Lock()
 			c.lastErr = err
