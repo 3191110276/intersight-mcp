@@ -41,44 +41,7 @@ Common optional settings:
 | Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
 | Read-only mode | `--read-only` | — | `false` |
 
-Endpoint rules:
-
-- Accepts either a bare host like `intersight.example.com` or an origin-like value
-- Bare hosts are normalized to `https://`
-- If you provide a scheme explicitly, it must be `https://`
-- Must not include user info, a query string, or a fragment
-- Must be the origin only; path components are rejected
-- OAuth and API base URLs are both derived from that HTTPS origin
-
-Proxy rules:
-
-- The server does not inherit `HTTP_PROXY`, `HTTPS_PROXY`, or `NO_PROXY` from the host environment
-- Outbound OAuth and API traffic uses a proxy only when `--proxy` or `INTERSIGHT_PROXY_URL` is set explicitly
-- Supported proxy URL schemes are `http`, `https`, and `socks5`
-
-Examples:
-
-```bash
-INTERSIGHT_CLIENT_ID=... \
-INTERSIGHT_CLIENT_SECRET=... \
-INTERSIGHT_ENDPOINT=intersight.com \
-./bin/intersight-mcp serve
-```
-
-```bash
-INTERSIGHT_CLIENT_ID=... \
-INTERSIGHT_CLIENT_SECRET=... \
-INTERSIGHT_PROXY_URL=http://proxy.example.com:8080 \
-./bin/intersight-mcp serve
-```
-
-```bash
-INTERSIGHT_CLIENT_ID=... \
-INTERSIGHT_CLIENT_SECRET=... \
-./bin/intersight-mcp serve --max-output 1MB
-```
-
-The server can still start without credentials so the offline `search` tool remains available. Live `query` reads and `mutate` writes will return auth errors until credentials work again.
+Outbound OAuth and API traffic uses a proxy only when `--proxy` or `INTERSIGHT_PROXY_URL` is set explicitly
 
 ## Usage
 
