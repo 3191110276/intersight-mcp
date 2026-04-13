@@ -9,15 +9,14 @@ import (
 )
 
 type searchRuntime struct {
-	catalog           contracts.SearchCatalog
-	schemas           map[string]contracts.NormalizedSchema
-	resourceKeys      []string
-	catalogPaths      []string
-	metricGroupKeys   []string
-	metricByNameKeys  []string
-	metricExampleKeys []string
-	schemaKeys        []string
-	baseCatalog       map[string]any
+	catalog          contracts.SearchCatalog
+	schemas          map[string]contracts.NormalizedSchema
+	resourceKeys     []string
+	catalogPaths     []string
+	metricGroupKeys  []string
+	metricByNameKeys []string
+	schemaKeys       []string
+	baseCatalog      map[string]any
 }
 
 func loadSearchRuntime(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*searchRuntime, error) {
@@ -43,18 +42,16 @@ func newSearchRuntime(catalog contracts.SearchCatalog, schemas map[string]contra
 	catalogPaths := sortedMapKeys(catalog.Paths)
 	metricGroupKeys := sortedMapKeys(catalog.Metrics.Groups)
 	metricByNameKeys := sortedMapKeys(catalog.Metrics.ByName)
-	metricExampleKeys := sortedMapKeys(catalog.Metrics.Examples)
 	schemaKeys := sortedMapKeys(schemas)
 
 	return &searchRuntime{
-		catalog:           catalog,
-		schemas:           schemas,
-		resourceKeys:      resourceKeys,
-		catalogPaths:      catalogPaths,
-		metricGroupKeys:   metricGroupKeys,
-		metricByNameKeys:  metricByNameKeys,
-		metricExampleKeys: metricExampleKeys,
-		schemaKeys:        schemaKeys,
+		catalog:          catalog,
+		schemas:          schemas,
+		resourceKeys:     resourceKeys,
+		catalogPaths:     catalogPaths,
+		metricGroupKeys:  metricGroupKeys,
+		metricByNameKeys: metricByNameKeys,
+		schemaKeys:       schemaKeys,
 		baseCatalog: map[string]any{
 			"metadata":      catalog.Metadata,
 			"resourceNames": resourceKeys,
@@ -110,10 +107,6 @@ func (r *searchRuntime) install(ctx *qjs.Context) error {
 		value, ok := r.catalog.Metrics.ByName[key]
 		return value, ok
 	})
-	registerLookup("__intersight_search_metric_example_get__", func(key string) (any, bool) {
-		value, ok := r.catalog.Metrics.Examples[key]
-		return value, ok
-	})
 	registerLookup("__intersight_search_schema_get__", func(key string) (any, bool) {
 		value, ok := r.schemas[key]
 		return value, ok
@@ -125,7 +118,6 @@ func (r *searchRuntime) install(ctx *qjs.Context) error {
 		"__search_catalog_paths":       r.catalogPaths,
 		"__search_metric_group_keys":   r.metricGroupKeys,
 		"__search_metric_by_name_keys": r.metricByNameKeys,
-		"__search_metric_example_keys": r.metricExampleKeys,
 		"__search_schema_keys":         r.schemaKeys,
 	}
 	for name, value := range values {
@@ -167,8 +159,7 @@ func (r *searchRuntime) install(ctx *qjs.Context) error {
 	    resourceNames: catalogBase.resourceNames || [],
 	    metrics: {
 	      groups: createLookupProxy(__search_metric_group_keys, key => __intersight_search_metric_group_get__(key)),
-      byName: createLookupProxy(__search_metric_by_name_keys, key => __intersight_search_metric_by_name_get__(key)),
-	      examples: createLookupProxy(__search_metric_example_keys, key => __intersight_search_metric_example_get__(key))
+      byName: createLookupProxy(__search_metric_by_name_keys, key => __intersight_search_metric_by_name_get__(key))
 	    },
 	    resources: createLookupProxy(__search_resource_keys, key => __intersight_search_resource_get__(key)),
 	    paths: createLookupProxy(__search_catalog_paths, key => __intersight_search_catalog_path_get__(key)),

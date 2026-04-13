@@ -195,10 +195,9 @@ func TestSearchMetricsCatalogAvailable(t *testing.T) {
 return {
   metricKeys: Object.keys((catalog.metrics && catalog.metrics.byName) || {}),
   groupKeys: Object.keys((catalog.metrics && catalog.metrics.groups) || {}),
-  exampleKeys: Object.keys((catalog.metrics && catalog.metrics.examples) || {}),
+  hasExamples: !!(catalog.metrics && catalog.metrics.examples),
   metric: catalog.metrics.byName["system.cpu.utilization_user"],
-  group: catalog.metrics.groups["system.cpu"],
-  example: catalog.metrics.examples["cpu-breakdown"]
+  group: catalog.metrics.groups["system.cpu"]
 };
 `, ModeSearch)
 	if err != nil {
@@ -212,7 +211,7 @@ return {
 	if value["metric"] == nil || value["group"] == nil {
 		t.Fatalf("unexpected metrics payload: %#v", value)
 	}
-	if value["metricKeys"] == nil || value["groupKeys"] == nil || value["exampleKeys"] == nil {
+	if value["metricKeys"] == nil || value["groupKeys"] == nil {
 		t.Fatalf("unexpected metric key payloads: %#v", value)
 	}
 	metric, ok := value["metric"].(map[string]any)
@@ -223,8 +222,8 @@ return {
 	if !ok || len(dimensions) == 0 {
 		t.Fatalf("metric dimensions = %#v, want inherited queryable dimensions", metric["dimensions"])
 	}
-	if value["example"] == nil {
-		t.Fatalf("unexpected example payload: %#v", value)
+	if value["hasExamples"] != false {
+		t.Fatalf("expected metrics.examples to be hidden from catalog: %#v", value)
 	}
 }
 

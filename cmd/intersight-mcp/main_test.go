@@ -183,6 +183,12 @@ func mustParseURL(t *testing.T, raw string) *url.URL {
 	return parsed
 }
 
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
 func TestServeFailsOnMalformedEmbeddedArtifacts(t *testing.T) {
 	t.Parallel()
 
@@ -222,6 +228,37 @@ func TestServeStartsWhenAuthBootstrapFails(t *testing.T) {
 
 	if err := serveWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client()); err != nil {
 		t.Fatalf("serveWithIO() error = %v", err)
+	}
+}
+
+func TestServeStartsWithoutBlockingOnAuthBootstrap(t *testing.T) {
+	t.Parallel()
+
+	api := testutil.NewTCP4TLSServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iam/token":
+			<-r.Context().Done()
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer api.Close()
+
+	env := []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+		"INTERSIGHT_ENDPOINT=" + api.URL,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	start := time.Now()
+	if err := serveWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client()); err != nil {
+		t.Fatalf("serveWithIO() error = %v", err)
+	}
+	if elapsed := time.Since(start); elapsed > 200*time.Millisecond {
+		t.Fatalf("serveWithIO() took %v, want startup to avoid blocking on auth bootstrap", elapsed)
 	}
 }
 
@@ -583,6 +620,62 @@ func TestRetryingBootstrapClientWaitersCanTimeOutIndependently(t *testing.T) {
 		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("timed out waiting for first bootstrap attempt to finish")
+	}
+}
+
+func TestRetryingBootstrapClientBacksOffAfterFailure(t *testing.T) {
+	t.Parallel()
+
+	var tokenCalls atomic.Int32
+	client := &retryingBootstrapClient{
+		ctx:            context.Background(),
+		timeout:        time.Second,
+		httpClient:     &http.Client{},
+		baseURL:        "https://example.com/api/v1",
+		initialBackoff: 100 * time.Millisecond,
+		maxBackoff:     time.Second,
+		now:            time.Now,
+		oauthCfg: intersight.OAuthConfig{
+			TokenURL:     "https://example.com/iam/token",
+			ValidateURL:  "https://example.com/api/v1/iam/UserPreferences",
+			ClientID:     "id",
+			ClientSecret: "secret",
+			HTTPClient: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				tokenCalls.Add(1)
+				return &http.Response{
+					StatusCode: http.StatusUnauthorized,
+					Header:     make(http.Header),
+					Body:       io.NopCloser(strings.NewReader(`{"message":"bad credentials"}`)),
+					Request:    req,
+				}, nil
+			})},
+		},
+	}
+
+	_, err := client.ensureClient(context.Background())
+	if err == nil {
+		t.Fatal("expected bootstrap error")
+	}
+	if got := tokenCalls.Load(); got != 1 {
+		t.Fatalf("token calls after first attempt = %d, want 1", got)
+	}
+
+	_, err = client.ensureClient(context.Background())
+	if err == nil {
+		t.Fatal("expected cached bootstrap error during backoff")
+	}
+	if got := tokenCalls.Load(); got != 1 {
+		t.Fatalf("token calls during backoff = %d, want 1", got)
+	}
+
+	time.Sleep(125 * time.Millisecond)
+
+	_, err = client.ensureClient(context.Background())
+	if err == nil {
+		t.Fatal("expected bootstrap error after backoff retry")
+	}
+	if got := tokenCalls.Load(); got != 2 {
+		t.Fatalf("token calls after backoff expiry = %d, want 2", got)
 	}
 }
 

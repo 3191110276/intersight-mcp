@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -26,6 +27,11 @@ import (
 )
 
 var version = "dev"
+
+const (
+	initialBootstrapBackoff = 1 * time.Second
+	maxBootstrapBackoff     = 1 * time.Minute
+)
 
 func main() {
 	if len(os.Args) < 2 {
@@ -104,18 +110,14 @@ func serveWithIOAndHTTPClient(ctx context.Context, args []string, stdin io.Reade
 			ClientSecret: cfg.ClientSecret,
 			HTTPClient:   httpClient,
 		}
-		oauthManager, authErr := bootstrapOAuthManager(ctx, ctx, cfg.PerCallTimeout, oauthCfg)
-		if authErr != nil {
-			apiCaller = &retryingBootstrapClient{
-				ctx:        ctx,
-				timeout:    cfg.PerCallTimeout,
-				httpClient: httpClient,
-				baseURL:    cfg.APIBaseURL,
-				oauthCfg:   oauthCfg,
-				lastErr:    authErr,
-			}
-		} else {
-			apiCaller = sandboxClient{client: intersight.NewClient(httpClient, cfg.APIBaseURL, oauthManager)}
+		apiCaller = &retryingBootstrapClient{
+			ctx:            ctx,
+			timeout:        cfg.PerCallTimeout,
+			httpClient:     httpClient,
+			baseURL:        cfg.APIBaseURL,
+			oauthCfg:       oauthCfg,
+			initialBackoff: initialBootstrapBackoff,
+			maxBackoff:     maxBootstrapBackoff,
 		}
 	}
 
@@ -222,10 +224,16 @@ type retryingBootstrapClient struct {
 	baseURL    string
 	oauthCfg   intersight.OAuthConfig
 
-	mu             sync.RWMutex
-	client         *intersight.Client
-	lastErr        error
-	bootstrapGroup singleflight.Group
+	initialBackoff time.Duration
+	maxBackoff     time.Duration
+	now            func() time.Time
+
+	mu                   sync.RWMutex
+	client               *intersight.Client
+	lastErr              error
+	bootstrapBackoff     time.Duration
+	nextBootstrapAttempt time.Time
+	bootstrapGroup       singleflight.Group
 }
 
 func (c *retryingBootstrapClient) Do(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
@@ -237,26 +245,20 @@ func (c *retryingBootstrapClient) Do(ctx context.Context, operation contracts.Op
 }
 
 func (c *retryingBootstrapClient) ensureClient(ctx context.Context) (*intersight.Client, error) {
-	c.mu.RLock()
-	client := c.client
-	c.mu.RUnlock()
-	if client != nil {
-		return client, nil
+	now := c.timeNow()
+	if client, err := c.cachedClient(now); client != nil || err != nil {
+		return client, err
 	}
 
 	resultCh := c.bootstrapGroup.DoChan("bootstrap-client", func() (any, error) {
-		c.mu.RLock()
-		client := c.client
-		c.mu.RUnlock()
-		if client != nil {
-			return client, nil
+		now := c.timeNow()
+		if client, err := c.cachedClient(now); client != nil || err != nil {
+			return client, err
 		}
 
 		manager, err := bootstrapOAuthManager(c.ctx, ctx, c.timeout, c.oauthCfg)
 		if err != nil {
-			c.mu.Lock()
-			c.lastErr = err
-			c.mu.Unlock()
+			c.recordBootstrapFailure(err, now)
 			return nil, err
 		}
 
@@ -269,6 +271,8 @@ func (c *retryingBootstrapClient) ensureClient(ctx context.Context) (*intersight
 		}
 		c.client = bootstrapped
 		c.lastErr = nil
+		c.bootstrapBackoff = 0
+		c.nextBootstrapAttempt = time.Time{}
 		return c.client, nil
 	})
 
@@ -285,6 +289,61 @@ func (c *retryingBootstrapClient) ensureClient(ctx context.Context) (*intersight
 		}
 		return client, nil
 	}
+}
+
+func (c *retryingBootstrapClient) cachedClient(now time.Time) (*intersight.Client, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.client != nil {
+		return c.client, nil
+	}
+	if c.lastErr != nil && now.Before(c.nextBootstrapAttempt) {
+		return nil, c.lastErr
+	}
+	return nil, nil
+}
+
+func (c *retryingBootstrapClient) recordBootstrapFailure(err error, now time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.lastErr = err
+	backoff := c.bootstrapBackoff
+	if backoff <= 0 {
+		backoff = c.initialBackoff
+		if backoff <= 0 {
+			backoff = initialBootstrapBackoff
+		}
+	} else {
+		backoff = minDuration(backoff*2, c.maximumBackoff())
+	}
+	c.bootstrapBackoff = backoff
+	c.nextBootstrapAttempt = now.Add(backoff)
+}
+
+func (c *retryingBootstrapClient) maximumBackoff() time.Duration {
+	if c.maxBackoff > 0 {
+		return c.maxBackoff
+	}
+	return maxBootstrapBackoff
+}
+
+func (c *retryingBootstrapClient) timeNow() time.Time {
+	if c.now != nil {
+		return c.now()
+	}
+	return time.Now()
+}
+
+func minDuration(left, right time.Duration) time.Duration {
+	if left <= 0 {
+		return right
+	}
+	if right <= 0 {
+		return left
+	}
+	return time.Duration(math.Min(float64(left), float64(right)))
 }
 
 func bootstrapWaitError(err error) error {

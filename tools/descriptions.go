@@ -2,8 +2,6 @@ package tools
 
 const searchDescription = `Search the Intersight discovery catalog for resources and metrics.
 
-Code runs as an async-function body; ` + "`return`" + ` the result. Output is JSON-serialized. ` + "`console.log()`" + ` is shown separately.
-
 Only global: ` + "`catalog`" + `
 - ` + "`resources`" + `: resource catalog
 - ` + "`paths`" + `: REST path -> resource keys
@@ -20,7 +18,7 @@ Examples:
 
 const queryDescription = `Query Intersight through ` + "`sdk`" + ` without persisting changes. Read-shaped SDK methods execute normally; write-shaped methods run offline validation only. Use ` + "`mutate`" + ` for persistent writes.
 
-Code runs as an async-function body; ` + "`return`" + ` the result. Output is JSON-serialized. ` + "`console.log()`" + ` is shown separately. Default limit: 250 API calls/execution; override with ` + "`--max-api-calls`" + ` or ` + "`INTERSIGHT_MAX_API_CALLS`" + `. Per-call timeout: 15s.
+Default limit: 250 API calls/execution; override with ` + "`--max-api-calls`" + ` or ` + "`INTERSIGHT_MAX_API_CALLS`" + `. Per-call timeout: 15s.
 
 Global: ` + "`sdk`" + `
 - ` + "`await sdk.<namespace>.<resource>.<method>({ path?, query?, body?, ...headerArgs })`" + `
@@ -37,7 +35,7 @@ Examples:
 
 const mutateDescription = `Persist write-shaped Intersight SDK operations through ` + "`sdk`" + `. Use ` + "`query`" + ` for the same validation without API calls.
 
-Code runs as an async-function body; ` + "`return`" + ` the result. Output is JSON-serialized. ` + "`console.log()`" + ` is shown separately. Default limit: 250 API calls/execution; override with ` + "`--max-api-calls`" + ` or ` + "`INTERSIGHT_MAX_API_CALLS`" + `. Per-call timeout: 15s.
+Default limit: 250 API calls/execution; override with ` + "`--max-api-calls`" + ` or ` + "`INTERSIGHT_MAX_API_CALLS`" + `. Per-call timeout: 15s.
 
 Global: ` + "`sdk`" + `
 - ` + "`await sdk.<namespace>.<resource>.<method>({ path?, query?, body?, ...headerArgs })`" + `
