@@ -1,6 +1,6 @@
 # Intersight MCP Server
 
-`intersight-mcp` is a local stdio MCP server for Cisco Intersight.
+This is an MCP server for Cisco Intersight which exposes the entire API.
 
 It exposes three tools:
 
