@@ -32,11 +32,11 @@ Configuration variables:
 | Client ID | — | `INTERSIGHT_CLIENT_ID` | Yes | none |
 | Client secret | — | `INTERSIGHT_CLIENT_SECRET` | Yes | none |
 | Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | No | `https://intersight.com` |
-| Explicit outbound proxy URL | `--proxy` | `INTERSIGHT_PROXY_URL` | No | disabled |
+| Proxy URL | `--proxy` | `INTERSIGHT_PROXY_URL` | No | disabled |
 | Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | No | `512KB` |
 | Read-only mode | `--read-only` | — | No | `false` |
 
-Outbound OAuth and API traffic uses a proxy only when `--proxy` or `INTERSIGHT_PROXY_URL` is set explicitly
+The server does not inherit `HTTP_PROXY`, `HTTPS_PROXY`, or `NO_PROXY`. Proxying is enabled only through `--proxy` or `INTERSIGHT_PROXY_URL`.
 
 ## Usage
 
