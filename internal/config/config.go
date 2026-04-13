@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"strconv"
@@ -63,6 +64,10 @@ func Load(args []string, environ []string) (Config, error) {
 	var maxConcurrentFlag int
 	var logLevelFlag string
 	var logFullCodeFlag bool
+	var searchTimeoutFlag string
+	var perCallTimeoutFlag string
+	var maxCodeSizeFlag string
+	var wasmMemoryFlag string
 
 	fs.StringVar(&endpointFlag, "endpoint", "", "base Intersight endpoint origin")
 	fs.StringVar(&timeoutFlag, "timeout", "", "global execution timeout")
@@ -71,6 +76,10 @@ func Load(args []string, environ []string) (Config, error) {
 	fs.IntVar(&maxConcurrentFlag, "max-concurrent", 0, "maximum concurrent query/mutate executions")
 	fs.StringVar(&logLevelFlag, "log-level", "", "log level: info or debug")
 	fs.BoolVar(&logFullCodeFlag, "log-full-code", false, "include full submitted code in logs")
+	fs.StringVar(&searchTimeoutFlag, "search-timeout", "", "timeout for search executions")
+	fs.StringVar(&perCallTimeoutFlag, "per-call-timeout", "", "timeout for individual HTTP and bootstrap calls")
+	fs.StringVar(&maxCodeSizeFlag, "max-code-size", "", "maximum submitted code size")
+	fs.StringVar(&wasmMemoryFlag, "wasm-memory", "", "QuickJS WebAssembly memory limit")
 
 	if err := fs.Parse(args); err != nil {
 		return Config{}, err
@@ -114,6 +123,36 @@ func Load(args []string, environ []string) (Config, error) {
 			return Config{}, fmt.Errorf("invalid timeout %q: must be positive", timeoutRaw)
 		}
 		cfg.Execution.GlobalTimeout = timeout
+	}
+
+	searchTimeoutRaw := env["INTERSIGHT_SEARCH_TIMEOUT"]
+	if setFlags["search-timeout"] {
+		searchTimeoutRaw = searchTimeoutFlag
+	}
+	if strings.TrimSpace(searchTimeoutRaw) != "" {
+		timeout, err := time.ParseDuration(strings.TrimSpace(searchTimeoutRaw))
+		if err != nil {
+			return Config{}, fmt.Errorf("invalid search-timeout %q: %w", searchTimeoutRaw, err)
+		}
+		if timeout <= 0 {
+			return Config{}, fmt.Errorf("invalid search-timeout %q: must be positive", searchTimeoutRaw)
+		}
+		cfg.SearchTimeout = timeout
+	}
+
+	perCallTimeoutRaw := env["INTERSIGHT_PER_CALL_TIMEOUT"]
+	if setFlags["per-call-timeout"] {
+		perCallTimeoutRaw = perCallTimeoutFlag
+	}
+	if strings.TrimSpace(perCallTimeoutRaw) != "" {
+		timeout, err := time.ParseDuration(strings.TrimSpace(perCallTimeoutRaw))
+		if err != nil {
+			return Config{}, fmt.Errorf("invalid per-call-timeout %q: %w", perCallTimeoutRaw, err)
+		}
+		if timeout <= 0 {
+			return Config{}, fmt.Errorf("invalid per-call-timeout %q: must be positive", perCallTimeoutRaw)
+		}
+		cfg.PerCallTimeout = timeout
 	}
 
 	maxOutputRaw := env["INTERSIGHT_MAX_OUTPUT"]
@@ -177,6 +216,30 @@ func Load(args []string, environ []string) (Config, error) {
 			return Config{}, fmt.Errorf("invalid log-full-code %q: must be true or false", logFullCodeRaw)
 		}
 		cfg.LogFullCode = value
+	}
+
+	maxCodeSizeRaw := env["INTERSIGHT_MAX_CODE_SIZE"]
+	if setFlags["max-code-size"] {
+		maxCodeSizeRaw = maxCodeSizeFlag
+	}
+	if strings.TrimSpace(maxCodeSizeRaw) != "" {
+		size, err := parsePositiveByteSizeInt("max-code-size", maxCodeSizeRaw)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.MaxCodeSize = size
+	}
+
+	wasmMemoryRaw := env["INTERSIGHT_WASM_MEMORY"]
+	if setFlags["wasm-memory"] {
+		wasmMemoryRaw = wasmMemoryFlag
+	}
+	if strings.TrimSpace(wasmMemoryRaw) != "" {
+		size, err := parsePositiveByteSizeUint64("wasm-memory", wasmMemoryRaw)
+		if err != nil {
+			return Config{}, err
+		}
+		cfg.WASMMemory = size
 	}
 
 	return cfg, nil
@@ -269,6 +332,25 @@ func parseByteSize(raw string) (int64, error) {
 		return 0, fmt.Errorf("invalid max-output %q: must be positive", raw)
 	}
 	return value, nil
+}
+
+func parsePositiveByteSizeInt(name, raw string) (int, error) {
+	size, err := parseByteSize(raw)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s %q: %w", name, raw, err)
+	}
+	if size > math.MaxInt {
+		return 0, fmt.Errorf("invalid %s %q: exceeds platform integer size", name, raw)
+	}
+	return int(size), nil
+}
+
+func parsePositiveByteSizeUint64(name, raw string) (uint64, error) {
+	size, err := parseByteSize(raw)
+	if err != nil {
+		return 0, fmt.Errorf("invalid %s %q: %w", name, raw, err)
+	}
+	return uint64(size), nil
 }
 
 func parseEnv(environ []string) map[string]string {

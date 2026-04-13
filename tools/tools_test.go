@@ -19,7 +19,7 @@ import (
 func TestServerToolsRegistration(t *testing.T) {
 	t.Parallel()
 
-	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), false)
+	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), 0, false)
 	if len(tools) != 3 {
 		t.Fatalf("len(ServerTools()) = %d, want 3", len(tools))
 	}
@@ -56,7 +56,7 @@ func TestSuccessMapping(t *testing.T) {
 			Value: map[string]any{"ok": true},
 			Logs:  []string{"hello", "world"},
 		},
-	}, nil)
+	}, nil, 0)
 
 	result, err := handler(context.Background(), toolRequest(`return { ok: true };`))
 	if err != nil {
@@ -89,7 +89,7 @@ func TestSuccessMapping(t *testing.T) {
 func TestSearchToolUsesSharedLimiter(t *testing.T) {
 	t.Parallel()
 
-	tool := NewSearchTool(stubExecutor{}, NewLimiter(1))
+	tool := NewSearchTool(stubExecutor{}, NewLimiter(1), 0)
 	if tool.Tool.Name != ToolSearch {
 		t.Fatalf("tool name = %q, want %q", tool.Tool.Name, ToolSearch)
 	}
@@ -102,7 +102,7 @@ func TestSearchToolUsesSharedLimiter(t *testing.T) {
 			<-blocked
 			return sandbox.Result{Value: map[string]any{"ok": true}}, nil
 		},
-	}, NewLimiter(1))
+	}, NewLimiter(1), 0)
 
 	done := make(chan *mcp.CallToolResult, 1)
 	go func() {
@@ -146,7 +146,7 @@ func TestTelemetrySuccessMappingIgnoresPresentationHints(t *testing.T) {
 			Value:        map[string]any{"rows": 3},
 			Presentation: &sandbox.PresentationHint{Kind: sandbox.PresentationKindMetricsApp},
 		},
-	}, nil)
+	}, nil, 0)
 
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
@@ -171,7 +171,7 @@ func TestErrorMapping(t *testing.T) {
 	handler := NewToolHandler(sandbox.ModeQuery, stubExecutor{
 		err:    contracts.ReferenceError{Message: "spec is not defined"},
 		result: sandbox.Result{Logs: []string{"trace 1"}},
-	}, nil)
+	}, nil, 0)
 
 	result, err := handler(context.Background(), toolRequest(`return spec;`))
 	if err != nil {
@@ -219,7 +219,7 @@ func TestQueryHTTPFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
-	handler := NewToolHandler(sandbox.ModeQuery, exec, nil)
+	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0)
 
 	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
 	if err != nil {
@@ -255,7 +255,7 @@ func TestQueryNetworkFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
-	handler := NewToolHandler(sandbox.ModeQuery, exec, nil)
+	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0)
 
 	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
 	if err != nil {
@@ -288,7 +288,7 @@ func TestQueryAuthFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
-	handler := NewToolHandler(sandbox.ModeQuery, exec, nil)
+	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0)
 
 	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
 	if err != nil {
@@ -313,7 +313,7 @@ func TestQueryAuthFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 func TestQueryAPICallReturnsReferenceErrorEnvelope(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeQuery, sandbox.NewQJSExecutor(toolTestConfig(), stubAPICaller{}), nil)
+	handler := NewToolHandler(sandbox.ModeQuery, sandbox.NewQJSExecutor(toolTestConfig(), stubAPICaller{}), nil, 0)
 
 	result, err := handler(context.Background(), toolRequest(`return await api.call('GET', '/api/v1/test');`))
 	if err != nil {
@@ -347,7 +347,7 @@ func TestOverloadRejection(t *testing.T) {
 			return sandbox.Result{Value: map[string]any{"done": true}}, nil
 		},
 	}
-	handler := NewToolHandler(sandbox.ModeQuery, exec, NewLimiter(1))
+	handler := NewToolHandler(sandbox.ModeQuery, exec, NewLimiter(1), 0)
 
 	done := make(chan *mcp.CallToolResult, 1)
 	go func() {
@@ -386,7 +386,7 @@ func TestOverloadRejection(t *testing.T) {
 func TestMutateHandlerRequiresChangeSummary(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil)
+	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil, 0)
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolMutate,
@@ -414,7 +414,7 @@ func TestMutateHandlerRequiresChangeSummary(t *testing.T) {
 func TestMutateHandlerRejectsBlankChangeSummary(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil)
+	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil, 0)
 	result, err := handler(context.Background(), mutateToolRequest("   ", `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`))
 	if err != nil {
 		t.Fatalf("handler() error = %v", err)
@@ -437,7 +437,7 @@ func TestMutateHandlerRejectsBlankChangeSummary(t *testing.T) {
 func TestSearchHandlerRequiresCodeThroughErrorEnvelope(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil)
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0)
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolSearch,
@@ -475,7 +475,7 @@ func TestMutateHandlerPassesOnlyCodeToExecutor(t *testing.T) {
 			gotMode = mode
 			return sandbox.Result{Value: map[string]any{"ok": true}}, nil
 		},
-	}, nil)
+	}, nil, 0)
 
 	result, err := handler(context.Background(), mutateToolRequest("Delete the NTP policy", `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`))
 	if err != nil {
@@ -489,6 +489,25 @@ func TestMutateHandlerPassesOnlyCodeToExecutor(t *testing.T) {
 	}
 	if gotCode != `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });` {
 		t.Fatalf("code = %q", gotCode)
+	}
+}
+
+func TestToolHandlerDoesNotRecountDuplicatedMCPEnvelopeSize(t *testing.T) {
+	t.Parallel()
+
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{
+		result: sandbox.Result{
+			Value: map[string]any{"data": strings.Repeat("a", 80)},
+			Logs:  []string{"trace"},
+		},
+	}, nil, 120)
+
+	result, err := handler(context.Background(), toolRequest(`return { ok: true };`))
+	if err != nil {
+		t.Fatalf("handler() error = %v", err)
+	}
+	if result.IsError {
+		t.Fatalf("result.IsError = true, want false")
 	}
 }
 
@@ -596,7 +615,7 @@ func (s stubExecutor) Execute(ctx context.Context, code string, mode sandbox.Mod
 func (s stubExecutor) Close() error { return nil }
 
 var _ sandbox.Executor = stubExecutor{}
-var _ mcpserver.ToolHandlerFunc = NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil)
+var _ mcpserver.ToolHandlerFunc = NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0)
 
 type stubAPICaller struct {
 	do func(ctx context.Context, operation contracts.OperationDescriptor) (any, error)
@@ -625,7 +644,7 @@ func TestToolErrorResultHandlesNil(t *testing.T) {
 func TestToolHandlerPropagatesBindErrors(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil)
+	handler := NewToolHandler(sandbox.ModeSearch, stubExecutor{}, nil, 0)
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolSearch,

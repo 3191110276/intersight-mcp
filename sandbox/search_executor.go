@@ -39,6 +39,10 @@ func NewSearchExecutor(cfg Config, specJSON, catalogJSON, rulesJSON, searchJSON 
 		rulesJSON:        append([]byte(nil), rulesJSON...),
 		publicSearchJSON: publicSearchJSON,
 	}
+	exec.search, err = loadSearchRuntime(specJSON, catalogJSON, rulesJSON, publicSearchJSON)
+	if err != nil {
+		return nil, err
+	}
 	return exec, nil
 }
 
@@ -55,6 +59,7 @@ func NewSearchExecutorFromBundle(cfg Config, bundle *ArtifactBundle) (Executor, 
 		catalogJSON:      append([]byte(nil), bundle.catalogJSON...),
 		rulesJSON:        append([]byte(nil), bundle.rulesJSON...),
 		publicSearchJSON: append([]byte(nil), bundle.publicSearchJSON...),
+		search:           bundle.search,
 	}, nil
 }
 
@@ -64,6 +69,7 @@ type searchExecutor struct {
 	catalogJSON       []byte
 	rulesJSON         []byte
 	publicSearchJSON  []byte
+	search            *searchRuntime
 	beforeLoadGlobals func(context.Context) error
 }
 
@@ -71,34 +77,21 @@ func (e *searchExecutor) loadGlobals(ctx context.Context, rt *qjs.Runtime) error
 	if err := ctx.Err(); err != nil {
 		return normalizeJSError(ctx, err)
 	}
-	spec := rt.Context().ParseJSON(string(e.specJSON))
-	sdk := rt.Context().ParseJSON(string(e.catalogJSON))
-	rules := rt.Context().ParseJSON(string(e.rulesJSON))
-	search := rt.Context().ParseJSON(string(e.publicSearchJSON))
-	rt.Context().Global().SetPropertyStr("catalog", search)
-	rt.Context().Global().SetPropertyStr("spec", spec)
-	rt.Context().Global().SetPropertyStr("sdk", sdk)
-	rt.Context().Global().SetPropertyStr("rules", rules)
-	if err := ctx.Err(); err != nil {
-		return normalizeJSError(ctx, err)
+	if e.search != nil {
+		if err := e.search.install(rt.Context()); err != nil {
+			return err
+		}
+	} else {
+		search := rt.Context().ParseJSON(string(e.publicSearchJSON))
+		rt.Context().Global().SetPropertyStr("catalog", search)
+		spec := rt.Context().ParseJSON(string(e.specJSON))
+		sdk := rt.Context().ParseJSON(string(e.catalogJSON))
+		rules := rt.Context().ParseJSON(string(e.rulesJSON))
+		rt.Context().Global().SetPropertyStr("spec", spec)
+		rt.Context().Global().SetPropertyStr("sdk", sdk)
+		rt.Context().Global().SetPropertyStr("rules", rules)
 	}
-	if _, err := rt.Context().Eval("freeze_spec.js", qjs.Code(`
-const __freezeSeen = new WeakSet();
-function __deepFreeze(value) {
-  if (!value || typeof value !== 'object' || __freezeSeen.has(value)) {
-    return value;
-  }
-  __freezeSeen.add(value);
-  for (const key of Object.getOwnPropertyNames(value)) {
-    __deepFreeze(value[key]);
-  }
-  return Object.freeze(value);
-}
-__deepFreeze(sdk);
-__deepFreeze(rules);
-__deepFreeze(catalog);
-__deepFreeze(spec);
-`)); err != nil {
+	if err := ctx.Err(); err != nil {
 		return normalizeJSError(ctx, err)
 	}
 	return nil

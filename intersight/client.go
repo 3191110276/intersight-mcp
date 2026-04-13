@@ -17,6 +17,13 @@ import (
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 )
 
+const (
+	// Intersight responses can be up to 16 MiB. Read one extra byte so we can
+	// detect oversized payloads and return an explicit limit error instead of
+	// surfacing a misleading JSON decode failure on truncated data.
+	maxIntersightResponseBytes = 16 << 20
+)
+
 type Client struct {
 	httpClient *http.Client
 	baseURL    string
@@ -103,7 +110,7 @@ func (c *Client) Do(ctx context.Context, operation contracts.OperationDescriptor
 	}
 	defer resp.Body.Close()
 
-	body, readErr := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxIntersightResponseBytes+1))
 	if readErr != nil {
 		internalpkg.RecordAPICall(ctx, internalpkg.APICallRecord{
 			Method:       operation.Method,
@@ -121,6 +128,15 @@ func (c *Client) Do(ctx context.Context, operation contracts.OperationDescriptor
 		ResponseSize: len(body),
 		DurationMS:   time.Since(start).Milliseconds(),
 	})
+	if len(body) > maxIntersightResponseBytes {
+		return nil, contracts.OutputTooLarge{
+			Message: fmt.Sprintf("Intersight response exceeded the %d MiB limit", maxIntersightResponseBytes/(1<<20)),
+			Details: map[string]any{
+				"bytes": len(body),
+				"limit": maxIntersightResponseBytes,
+			},
+		}
+	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, contracts.HTTPError{

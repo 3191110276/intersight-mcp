@@ -84,8 +84,8 @@ Supported configuration comes from flags and matching environment variables. Fla
 | Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | `https://intersight.com` |
 | Global execution timeout | `--timeout` | `INTERSIGHT_TIMEOUT` | `40s` |
 | Max API calls per execution | `--max-api-calls` | `INTERSIGHT_MAX_API_CALLS` | `250` |
-| Max serialized output | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
-| Max concurrent `query`/`mutate` executions | `--max-concurrent` | `INTERSIGHT_MAX_CONCURRENT` | `50` |
+| Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
+| Max concurrent tool executions | `--max-concurrent` | `INTERSIGHT_MAX_CONCURRENT` | `50` |
 | Log level | `--log-level` | `INTERSIGHT_LOG_LEVEL` | `info` |
 | Include full submitted code in logs | `--log-full-code` | `INTERSIGHT_LOG_FULL_CODE` | `false` |
 
@@ -95,6 +95,10 @@ Credentials required for live `query` reads and `mutate` writes:
 - `INTERSIGHT_CLIENT_SECRET`
 
 The server can still start without credentials so the offline `search` tool remains available. Write-shaped `query` validation also remains available because it runs locally.
+
+`--max-output` applies to the serialized tool payload produced by sandbox execution, before MCP response wrapping. It does not count the duplicated MCP envelope fields on top of that payload.
+
+`--max-concurrent` is a shared process-wide limiter across `search`, `query`, and `mutate`. The default limit is `50` in-flight tool executions.
 
 Endpoint validation rules:
 

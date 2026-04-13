@@ -5,6 +5,6 @@ import (
 	"github.com/mimaurer/intersight-mcp/sandbox"
 )
 
-func NewQueryTool(exec sandbox.Executor, limiter *Limiter, exposeMetricsApps bool) mcpserver.ServerTool {
-	return newServerTool(ToolQuery, queryTitle, queryDescription, sandbox.ModeQuery, exec, limiter, true, false, exposeMetricsApps)
+func NewQueryTool(exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, exposeMetricsApps bool) mcpserver.ServerTool {
+	return newServerTool(ToolQuery, queryTitle, queryDescription, sandbox.ModeQuery, exec, limiter, maxOutputBytes, true, false, exposeMetricsApps)
 }

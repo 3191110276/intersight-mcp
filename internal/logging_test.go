@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"testing"
 	"time"
 
@@ -124,5 +125,30 @@ func TestAPICallRecorderSnapshot(t *testing.T) {
 	}
 	if calls[0].Path != "/api/v1/test" {
 		t.Fatalf("calls[0].Path = %q, want /api/v1/test", calls[0].Path)
+	}
+}
+
+func TestStdioErrorLoggerRoutesToStructuredLogs(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	logger := NewLogger(&buf, config.LogLevelDebug, false)
+
+	if _, err := io.WriteString(logger.StdioErrorLogger().Writer(), "Error reading input: boom\n"); err != nil {
+		t.Fatalf("WriteString() error = %v", err)
+	}
+
+	var payload map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal log entry: %v", err)
+	}
+	if payload["component"] != "mcp-stdio" {
+		t.Fatalf("component = %#v, want %q", payload["component"], "mcp-stdio")
+	}
+	if payload["msg"] != "server message" {
+		t.Fatalf("msg = %#v, want %q", payload["msg"], "server message")
+	}
+	if payload["message"] != "Error reading input: boom" {
+		t.Fatalf("message = %#v, want %q", payload["message"], "Error reading input: boom")
 	}
 }

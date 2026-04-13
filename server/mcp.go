@@ -27,6 +27,7 @@ type RuntimeConfig struct {
 	ServerName        string
 	ServerVersion     string
 	MaxConcurrent     int
+	MaxOutputBytes    int64
 	ExposeMetricsApps bool
 	Logger            *internalpkg.Logger
 
@@ -68,18 +69,23 @@ func NewRuntime(cfg RuntimeConfig) (*Runtime, error) {
 		cfg.ServerName,
 		cfg.ServerVersion,
 		mcpserver.WithRecovery(),
-		// Resource support is intentionally left disabled until the metrics app
-		// placeholder is wired into a real MCP resource surface.
+		// Metrics-app resources are still in development. Keep MCP resource
+		// support disabled until the placeholder flow is replaced with a real
+		// resource surface and tool response metadata wiring.
 		mcpserver.WithResourceCapabilities(false, false),
 	)
-	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent), cfg.ExposeMetricsApps)
+	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent), cfg.MaxOutputBytes, cfg.ExposeMetricsApps)
 	for i := range serverTools {
 		serverTools[i].Handler = wrapToolHandler(serverTools[i].Tool.Name, serverTools[i].Handler, cfg.Logger)
 	}
 	srv.AddTools(serverTools...)
 
 	stdio := mcpserver.NewStdioServer(srv)
-	stdio.SetErrorLogger(log.New(io.Discard, "", 0))
+	if cfg.Logger != nil {
+		stdio.SetErrorLogger(cfg.Logger.StdioErrorLogger())
+	} else {
+		stdio.SetErrorLogger(log.New(io.Discard, "", 0))
+	}
 
 	return &Runtime{
 		server: srv,
@@ -134,12 +140,24 @@ func (r *Runtime) Close() error {
 type cancelOnEOFReader struct {
 	reader io.Reader
 	cancel context.CancelFunc
+	sawEOF bool
 }
 
 var executionSeq atomic.Uint64
 
 func (r *cancelOnEOFReader) Read(p []byte) (int, error) {
+	if r.sawEOF {
+		if r.cancel != nil {
+			r.cancel()
+		}
+		return 0, io.EOF
+	}
+
 	n, err := r.reader.Read(p)
+	if errors.Is(err, io.EOF) && n > 0 {
+		r.sawEOF = true
+		return n, nil
+	}
 	if errors.Is(err, io.EOF) && r.cancel != nil {
 		r.cancel()
 	}

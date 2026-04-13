@@ -3,6 +3,7 @@ package sandbox
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	"github.com/fastschema/qjs"
@@ -12,11 +13,11 @@ import (
 const telemetryQuerySDKMethod = "telemetry.query"
 
 type sdkRuntime struct {
-	catalog     contracts.SDKCatalog
-	rules       contracts.RuleCatalog
-	spec        contracts.NormalizedSpec
-	specIndex   *dryRunSpecIndex
-	catalogJSON []byte
+	catalog      contracts.SDKCatalog
+	rules        contracts.RuleCatalog
+	spec         contracts.NormalizedSpec
+	specIndex    *dryRunSpecIndex
+	namespaceMap map[string][]string
 }
 
 func loadSDKRuntime(specJSON, catalogJSON, rulesJSON []byte) (*sdkRuntime, error) {
@@ -44,11 +45,11 @@ func loadSDKRuntime(specJSON, catalogJSON, rulesJSON []byte) (*sdkRuntime, error
 	}
 
 	return &sdkRuntime{
-		catalog:     catalog,
-		rules:       rules,
-		spec:        spec,
-		specIndex:   specIndex,
-		catalogJSON: append([]byte(nil), catalogJSON...),
+		catalog:      catalog,
+		rules:        rules,
+		spec:         spec,
+		specIndex:    specIndex,
+		namespaceMap: buildSDKNamespaceMap(catalog),
 	}, nil
 }
 
@@ -79,35 +80,66 @@ func (r *sdkRuntime) install(ctx *qjs.Context, execCtx context.Context, bridge *
 		resolvePromise(this, response["value"])
 	})
 
-	catalogValue := ctx.ParseJSON(string(r.catalogJSON))
-	ctx.Global().SetPropertyStr("__sdk_catalog", catalogValue)
+	ctx.SetFunc("__intersight_sdk_has_method__", func(this *qjs.This) (*qjs.Value, error) {
+		args := this.Args()
+		if len(args) < 1 {
+			return this.Context().NewBool(false), nil
+		}
+		_, ok := r.catalog.Methods[args[0].String()]
+		return this.Context().NewBool(ok), nil
+	})
+
+	ctx.SetFunc("__intersight_sdk_list_children__", func(this *qjs.This) (*qjs.Value, error) {
+		args := this.Args()
+		prefix := ""
+		if len(args) > 0 {
+			prefix = args[0].String()
+		}
+		children := r.namespaceMap[prefix]
+		return qjs.ToJsValue(this.Context(), children)
+	})
 
 	sdkWrapper, err := ctx.Eval("sdk_helper.js", qjs.Code(`(() => {
-  const root = {};
-  const methods = (__sdk_catalog && __sdk_catalog.methods) || {};
-  for (const sdkMethod of Object.keys(methods)) {
-    const parts = sdkMethod.split('.');
-    let cursor = root;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const key = parts[i];
-      if (!cursor[key]) {
-        cursor[key] = {};
-      }
-      cursor = cursor[key];
-    }
-    const leaf = parts[parts.length - 1];
-    cursor[leaf] = function(args) {
-      const normalizedArgs = args === undefined ? {} : args;
-      return __intersight_sdk_call_async__(sdkMethod, normalizedArgs);
-    };
+  function dispatch(sdkMethod, args) {
+    const normalizedArgs = args === undefined ? {} : args;
+    return __intersight_sdk_call_async__(sdkMethod, normalizedArgs);
   }
+
+  function createNamespace(prefix) {
+    const children = __intersight_sdk_list_children__(prefix) || [];
+    const target = Object.create(null);
+    for (const child of children) {
+      target[child] = true;
+    }
+    return new Proxy(target, {
+      get(target, prop, receiver) {
+        if (typeof prop !== 'string') {
+          return Reflect.get(target, prop, receiver);
+        }
+        if (Object.prototype.hasOwnProperty.call(target, prop) && target[prop] !== true) {
+          return Reflect.get(target, prop, receiver);
+        }
+        const next = prefix ? prefix + '.' + prop : prop;
+        if (__intersight_sdk_has_method__(next)) {
+          return function(args) {
+            return dispatch(next, args);
+          };
+        }
+        if (Object.prototype.hasOwnProperty.call(target, prop)) {
+          return createNamespace(next);
+        }
+        return undefined;
+      }
+    });
+  }
+
+  const root = createNamespace('');
   if (!root.telemetry) {
     root.telemetry = {};
   }
-	root.telemetry.query = function(args) {
-		const normalizedArgs = args === undefined ? {} : args;
-		return __intersight_sdk_call_async__('telemetry.query', normalizedArgs);
-	};
+  root.telemetry.query = function(args) {
+    return dispatch('telemetry.query', args);
+  };
   return root;
 })()`))
 	if err != nil {
@@ -115,6 +147,48 @@ func (r *sdkRuntime) install(ctx *qjs.Context, execCtx context.Context, bridge *
 	}
 	ctx.Global().SetPropertyStr("sdk", sdkWrapper)
 	return nil
+}
+
+func buildSDKNamespaceMap(catalog contracts.SDKCatalog) map[string][]string {
+	namespaces := map[string]map[string]struct{}{
+		"": {},
+	}
+
+	for sdkMethod := range catalog.Methods {
+		parts := strings.Split(strings.TrimSpace(sdkMethod), ".")
+		if len(parts) == 0 {
+			continue
+		}
+		prefix := ""
+		for i, part := range parts {
+			if part == "" {
+				continue
+			}
+			namespaces[prefix][part] = struct{}{}
+			if i == len(parts)-1 {
+				break
+			}
+			next := part
+			if prefix != "" {
+				next = prefix + "." + part
+			}
+			if _, ok := namespaces[next]; !ok {
+				namespaces[next] = map[string]struct{}{}
+			}
+			prefix = next
+		}
+	}
+
+	out := make(map[string][]string, len(namespaces))
+	for prefix, children := range namespaces {
+		items := make([]string, 0, len(children))
+		for child := range children {
+			items = append(items, child)
+		}
+		slices.Sort(items)
+		out[prefix] = items
+	}
+	return out
 }
 
 func decodeSDKCallArgs(this *qjs.This) (string, map[string]any, error) {

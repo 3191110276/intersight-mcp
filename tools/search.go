@@ -5,6 +5,6 @@ import (
 	"github.com/mimaurer/intersight-mcp/sandbox"
 )
 
-func NewSearchTool(exec sandbox.Executor, limiter *Limiter) mcpserver.ServerTool {
-	return newServerTool(ToolSearch, searchTitle, searchDescription, sandbox.ModeSearch, exec, limiter, true, false, false)
+func NewSearchTool(exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64) mcpserver.ServerTool {
+	return newServerTool(ToolSearch, searchTitle, searchDescription, sandbox.ModeSearch, exec, limiter, maxOutputBytes, true, false, false)
 }

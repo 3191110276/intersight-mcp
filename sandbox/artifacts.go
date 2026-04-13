@@ -16,6 +16,7 @@ type ArtifactBundle struct {
 	publicSearchJSON []byte
 	specIndex        *dryRunSpecIndex
 	sdk              *sdkRuntime
+	search           *searchRuntime
 }
 
 // LoadArtifactBundle parses and prepares the embedded artifacts once so later
@@ -51,6 +52,11 @@ func LoadArtifactBundle(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*A
 	if err != nil {
 		return nil, err
 	}
+	var searchCatalog contracts.SearchCatalog
+	if err := json.Unmarshal(publicSearchJSON, &searchCatalog); err != nil {
+		return nil, contracts.ValidationError{Message: "decode embedded search catalog", Err: err}
+	}
+	search := newSearchRuntime(sdk.spec, sdk.catalog, sdk.rules, searchCatalog)
 
 	return &ArtifactBundle{
 		specJSON:         specCopy,
@@ -60,5 +66,6 @@ func LoadArtifactBundle(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*A
 		publicSearchJSON: publicSearchJSON,
 		specIndex:        specIndex,
 		sdk:              sdk,
+		search:           search,
 	}, nil
 }

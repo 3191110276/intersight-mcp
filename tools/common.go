@@ -166,15 +166,15 @@ func OutputSchema() json.RawMessage {
 	return append(json.RawMessage(nil), outputSchemaJSON...)
 }
 
-func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, exposeMetricsApps bool) []mcpserver.ServerTool {
+func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, exposeMetricsApps bool) []mcpserver.ServerTool {
 	return []mcpserver.ServerTool{
-		NewSearchTool(searchExec, limiter),
-		NewQueryTool(queryExec, limiter, exposeMetricsApps),
-		NewMutateTool(mutateExec, limiter),
+		NewSearchTool(searchExec, limiter, maxOutputBytes),
+		NewQueryTool(queryExec, limiter, maxOutputBytes, exposeMetricsApps),
+		NewMutateTool(mutateExec, limiter, maxOutputBytes),
 	}
 }
 
-func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, readOnly, destructive, _ bool) mcpserver.ServerTool {
+func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, readOnly, destructive, _ bool) mcpserver.ServerTool {
 	inputSchema := InputSchema()
 	if mode == sandbox.ModeMutate {
 		inputSchema = MutateInputSchema()
@@ -195,11 +195,11 @@ func newServerTool(name, title, description string, mode sandbox.Mode, exec sand
 
 	return mcpserver.ServerTool{
 		Tool:    tool,
-		Handler: NewToolHandler(mode, exec, limiter),
+		Handler: NewToolHandler(mode, exec, limiter, maxOutputBytes),
 	}
 }
 
-func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter) mcpserver.ToolHandlerFunc {
+func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64) mcpserver.ToolHandlerFunc {
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if exec == nil {
 			return toolErrorResult(contracts.InternalError{Message: "tool executor is not configured"}, nil), nil

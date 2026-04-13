@@ -1,7 +1,6 @@
 package sandbox
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -13,15 +12,15 @@ import (
 )
 
 type apiBridge struct {
-	client         APICaller
-	mode           Mode
-	perCallTimeout time.Duration
-	maxAPICalls    int
+	client            APICaller
+	mode              Mode
+	perCallTimeout    time.Duration
+	maxAPICalls       int
 	enableMetricsApps bool
-	callCount      atomic.Int64
-	spec           *dryRunSpecIndex
-	sdk            *sdkRuntime
-	presentation   *PresentationHint
+	callCount         atomic.Int64
+	spec              *dryRunSpecIndex
+	sdk               *sdkRuntime
+	presentation      *PresentationHint
 }
 
 func (b *apiBridge) APICallCount() int {
@@ -212,10 +211,5 @@ func jsonToJSValue(ctx *qjs.Context, payload any) (*qjs.Value, error) {
 	case string:
 		return ctx.NewString(typed), nil
 	}
-
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-	return ctx.ParseJSON(string(data)), nil
+	return qjs.ToJsValue(ctx, payload)
 }

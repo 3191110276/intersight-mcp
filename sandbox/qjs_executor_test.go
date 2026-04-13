@@ -184,8 +184,12 @@ func TestSearchMetricsCatalogAvailable(t *testing.T) {
 
 	result, err := exec.Execute(context.Background(), `
 return {
+  metricKeys: Object.keys((catalog.metrics && catalog.metrics.byName) || {}),
+  groupKeys: Object.keys((catalog.metrics && catalog.metrics.groups) || {}),
+  exampleKeys: Object.keys((catalog.metrics && catalog.metrics.examples) || {}),
   metric: catalog.metrics.byName["system.cpu.utilization_user"],
-  group: catalog.metrics.groups["system.cpu"]
+  group: catalog.metrics.groups["system.cpu"],
+  example: catalog.metrics.examples["cpu-breakdown"]
 };
 `, ModeSearch)
 	if err != nil {
@@ -199,6 +203,9 @@ return {
 	if value["metric"] == nil || value["group"] == nil {
 		t.Fatalf("unexpected metrics payload: %#v", value)
 	}
+	if value["metricKeys"] == nil || value["groupKeys"] == nil || value["exampleKeys"] == nil {
+		t.Fatalf("unexpected metric key payloads: %#v", value)
+	}
 	metric, ok := value["metric"].(map[string]any)
 	if !ok {
 		t.Fatalf("metric payload type = %T", value["metric"])
@@ -206,6 +213,9 @@ return {
 	dimensions, ok := metric["dimensions"].([]any)
 	if !ok || len(dimensions) == 0 {
 		t.Fatalf("metric dimensions = %#v, want inherited queryable dimensions", metric["dimensions"])
+	}
+	if value["example"] == nil {
+		t.Fatalf("unexpected example payload: %#v", value)
 	}
 }
 
@@ -384,7 +394,16 @@ const testSDKSpec = `{
       }
     }
   },
-  "schemas": {}
+  "schemas": {
+    "example.Widget": {
+      "type": "object",
+      "properties": {
+        "Moid": { "type": "string" },
+        "Name": { "type": "string" },
+        "Mode": { "type": "string", "enum": ["fast", "safe"] }
+      }
+    }
+  }
 }`
 
 const testSDKCatalog = `{
@@ -535,7 +554,7 @@ const testSearchCatalogWithPostUpdate = `{
 func TestSearchCatalogHidesOperationMetadataButSDKRetainsIt(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewSearchExecutor(testConfig(), []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules), []byte(testSearchCatalog))
+	exec, err := NewSearchExecutor(testConfig(), []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules), []byte(testSearchCatalog))
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
@@ -616,6 +635,102 @@ return {
 	}
 	if got := value["hasUpdate"]; got != true {
 		t.Fatalf("hasUpdate = %#v, want true", got)
+	}
+}
+
+func TestSearchCatalogLazyProxiesSupportEnumerationAndLookup(t *testing.T) {
+	t.Parallel()
+
+	exec, err := NewSearchExecutor(testConfig(), []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules), []byte(testSearchCatalog))
+	if err != nil {
+		t.Fatalf("NewSearchExecutor() error = %v", err)
+	}
+	defer exec.Close()
+
+	result, err := exec.Execute(context.Background(), `
+const resourceKeys = Object.keys(catalog.resources || {});
+const pathKeys = Object.keys(catalog.paths || {});
+return {
+  resourceKeys,
+  pathKeys,
+  resourceSchema: catalog.resources["example.widget"]?.schema ?? null,
+  pathLookup: catalog.paths["/api/v1/example/Widgets"] ?? null
+};
+`, ModeSearch)
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	value, ok := result.Value.(map[string]any)
+	if !ok {
+		t.Fatalf("result.Value type = %T", result.Value)
+	}
+	if got := fmt.Sprint(value["resourceKeys"]); got != "[example.widget]" {
+		t.Fatalf("resourceKeys = %v, want [example.widget]", value["resourceKeys"])
+	}
+	if got := fmt.Sprint(value["pathKeys"]); got != "[/api/v1/example/Widgets]" {
+		t.Fatalf("pathKeys = %v, want [/api/v1/example/Widgets]", value["pathKeys"])
+	}
+	if got := value["resourceSchema"]; got != "example.Widget" {
+		t.Fatalf("resourceSchema = %#v, want example.Widget", got)
+	}
+	if got := fmt.Sprint(value["pathLookup"]); got != "[example.widget]" {
+		t.Fatalf("pathLookup = %v, want [example.widget]", value["pathLookup"])
+	}
+}
+
+func TestSearchSpecAndSDKLazyProxiesSupportEnumerationAndLookup(t *testing.T) {
+	t.Parallel()
+
+	exec, err := NewSearchExecutor(testConfig(), []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules), []byte(testSearchCatalog))
+	if err != nil {
+		t.Fatalf("NewSearchExecutor() error = %v", err)
+	}
+	defer exec.Close()
+
+	result, err := exec.Execute(context.Background(), `
+return {
+  schemaKeys: Object.keys(spec.schemas || {}),
+  specPathKeys: Object.keys(spec.paths || {}),
+  sdkMethodKeys: Object.keys(sdk.methods || {}),
+  ruleMethodKeys: Object.keys(rules.methods || {}),
+  schemaType: spec.schemas["example.Widget"]?.type ?? null,
+  specPathGet: spec.paths["/api/v1/example/Widgets"]?.get?.operationId ?? null,
+  sdkMethodId: sdk.methods["example.widget.create"]?.descriptor?.operationId ?? null,
+  ruleMethodId: rules.methods["example.widget.create"]?.operationId ?? null
+};
+`, ModeSearch)
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	value, ok := result.Value.(map[string]any)
+	if !ok {
+		t.Fatalf("result.Value type = %T", result.Value)
+	}
+	if got := fmt.Sprint(value["schemaKeys"]); got != "[example.Widget]" {
+		t.Fatalf("schemaKeys = %v, want [example.Widget]", value["schemaKeys"])
+	}
+	if got := fmt.Sprint(value["specPathKeys"]); got != "[/api/v1/example/Widgets /api/v1/example/Widgets/{Moid}]" {
+		t.Fatalf("specPathKeys = %v, want both example widget paths", value["specPathKeys"])
+	}
+	if got := fmt.Sprint(value["sdkMethodKeys"]); got != "[example.widget.create example.widget.get example.widget.list example.widget.update]" {
+		t.Fatalf("sdkMethodKeys = %v, want all example widget methods", value["sdkMethodKeys"])
+	}
+	if got := fmt.Sprint(value["ruleMethodKeys"]); got != "[example.widget.create]" {
+		t.Fatalf("ruleMethodKeys = %v, want [example.widget.create]", value["ruleMethodKeys"])
+	}
+	if got := value["schemaType"]; got != "object" {
+		t.Fatalf("schemaType = %#v, want object", got)
+	}
+	if got := value["specPathGet"]; got != "GetExampleWidgetList" {
+		t.Fatalf("specPathGet = %#v, want GetExampleWidgetList", got)
+	}
+	if got := value["sdkMethodId"]; got != "CreateExampleWidget" {
+		t.Fatalf("sdkMethodId = %#v, want CreateExampleWidget", got)
+	}
+	if got := value["ruleMethodId"]; got != "CreateExampleWidget" {
+		t.Fatalf("ruleMethodId = %#v, want CreateExampleWidget", got)
 	}
 }
 

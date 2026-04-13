@@ -329,6 +329,76 @@ func TestRetryingBootstrapClientHonorsRequestContextDuringBootstrap(t *testing.T
 	}
 }
 
+func TestRetryingBootstrapClientWaitersCanTimeOutIndependently(t *testing.T) {
+	t.Parallel()
+
+	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/iam/token":
+			<-r.Context().Done()
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer api.Close()
+
+	serverCtx, serverCancel := context.WithCancel(context.Background())
+	defer serverCancel()
+
+	client := &retryingBootstrapClient{
+		ctx:        serverCtx,
+		timeout:    time.Second,
+		httpClient: api.Client(),
+		baseURL:    api.URL + "/api/v1",
+		oauthCfg: intersight.OAuthConfig{
+			TokenURL:     api.URL + "/iam/token",
+			ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
+			ClientID:     "id",
+			ClientSecret: "secret",
+			HTTPClient:   api.Client(),
+		},
+	}
+
+	firstCtx, firstCancel := context.WithTimeout(context.Background(), 750*time.Millisecond)
+	defer firstCancel()
+
+	firstErrCh := make(chan error, 1)
+	go func() {
+		_, err := client.Do(firstCtx, contracts.NewHTTPOperationDescriptor(http.MethodGet, "/api/v1/compute/RackUnits"))
+		firstErrCh <- err
+	}()
+
+	time.Sleep(25 * time.Millisecond)
+
+	secondCtx, secondCancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer secondCancel()
+
+	start := time.Now()
+	_, err := client.Do(secondCtx, contracts.NewHTTPOperationDescriptor(http.MethodGet, "/api/v1/compute/RackUnits"))
+	if err == nil {
+		t.Fatal("expected second bootstrap retry failure")
+	}
+
+	var timeoutErr contracts.TimeoutError
+	if !errors.As(err, &timeoutErr) {
+		t.Fatalf("expected TimeoutError for waiting caller, got %T", err)
+	}
+	if elapsed := time.Since(start); elapsed > 250*time.Millisecond {
+		t.Fatalf("waiting caller took %v, want independent timeout", elapsed)
+	}
+
+	serverCancel()
+
+	select {
+	case err := <-firstErrCh:
+		if err == nil {
+			t.Fatal("expected first bootstrap retry failure")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for first bootstrap attempt to finish")
+	}
+}
+
 func TestServeWithoutCredentialsQueryReturnsAuthError(t *testing.T) {
 	t.Parallel()
 

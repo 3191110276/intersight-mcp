@@ -43,6 +43,12 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.SearchTimeout != limits.SearchTimeout || cfg.PerCallTimeout != limits.PerCallTimeout {
 		t.Fatalf("unexpected hardcoded timeouts: %+v", cfg)
 	}
+	if cfg.MaxCodeSize != limits.MaxCodeSizeBytes {
+		t.Fatalf("unexpected max code size: %d", cfg.MaxCodeSize)
+	}
+	if cfg.WASMMemory != limits.WASMMemoryBytes {
+		t.Fatalf("unexpected wasm memory: %d", cfg.WASMMemory)
+	}
 }
 
 func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
@@ -55,6 +61,10 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"--max-output", "1MB",
 			"--max-api-calls", "12",
 			"--max-concurrent", "7",
+			"--search-timeout", "22s",
+			"--per-call-timeout", "11s",
+			"--max-code-size", "256KB",
+			"--wasm-memory", "96MB",
 			"--log-level", "debug",
 			"--log-full-code",
 		},
@@ -66,6 +76,10 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"INTERSIGHT_MAX_OUTPUT=2048",
 			"INTERSIGHT_MAX_API_CALLS=9",
 			"INTERSIGHT_MAX_CONCURRENT=3",
+			"INTERSIGHT_SEARCH_TIMEOUT=8s",
+			"INTERSIGHT_PER_CALL_TIMEOUT=4s",
+			"INTERSIGHT_MAX_CODE_SIZE=32KB",
+			"INTERSIGHT_WASM_MEMORY=32MB",
 			"INTERSIGHT_LOG_LEVEL=info",
 		},
 	)
@@ -87,6 +101,18 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 	}
 	if cfg.Execution.MaxConcurrent != 7 {
 		t.Fatalf("unexpected max concurrent: %d", cfg.Execution.MaxConcurrent)
+	}
+	if cfg.SearchTimeout != 22*time.Second {
+		t.Fatalf("unexpected search timeout: %v", cfg.SearchTimeout)
+	}
+	if cfg.PerCallTimeout != 11*time.Second {
+		t.Fatalf("unexpected per-call timeout: %v", cfg.PerCallTimeout)
+	}
+	if cfg.MaxCodeSize != 256*1024 {
+		t.Fatalf("unexpected max code size: %d", cfg.MaxCodeSize)
+	}
+	if cfg.WASMMemory != 96*1024*1024 {
+		t.Fatalf("unexpected wasm memory: %d", cfg.WASMMemory)
 	}
 	if cfg.LogLevel != LogLevelDebug {
 		t.Fatalf("unexpected log level: %q", cfg.LogLevel)
@@ -138,6 +164,58 @@ func TestLoadConfigInvalidPositiveInts(t *testing.T) {
 		t.Fatalf("expected invalid max-api-calls error")
 	}
 	if !strings.Contains(err.Error(), "positive integer") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestLoadConfigInvalidDurationKnobs(t *testing.T) {
+	t.Parallel()
+
+	_, err := Load([]string{"--search-timeout", "0s"}, []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+	})
+	if err == nil {
+		t.Fatalf("expected invalid search-timeout error")
+	}
+	if !strings.Contains(err.Error(), "search-timeout") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	_, err = Load([]string{"--per-call-timeout", "nope"}, []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+	})
+	if err == nil {
+		t.Fatalf("expected invalid per-call-timeout error")
+	}
+	if !strings.Contains(err.Error(), "per-call-timeout") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestLoadConfigInvalidSizeKnobs(t *testing.T) {
+	t.Parallel()
+
+	_, err := Load([]string{"--max-code-size", "abc"}, []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+	})
+	if err == nil {
+		t.Fatalf("expected invalid max-code-size error")
+	}
+	if !strings.Contains(err.Error(), "max-code-size") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	_, err = Load([]string{"--wasm-memory", "0"}, []string{
+		"INTERSIGHT_CLIENT_ID=id",
+		"INTERSIGHT_CLIENT_SECRET=secret",
+	})
+	if err == nil {
+		t.Fatalf("expected invalid wasm-memory error")
+	}
+	if !strings.Contains(err.Error(), "wasm-memory") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

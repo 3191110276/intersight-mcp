@@ -19,6 +19,7 @@ import (
 	"github.com/mimaurer/intersight-mcp/intersight"
 	"github.com/mimaurer/intersight-mcp/sandbox"
 	"github.com/mimaurer/intersight-mcp/server"
+	"golang.org/x/sync/singleflight"
 )
 
 var version = "dev"
@@ -119,6 +120,7 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 		ServerName:     "intersight-mcp",
 		ServerVersion:  version,
 		MaxConcurrent:  cfg.Execution.MaxConcurrent,
+		MaxOutputBytes: cfg.Execution.MaxOutputBytes,
 		Logger:         logger,
 		SearchExecutor: searchExec,
 		QueryExecutor:  queryExec,
@@ -188,9 +190,10 @@ type retryingBootstrapClient struct {
 	baseURL    string
 	oauthCfg   intersight.OAuthConfig
 
-	mu      sync.RWMutex
-	client  *intersight.Client
-	lastErr error
+	mu             sync.RWMutex
+	client         *intersight.Client
+	lastErr        error
+	bootstrapGroup singleflight.Group
 }
 
 func (c *retryingBootstrapClient) Do(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
@@ -209,19 +212,58 @@ func (c *retryingBootstrapClient) ensureClient(ctx context.Context) (*intersight
 		return client, nil
 	}
 
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.client != nil {
+	resultCh := c.bootstrapGroup.DoChan("bootstrap-client", func() (any, error) {
+		c.mu.RLock()
+		client := c.client
+		c.mu.RUnlock()
+		if client != nil {
+			return client, nil
+		}
+
+		manager, err := bootstrapOAuthManager(c.ctx, c.ctx, c.timeout, c.oauthCfg)
+		if err != nil {
+			c.mu.Lock()
+			c.lastErr = err
+			c.mu.Unlock()
+			return nil, err
+		}
+
+		bootstrapped := intersight.NewClient(c.httpClient, c.baseURL, manager)
+
+		c.mu.Lock()
+		defer c.mu.Unlock()
+		if c.client != nil {
+			return c.client, nil
+		}
+		c.client = bootstrapped
+		c.lastErr = nil
 		return c.client, nil
-	}
+	})
 
-	manager, err := bootstrapOAuthManager(c.ctx, ctx, c.timeout, c.oauthCfg)
-	if err != nil {
-		c.lastErr = err
-		return nil, err
+	select {
+	case <-ctx.Done():
+		return nil, bootstrapWaitError(ctx.Err())
+	case result := <-resultCh:
+		if result.Err != nil {
+			return nil, result.Err
+		}
+		client, ok := result.Val.(*intersight.Client)
+		if !ok || client == nil {
+			return nil, contracts.InternalError{Message: "bootstrap client initialization returned an invalid result"}
+		}
+		return client, nil
 	}
+}
 
-	c.client = intersight.NewClient(c.httpClient, c.baseURL, manager)
-	c.lastErr = nil
-	return c.client, nil
+func bootstrapWaitError(err error) error {
+	switch err {
+	case nil:
+		return nil
+	case context.DeadlineExceeded:
+		return contracts.TimeoutError{Message: "OAuth bootstrap timed out while waiting for credentials", Err: err}
+	case context.Canceled:
+		return contracts.NetworkError{Message: "OAuth bootstrap was canceled while waiting for credentials", Err: err}
+	default:
+		return contracts.NetworkError{Message: "OAuth bootstrap failed while waiting for credentials", Err: err}
+	}
 }

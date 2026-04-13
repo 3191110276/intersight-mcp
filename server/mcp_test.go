@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -112,6 +113,41 @@ func TestRuntimeSuccessfulStdioStartup(t *testing.T) {
 	}
 }
 
+func TestCancelOnEOFReaderDefersCancellationUntilBufferedDataIsConsumed(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	reader := &cancelOnEOFReader{
+		reader: &eofAfterDataReader{data: []byte("ping")},
+		cancel: cancel,
+	}
+
+	buf := make([]byte, 8)
+	n, err := reader.Read(buf)
+	if err != nil {
+		t.Fatalf("first Read() error = %v, want nil", err)
+	}
+	if got := string(buf[:n]); got != "ping" {
+		t.Fatalf("first Read() data = %q, want %q", got, "ping")
+	}
+	if ctx.Err() != nil {
+		t.Fatalf("context canceled before buffered data was consumed: %v", ctx.Err())
+	}
+
+	n, err = reader.Read(buf)
+	if !errors.Is(err, io.EOF) {
+		t.Fatalf("second Read() error = %v, want EOF", err)
+	}
+	if n != 0 {
+		t.Fatalf("second Read() bytes = %d, want 0", n)
+	}
+	if !errors.Is(ctx.Err(), context.Canceled) {
+		t.Fatalf("context error = %v, want canceled", ctx.Err())
+	}
+}
+
 func TestRuntimeShutdownCancelsInflightExecutionOnStdinClose(t *testing.T) {
 	t.Parallel()
 
@@ -214,6 +250,20 @@ func TestRuntimeShutdownCancelsInflightExecutionOnStdinClose(t *testing.T) {
 	if toolResp.Result.StructuredContent.Error.Type != contracts.ErrorTypeInternal {
 		t.Fatalf("error.type = %q, want %q", toolResp.Result.StructuredContent.Error.Type, contracts.ErrorTypeInternal)
 	}
+}
+
+type eofAfterDataReader struct {
+	data []byte
+	read bool
+}
+
+func (r *eofAfterDataReader) Read(p []byte) (int, error) {
+	if r.read {
+		return 0, io.EOF
+	}
+	n := copy(p, r.data)
+	r.read = true
+	return n, io.EOF
 }
 
 func TestRuntimeShutdownCancelsInflightExecutionOnContextCancel(t *testing.T) {

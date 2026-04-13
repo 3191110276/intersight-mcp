@@ -1,5 +1,8 @@
 package tools
 
+// This resource is an in-development placeholder only. The server does not yet
+// expose a real MCP resource surface for metrics apps, and the HTML below is a
+// static proof-of-concept so the eventual wiring has a concrete target.
 const metricsAppResourceHTML = `<!doctype html>
 <html lang="en">
   <head>

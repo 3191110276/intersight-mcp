@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
@@ -202,6 +203,30 @@ func TestClientDoJSONNetworkNormalization(t *testing.T) {
 	var networkErr contracts.NetworkError
 	if !errors.As(err, &networkErr) {
 		t.Fatalf("expected NetworkError, got %T", err)
+	}
+}
+
+func TestClientDoJSONRejectsOversizedResponse(t *testing.T) {
+	t.Parallel()
+
+	server := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":"` + strings.Repeat("a", maxIntersightResponseBytes) + `"}`))
+	}))
+	defer server.Close()
+
+	client := NewClient(server.Client(), server.URL, staticTokenProvider("test-token"))
+	_, err := client.DoJSON(context.Background(), http.MethodGet, "/api/v1/test", RequestOptions{})
+	if err == nil {
+		t.Fatalf("expected oversized response error")
+	}
+
+	var tooLarge contracts.OutputTooLarge
+	if !errors.As(err, &tooLarge) {
+		t.Fatalf("expected OutputTooLarge, got %T", err)
+	}
+	if tooLarge.Message != "Intersight response exceeded the 16 MiB limit" {
+		t.Fatalf("unexpected error message: %q", tooLarge.Message)
 	}
 }
 

@@ -1,12 +1,15 @@
 package internal
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
+	"log"
 	"log/slog"
 	"runtime/debug"
+	"strings"
 	"sync"
 	"time"
 
@@ -61,6 +64,13 @@ func NewLogger(w io.Writer, level config.LogLevel, includeFullCode bool) *Logger
 		debug:           level == config.LogLevelDebug,
 		includeFullCode: includeFullCode,
 	}
+}
+
+func (l *Logger) StdioErrorLogger() *log.Logger {
+	if l == nil {
+		return log.New(io.Discard, "", 0)
+	}
+	return log.New(&structuredLogWriter{logger: l}, "", 0)
 }
 
 func WithSessionID(ctx context.Context, sessionID string) context.Context {
@@ -146,6 +156,41 @@ func (l *Logger) LogExecution(ctx context.Context, record ExecutionRecord) {
 	}
 
 	l.slog.InfoContext(ctx, "tool execution", attrs...)
+}
+
+func (l *Logger) LogServerMessage(ctx context.Context, component, message string) {
+	if l == nil {
+		return
+	}
+	component = strings.TrimSpace(component)
+	message = strings.TrimSpace(message)
+	if component == "" {
+		component = "server"
+	}
+	if message == "" {
+		return
+	}
+	l.slog.WarnContext(ctx, "server message",
+		"session_id", sessionIDFromContext(ctx),
+		"execution_id", executionIDFromContext(ctx),
+		"component", component,
+		"message", message,
+	)
+}
+
+type structuredLogWriter struct {
+	logger *Logger
+}
+
+func (w *structuredLogWriter) Write(p []byte) (int, error) {
+	if w == nil || w.logger == nil {
+		return len(p), nil
+	}
+	message := strings.TrimSpace(string(bytes.TrimSpace(p)))
+	if message != "" {
+		w.logger.LogServerMessage(context.Background(), "mcp-stdio", message)
+	}
+	return len(p), nil
 }
 
 func CaptureStackTrace() string {
