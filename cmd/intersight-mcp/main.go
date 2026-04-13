@@ -64,7 +64,10 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 		return err
 	}
 
-	logger := internalpkg.NewLogger(stderr, cfg.LogLevel, cfg.LogFullCode)
+	logger := internalpkg.NewLogger(stderr, cfg.LogLevel, cfg.UnsafeLogFullCode)
+	if cfg.LogLevel == config.LogLevelDebug && cfg.UnsafeLogFullCode {
+		logger.LogServerMessage(context.Background(), "config", "unsafe full-code debug logging is enabled; submitted tool code may be written to logs with best-effort redaction. Use only for short-lived incident debugging on trusted machines.")
+	}
 	httpClient := newHTTPClient(cfg.PerCallTimeout)
 	sandboxCfg := sandbox.Config{
 		SearchTimeout:   cfg.SearchTimeout,
@@ -120,6 +123,7 @@ func serveWithIO(ctx context.Context, args []string, stdin io.Reader, stdout, st
 	runtime, err := server.NewRuntime(server.RuntimeConfig{
 		ServerName:     "intersight-mcp",
 		ServerVersion:  version,
+		MaxCodeSize:    cfg.MaxCodeSize,
 		MaxConcurrent:  cfg.Execution.MaxConcurrent,
 		MaxOutputBytes: cfg.Execution.MaxOutputBytes,
 		ContentMode: tools.ContentMode{

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,6 +40,9 @@ func TestLoggerInfoLevel(t *testing.T) {
 	}
 	if payload["code_hash"] == "" {
 		t.Fatalf("expected code hash: %#v", payload)
+	}
+	if payload["code_size_bytes"] != float64(len("return 1")) {
+		t.Fatalf("expected code_size_bytes in logs: %#v", payload)
 	}
 	if payload["change_summary"] != "" {
 		t.Fatalf("expected empty change_summary: %#v", payload)
@@ -84,14 +88,14 @@ func TestLoggerDebugLevelOmitsCodeUnlessEnabled(t *testing.T) {
 	}
 }
 
-func TestLoggerDebugLevelIncludesCodeWhenEnabled(t *testing.T) {
+func TestLoggerDebugLevelIncludesRedactedCodeWhenEnabled(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
 	logger := NewLogger(&buf, config.LogLevelDebug, true)
 	logger.LogExecution(context.Background(), ExecutionRecord{
 		Tool:          "query",
-		Code:          "return await sdk.compute.rackUnit.list()",
+		Code:          `return { token: "secret-token", Authorization: "Bearer abc.def.ghi", client_secret: "super-secret" }`,
 		Duration:      10 * time.Millisecond,
 		Success:       true,
 		APICallCount:  0,
@@ -102,8 +106,18 @@ func TestLoggerDebugLevelIncludesCodeWhenEnabled(t *testing.T) {
 	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
 		t.Fatalf("unmarshal log entry: %v", err)
 	}
-	if payload["code"] == nil {
-		t.Fatalf("expected debug log to include full code when enabled: %#v", payload)
+	code, ok := payload["code"].(string)
+	if !ok {
+		t.Fatalf("expected debug log to include redacted code when enabled: %#v", payload)
+	}
+	if strings.Contains(code, "super-secret") || strings.Contains(code, "secret-token") || strings.Contains(code, "abc.def.ghi") {
+		t.Fatalf("expected secret values to be redacted: %q", code)
+	}
+	if !strings.Contains(code, "<CLIENT_SECRET>") || !strings.Contains(code, "<REDACTED_SECRET>") || !strings.Contains(code, "Bearer <BEARER_TOKEN>") {
+		t.Fatalf("expected redaction markers in code: %q", code)
+	}
+	if payload["code_redacted"] != true {
+		t.Fatalf("expected code_redacted=true: %#v", payload)
 	}
 }
 

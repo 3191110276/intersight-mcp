@@ -38,7 +38,7 @@ func TestLoadConfigDefaults(t *testing.T) {
 	if cfg.LogLevel != LogLevelInfo {
 		t.Fatalf("unexpected log level: %q", cfg.LogLevel)
 	}
-	if cfg.LogFullCode {
+	if cfg.UnsafeLogFullCode {
 		t.Fatalf("expected log full code to default to false")
 	}
 	if cfg.LegacyContentMirror {
@@ -70,7 +70,7 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"--max-code-size", "256KB",
 			"--wasm-memory", "96MB",
 			"--log-level", "debug",
-			"--log-full-code",
+			"--unsafe-log-full-code",
 			"--legacy-content-mirror",
 		},
 		[]string{
@@ -122,7 +122,7 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 	if cfg.LogLevel != LogLevelDebug {
 		t.Fatalf("unexpected log level: %q", cfg.LogLevel)
 	}
-	if !cfg.LogFullCode {
+	if !cfg.UnsafeLogFullCode {
 		t.Fatalf("expected log full code to be enabled")
 	}
 	if !cfg.LegacyContentMirror {
@@ -241,16 +241,16 @@ func TestLoadConfigMissingCredentialsAllowedForOfflineStartup(t *testing.T) {
 	t.Fatalf("Load() error = %v", err)
 }
 
-func TestLoadConfigInvalidLogFullCode(t *testing.T) {
+func TestLoadConfigInvalidUnsafeLogFullCode(t *testing.T) {
 	t.Parallel()
 
 	_, err := Load(nil, []string{
-		"INTERSIGHT_LOG_FULL_CODE=maybe",
+		"INTERSIGHT_UNSAFE_LOG_FULL_CODE=maybe",
 	})
 	if err == nil {
-		t.Fatalf("expected invalid log-full-code error")
+		t.Fatalf("expected invalid unsafe-log-full-code error")
 	}
-	if !strings.Contains(err.Error(), "invalid log-full-code") {
+	if !strings.Contains(err.Error(), "invalid unsafe-log-full-code") {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

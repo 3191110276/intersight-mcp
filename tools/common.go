@@ -10,6 +10,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
+	"github.com/mimaurer/intersight-mcp/internal/limits"
 	"github.com/mimaurer/intersight-mcp/sandbox"
 )
 
@@ -27,40 +28,6 @@ const (
 )
 
 var (
-	inputSchemaJSON = json.RawMessage(`{
-  "type": "object",
-  "properties": {
-    "code": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 102400,
-      "description": "JavaScript source to execute as the body of an async function."
-    }
-  },
-  "required": ["code"],
-  "additionalProperties": false
-}`)
-
-	mutateInputSchemaJSON = json.RawMessage(`{
-  "type": "object",
-  "properties": {
-    "changeSummary": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 1000,
-      "description": "Human-readable summary of what the mutation will change."
-    },
-    "code": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 102400,
-      "description": "JavaScript source to execute as the body of an async function."
-    }
-  },
-  "required": ["changeSummary", "code"],
-  "additionalProperties": false
-}`)
-
 	outputSchemaJSON = json.RawMessage(`{
   "oneOf": [
     {
@@ -158,30 +125,30 @@ func (l *Limiter) Limit() int {
 	return cap(l.slots)
 }
 
-func InputSchema() json.RawMessage {
-	return append(json.RawMessage(nil), inputSchemaJSON...)
+func InputSchema(maxCodeSize int) json.RawMessage {
+	return buildInputSchema(maxCodeSize, false)
 }
 
-func MutateInputSchema() json.RawMessage {
-	return append(json.RawMessage(nil), mutateInputSchemaJSON...)
+func MutateInputSchema(maxCodeSize int) json.RawMessage {
+	return buildInputSchema(maxCodeSize, true)
 }
 
 func OutputSchema() json.RawMessage {
 	return append(json.RawMessage(nil), outputSchemaJSON...)
 }
 
-func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, exposeMetricsApps bool, contentMode ContentMode) []mcpserver.ServerTool {
+func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, exposeMetricsApps bool, contentMode ContentMode) []mcpserver.ServerTool {
 	return []mcpserver.ServerTool{
-		NewSearchTool(searchExec, limiter, maxOutputBytes, contentMode),
-		NewQueryTool(queryExec, limiter, maxOutputBytes, exposeMetricsApps, contentMode),
-		NewMutateTool(mutateExec, limiter, maxOutputBytes, contentMode),
+		NewSearchTool(searchExec, limiter, maxCodeSize, maxOutputBytes, contentMode),
+		NewQueryTool(queryExec, limiter, maxCodeSize, maxOutputBytes, exposeMetricsApps, contentMode),
+		NewMutateTool(mutateExec, limiter, maxCodeSize, maxOutputBytes, contentMode),
 	}
 }
 
-func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, readOnly, destructive, _ bool, contentMode ContentMode) mcpserver.ServerTool {
-	inputSchema := InputSchema()
+func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, readOnly, destructive, _ bool, contentMode ContentMode) mcpserver.ServerTool {
+	inputSchema := InputSchema(maxCodeSize)
 	if mode == sandbox.ModeMutate {
-		inputSchema = MutateInputSchema()
+		inputSchema = MutateInputSchema(maxCodeSize)
 	}
 
 	tool := mcp.NewTool(name,
@@ -201,6 +168,43 @@ func newServerTool(name, title, description string, mode sandbox.Mode, exec sand
 		Tool:    tool,
 		Handler: NewToolHandler(mode, exec, limiter, maxOutputBytes, contentMode),
 	}
+}
+
+func buildInputSchema(maxCodeSize int, mutate bool) json.RawMessage {
+	if maxCodeSize <= 0 {
+		maxCodeSize = limits.MaxCodeSizeBytes
+	}
+
+	properties := map[string]any{
+		"code": map[string]any{
+			"type":        "string",
+			"minLength":   1,
+			"maxLength":   maxCodeSize,
+			"description": "JavaScript source to execute as the body of an async function.",
+		},
+	}
+	required := []string{"code"}
+	if mutate {
+		properties["changeSummary"] = map[string]any{
+			"type":        "string",
+			"minLength":   1,
+			"maxLength":   1000,
+			"description": "Human-readable summary of what the mutation will change.",
+		}
+		required = []string{"changeSummary", "code"}
+	}
+
+	schema := map[string]any{
+		"type":                 "object",
+		"properties":           properties,
+		"required":             required,
+		"additionalProperties": false,
+	}
+	data, err := json.Marshal(schema)
+	if err != nil {
+		panic(fmt.Sprintf("build input schema: %v", err))
+	}
+	return data
 }
 
 func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, contentMode ContentMode) mcpserver.ToolHandlerFunc {

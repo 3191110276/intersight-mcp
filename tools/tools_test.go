@@ -13,13 +13,14 @@ import (
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"github.com/mimaurer/intersight-mcp/generated"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
+	"github.com/mimaurer/intersight-mcp/internal/limits"
 	"github.com/mimaurer/intersight-mcp/sandbox"
 )
 
 func TestServerToolsRegistration(t *testing.T) {
 	t.Parallel()
 
-	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), 0, false, ContentMode{})
+	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), limits.MaxCodeSizeBytes, 0, false, ContentMode{})
 	if len(tools) != 3 {
 		t.Fatalf("len(ServerTools()) = %d, want 3", len(tools))
 	}
@@ -29,9 +30,9 @@ func TestServerToolsRegistration(t *testing.T) {
 		byName[tool.Tool.Name] = tool.Tool
 	}
 
-	assertTool(t, byName[ToolSearch], searchTitle, true, false)
-	assertTool(t, byName[ToolQuery], queryTitle, true, false)
-	assertTool(t, byName[ToolMutate], mutateTitle, false, true)
+	assertTool(t, byName[ToolSearch], searchTitle, true, false, limits.MaxCodeSizeBytes)
+	assertTool(t, byName[ToolQuery], queryTitle, true, false, limits.MaxCodeSizeBytes)
+	assertTool(t, byName[ToolMutate], mutateTitle, false, true, limits.MaxCodeSizeBytes)
 	assertDescription(t, byName[ToolSearch], searchDescription)
 	assertDescription(t, byName[ToolQuery], queryDescription)
 	assertDescription(t, byName[ToolMutate], mutateDescription)
@@ -43,9 +44,46 @@ func TestServerToolsRegistration(t *testing.T) {
 func TestSchemasMatchArchitecture(t *testing.T) {
 	t.Parallel()
 
-	assertJSONEq(t, string(InputSchema()), string(inputSchemaJSON))
-	assertJSONEq(t, string(MutateInputSchema()), string(mutateInputSchemaJSON))
+	assertJSONEq(t, string(InputSchema(limits.MaxCodeSizeBytes)), string(buildInputSchema(limits.MaxCodeSizeBytes, false)))
+	assertJSONEq(t, string(MutateInputSchema(limits.MaxCodeSizeBytes)), string(buildInputSchema(limits.MaxCodeSizeBytes, true)))
 	assertJSONEq(t, string(OutputSchema()), string(outputSchemaJSON))
+}
+
+func TestInputSchemasUseConfiguredMaxCodeSize(t *testing.T) {
+	t.Parallel()
+
+	assertJSONEq(t, string(InputSchema(2048)), `{
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "JavaScript source to execute as the body of an async function."
+    }
+  },
+  "required": ["code"],
+  "additionalProperties": false
+}`)
+	assertJSONEq(t, string(MutateInputSchema(2048)), `{
+  "type": "object",
+  "properties": {
+    "changeSummary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1000,
+      "description": "Human-readable summary of what the mutation will change."
+    },
+    "code": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "description": "JavaScript source to execute as the body of an async function."
+    }
+  },
+  "required": ["changeSummary", "code"],
+  "additionalProperties": false
+}`)
 }
 
 func TestSuccessMapping(t *testing.T) {
@@ -113,7 +151,7 @@ func TestSuccessMappingLegacyContentMirror(t *testing.T) {
 func TestSearchToolUsesSharedLimiter(t *testing.T) {
 	t.Parallel()
 
-	tool := NewSearchTool(stubExecutor{}, NewLimiter(1), 0, ContentMode{})
+	tool := NewSearchTool(stubExecutor{}, NewLimiter(1), limits.MaxCodeSizeBytes, 0, ContentMode{})
 	if tool.Tool.Name != ToolSearch {
 		t.Fatalf("tool name = %q, want %q", tool.Tool.Name, ToolSearch)
 	}
@@ -535,7 +573,7 @@ func TestToolHandlerDoesNotRecountDuplicatedMCPEnvelopeSize(t *testing.T) {
 	}
 }
 
-func assertTool(t *testing.T, tool mcp.Tool, title string, readOnly, destructive bool) {
+func assertTool(t *testing.T, tool mcp.Tool, title string, readOnly, destructive bool, maxCodeSize int) {
 	t.Helper()
 
 	if tool.Name == "" {
@@ -550,9 +588,9 @@ func assertTool(t *testing.T, tool mcp.Tool, title string, readOnly, destructive
 	if tool.Annotations.DestructiveHint == nil || *tool.Annotations.DestructiveHint != destructive {
 		t.Fatalf("%s destructive = %#v, want %v", tool.Name, tool.Annotations.DestructiveHint, destructive)
 	}
-	wantInputSchema := string(inputSchemaJSON)
+	wantInputSchema := string(InputSchema(maxCodeSize))
 	if tool.Name == ToolMutate {
-		wantInputSchema = string(mutateInputSchemaJSON)
+		wantInputSchema = string(MutateInputSchema(maxCodeSize))
 	}
 	assertJSONEq(t, string(tool.RawInputSchema), wantInputSchema)
 	assertJSONEq(t, string(tool.RawOutputSchema), string(outputSchemaJSON))

@@ -79,26 +79,21 @@ Search execution reuses immutable embedded artifacts prepared at startup, but it
 
 Supported configuration comes from flags and matching environment variables. Flags take precedence over environment variables.
 
-| Setting | Flag | Environment | Default |
-|---|---|---|---|
-| Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | `https://intersight.com` |
-| Global execution timeout | `--timeout` | `INTERSIGHT_TIMEOUT` | `40s` |
-| Max API calls per execution | `--max-api-calls` | `INTERSIGHT_MAX_API_CALLS` | `250` |
-| Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
-| Max concurrent tool executions | `--max-concurrent` | `INTERSIGHT_MAX_CONCURRENT` | `50` |
-| Log level | `--log-level` | `INTERSIGHT_LOG_LEVEL` | `info` |
-| Include full submitted code in logs | `--log-full-code` | `INTERSIGHT_LOG_FULL_CODE` | `false` |
-
 Credentials required for live `query` reads and `mutate` writes:
 
 - `INTERSIGHT_CLIENT_ID`
 - `INTERSIGHT_CLIENT_SECRET`
 
+Optional settings most users might care about:
+
+| Setting | Flag | Environment | Default |
+|---|---|---|---|
+| Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | `https://intersight.com` |
+| Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | `512KB` |
+
 The server can still start without credentials so the offline `search` tool remains available. Write-shaped `query` validation also remains available because it runs locally.
 
 `--max-output` applies to the serialized tool payload produced by sandbox execution, before MCP response wrapping. It does not count the duplicated MCP envelope fields on top of that payload.
-
-`--max-concurrent` is a shared process-wide limiter across `search`, `query`, and `mutate`. The default limit is `50` in-flight tool executions.
 
 Endpoint validation rules:
 
@@ -113,14 +108,33 @@ Examples:
 INTERSIGHT_CLIENT_ID=... \
 INTERSIGHT_CLIENT_SECRET=... \
 INTERSIGHT_ENDPOINT=https://intersight.com \
-./bin/intersight-mcp serve --log-level debug
+./bin/intersight-mcp serve
 ```
 
 ```bash
 INTERSIGHT_CLIENT_ID=... \
 INTERSIGHT_CLIENT_SECRET=... \
-./bin/intersight-mcp serve --timeout 60s --max-output 1MB --max-concurrent 10
+./bin/intersight-mcp serve --max-output 1MB
 ```
+
+### Advanced Tuning
+
+These settings are available, but they are operational tuning knobs rather than normal setup requirements:
+
+| Setting | Flag | Environment | Default |
+|---|---|---|---|
+| Global execution timeout | `--timeout` | `INTERSIGHT_TIMEOUT` | `40s` |
+| Search execution timeout | `--search-timeout` | `INTERSIGHT_SEARCH_TIMEOUT` | `15s` |
+| Per-call HTTP/bootstrap timeout | `--per-call-timeout` | `INTERSIGHT_PER_CALL_TIMEOUT` | `15s` |
+| Max API calls per execution | `--max-api-calls` | `INTERSIGHT_MAX_API_CALLS` | `250` |
+| Max concurrent tool executions | `--max-concurrent` | `INTERSIGHT_MAX_CONCURRENT` | `40` |
+| Max submitted code size | `--max-code-size` | `INTERSIGHT_MAX_CODE_SIZE` | `100KB` |
+| QuickJS memory limit | `--wasm-memory` | `INTERSIGHT_WASM_MEMORY` | `64MB` |
+| Log level | `--log-level` | `INTERSIGHT_LOG_LEVEL` | `info` |
+| Include submitted tool code in debug logs with best-effort redaction | `--unsafe-log-full-code` | `INTERSIGHT_UNSAFE_LOG_FULL_CODE` | `false` |
+| Mirror structured content into text for legacy clients | `--legacy-content-mirror` | `INTERSIGHT_LEGACY_CONTENT_MIRROR` | `false` |
+
+`--max-concurrent` is a shared process-wide limiter across `search`, `query`, and `mutate`. The default limit is `40` in-flight tool executions.
 
 ## MCP Client Setup
 
@@ -142,6 +156,8 @@ The server registers exactly three tools: `search`, `query`, and `mutate`.
 The public execution surface is `sdk` only. `search` also exposes a merged `catalog` discovery object plus raw `sdk`, `rules`, and `spec` globals.
 
 If credentials are missing or initial OAuth bootstrap fails, the server still starts so `search` remains usable. Live `query` reads and `mutate` writes then return auth errors until credentials work again.
+
+`--unsafe-log-full-code` and `INTERSIGHT_UNSAFE_LOG_FULL_CODE` are break-glass debugging options. When enabled together with `--log-level debug`, the server logs submitted tool code with best-effort redaction for bearer tokens, client secrets, and similar values, then emits a startup warning. Use this only temporarily on trusted machines; normal debug logging already captures code hashes, execution metadata, API call traces, and error details without storing submitted code.
 
 Example reverse lookup in `search`:
 

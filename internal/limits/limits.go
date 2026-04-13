@@ -7,7 +7,7 @@ const (
 	DefaultGlobalTimeout = 40 * time.Second
 	DefaultMaxAPICalls   = 250
 	DefaultMaxOutput     = 512 * 1024
-	DefaultMaxConcurrent = 50
+	DefaultMaxConcurrent = 40
 
 	SearchTimeout    = 15 * time.Second
 	PerCallTimeout   = 15 * time.Second

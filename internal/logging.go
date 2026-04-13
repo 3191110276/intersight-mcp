@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"log/slog"
+	"regexp"
 	"runtime/debug"
 	"strings"
 	"sync"
@@ -25,9 +26,9 @@ const (
 )
 
 type Logger struct {
-	slog            *slog.Logger
-	debug           bool
-	includeFullCode bool
+	slog              *slog.Logger
+	debug             bool
+	includeUnsafeCode bool
 }
 
 type ExecutionRecord struct {
@@ -52,7 +53,7 @@ type APICallRecord struct {
 	DurationMS   int64  `json:"durationMs"`
 }
 
-func NewLogger(w io.Writer, level config.LogLevel, includeFullCode bool) *Logger {
+func NewLogger(w io.Writer, level config.LogLevel, includeUnsafeCode bool) *Logger {
 	slogLevel := slog.LevelInfo
 	if level == config.LogLevelDebug {
 		slogLevel = slog.LevelDebug
@@ -61,8 +62,8 @@ func NewLogger(w io.Writer, level config.LogLevel, includeFullCode bool) *Logger
 		slog: slog.New(slog.NewJSONHandler(w, &slog.HandlerOptions{
 			Level: slogLevel,
 		})),
-		debug:           level == config.LogLevelDebug,
-		includeFullCode: includeFullCode,
+		debug:             level == config.LogLevelDebug,
+		includeUnsafeCode: includeUnsafeCode,
 	}
 }
 
@@ -132,6 +133,7 @@ func (l *Logger) LogExecution(ctx context.Context, record ExecutionRecord) {
 		"tool", record.Tool,
 		"change_summary", record.ChangeSummary,
 		"code_hash", hashCode(record.Code),
+		"code_size_bytes", len(record.Code),
 		"duration_ms", record.Duration.Milliseconds(),
 		"api_call_count", record.APICallCount,
 		"result_size_bytes", record.ResultSizeBytes,
@@ -144,8 +146,12 @@ func (l *Logger) LogExecution(ctx context.Context, record ExecutionRecord) {
 		attrs = append(attrs, "error_message", record.ErrorMessage)
 	}
 	if l.debug {
-		if l.includeFullCode {
-			attrs = append(attrs, "code", record.Code)
+		if l.includeUnsafeCode {
+			sanitizedCode := redactCodeForLogging(record.Code)
+			attrs = append(attrs,
+				"code", sanitizedCode,
+				"code_redacted", sanitizedCode != record.Code,
+			)
 		}
 		if len(record.APICalls) > 0 {
 			attrs = append(attrs, "api_calls", record.APICalls)
@@ -200,6 +206,44 @@ func CaptureStackTrace() string {
 func hashCode(code string) string {
 	sum := sha256.Sum256([]byte(code))
 	return hex.EncodeToString(sum[:])
+}
+
+var codeRedactors = []struct {
+	pattern *regexp.Regexp
+	replace string
+}{
+	{
+		pattern: regexp.MustCompile(`(?i)\bBearer\s+[A-Za-z0-9\-._~+/]+=*`),
+		replace: "Bearer <BEARER_TOKEN>",
+	},
+	{
+		pattern: regexp.MustCompile(`(?i)(["']?(?:client_secret|clientSecret|INTERSIGHT_CLIENT_SECRET)["']?\s*[:=]\s*["'])([^"']*)(["'])`),
+		replace: `${1}<CLIENT_SECRET>${3}`,
+	},
+	{
+		pattern: regexp.MustCompile(`(?i)(["']?(?:access_token|accessToken)["']?\s*[:=]\s*["'])([^"']*)(["'])`),
+		replace: `${1}<ACCESS_TOKEN>${3}`,
+	},
+	{
+		pattern: regexp.MustCompile(`(?i)(["']?\b(?:api[_-]?key|apiKey|password|secret|token)\b["']?\s*[:=]\s*["'])([^"']*)(["'])`),
+		replace: `${1}<REDACTED_SECRET>${3}`,
+	},
+	{
+		pattern: regexp.MustCompile(`(?m)\b(INTERSIGHT_CLIENT_SECRET=)(\S+)`),
+		replace: `${1}<CLIENT_SECRET>`,
+	},
+	{
+		pattern: regexp.MustCompile(`(?m)\b(INTERSIGHT_CLIENT_ID=)(\S+)`),
+		replace: `${1}<CLIENT_ID>`,
+	},
+}
+
+func redactCodeForLogging(code string) string {
+	redacted := code
+	for _, redactor := range codeRedactors {
+		redacted = redactor.pattern.ReplaceAllString(redacted, redactor.replace)
+	}
+	return redacted
 }
 
 func sessionIDFromContext(ctx context.Context) string {

@@ -28,6 +28,25 @@ func TestServeStartsWithoutCredentialsForOfflineSearch(t *testing.T) {
 	}
 }
 
+func TestServeWarnsWhenUnsafeCodeLoggingEnabled(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	var stderr bytes.Buffer
+	err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &stderr, []string{
+		"INTERSIGHT_LOG_LEVEL=debug",
+		"INTERSIGHT_UNSAFE_LOG_FULL_CODE=true",
+	}, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+	if err != nil {
+		t.Fatalf("serveWithIO() error = %v", err)
+	}
+	if !strings.Contains(stderr.String(), "unsafe full-code debug logging is enabled") {
+		t.Fatalf("expected unsafe logging warning, got: %s", stderr.String())
+	}
+}
+
 func TestServeFailsOnInvalidConfig(t *testing.T) {
 	t.Parallel()
 

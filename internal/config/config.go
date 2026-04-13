@@ -29,7 +29,7 @@ type Config struct {
 	ClientID            string
 	ClientSecret        string
 	LogLevel            LogLevel
-	LogFullCode         bool
+	UnsafeLogFullCode   bool
 	LegacyContentMirror bool
 	Execution           limits.Execution
 	SearchTimeout       time.Duration
@@ -64,7 +64,7 @@ func Load(args []string, environ []string) (Config, error) {
 	var maxOutputFlag string
 	var maxConcurrentFlag int
 	var logLevelFlag string
-	var logFullCodeFlag bool
+	var unsafeLogFullCodeFlag bool
 	var legacyContentMirrorFlag bool
 	var searchTimeoutFlag string
 	var perCallTimeoutFlag string
@@ -77,7 +77,7 @@ func Load(args []string, environ []string) (Config, error) {
 	fs.StringVar(&maxOutputFlag, "max-output", "", "maximum serialized output size")
 	fs.IntVar(&maxConcurrentFlag, "max-concurrent", 0, "maximum concurrent tool executions across search, query, and mutate")
 	fs.StringVar(&logLevelFlag, "log-level", "", "log level: info or debug")
-	fs.BoolVar(&logFullCodeFlag, "log-full-code", false, "include full submitted code in logs")
+	fs.BoolVar(&unsafeLogFullCodeFlag, "unsafe-log-full-code", false, "include submitted tool code in debug logs with best-effort redaction; use only for short-lived incident debugging")
 	fs.BoolVar(&legacyContentMirrorFlag, "legacy-content-mirror", false, "mirror full results into text content for legacy MCP clients")
 	fs.StringVar(&searchTimeoutFlag, "search-timeout", "", "timeout for search executions")
 	fs.StringVar(&perCallTimeoutFlag, "per-call-timeout", "", "timeout for individual HTTP and bootstrap calls")
@@ -209,16 +209,16 @@ func Load(args []string, environ []string) (Config, error) {
 		}
 	}
 
-	logFullCodeRaw := env["INTERSIGHT_LOG_FULL_CODE"]
-	if setFlags["log-full-code"] {
-		logFullCodeRaw = strconv.FormatBool(logFullCodeFlag)
+	unsafeLogFullCodeRaw := env["INTERSIGHT_UNSAFE_LOG_FULL_CODE"]
+	if setFlags["unsafe-log-full-code"] {
+		unsafeLogFullCodeRaw = strconv.FormatBool(unsafeLogFullCodeFlag)
 	}
-	if strings.TrimSpace(logFullCodeRaw) != "" {
-		value, err := strconv.ParseBool(strings.TrimSpace(logFullCodeRaw))
+	if strings.TrimSpace(unsafeLogFullCodeRaw) != "" {
+		value, err := strconv.ParseBool(strings.TrimSpace(unsafeLogFullCodeRaw))
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid log-full-code %q: must be true or false", logFullCodeRaw)
+			return Config{}, fmt.Errorf("invalid unsafe-log-full-code %q: must be true or false", unsafeLogFullCodeRaw)
 		}
-		cfg.LogFullCode = value
+		cfg.UnsafeLogFullCode = value
 	}
 
 	legacyContentMirrorRaw := env["INTERSIGHT_LEGACY_CONTENT_MIRROR"]
