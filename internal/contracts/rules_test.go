@@ -106,6 +106,20 @@ func testIntersightRuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "cond.thresholdDefinition.create",
+			Resource:  "cond.ThresholdDefinition",
+			Rules: []SemanticRule{
+				NewRequiredRule("Condition", ""),
+			},
+		},
+		{
+			SDKMethod: "deviceconnector.policy.create",
+			Resource:  "deviceconnector.Policy",
+			Rules: []SemanticRule{
+				NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
 			SDKMethod: "hyperflex.extFcStoragePolicy.create",
 			Resource:  "hyperflex.ExtFcStoragePolicy",
 			Rules: []SemanticRule{
@@ -214,6 +228,21 @@ func testIntersightRuleTemplates() []RuleTemplate {
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
 				NewRequiredRule("ScheduleParams", "", 1),
+				NewRequiredRule("ScheduleParams[].Name", ""),
+			},
+		},
+		{
+			SDKMethod: "recovery.backupProfile.create",
+			Resource:  "recovery.BackupProfile",
+			Rules: []SemanticRule{
+				NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "resourcepool.pool.create",
+			Resource:  "resourcepool.Pool",
+			Rules: []SemanticRule{
+				NewConditionalRequireRule("ResourceType", "Server", FieldRule{Field: "ResourcePoolParameters"}),
 			},
 		},
 		{
@@ -235,6 +264,14 @@ func testIntersightRuleTemplates() []RuleTemplate {
 			Resource:  "storage.DriveSecurityPolicy",
 			Rules: []SemanticRule{
 				NewRequiredRule("KeySetting", ""),
+			},
+		},
+		{
+			SDKMethod: "server.diagnostics.create",
+			Resource:  "server.Diagnostics",
+			Rules: []SemanticRule{
+				NewRequiredRule("Server", "compute.Physical"),
+				NewRequiredRule("ComponentList", "", 1),
 			},
 		},
 		{
@@ -1054,6 +1091,61 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 			RetrievalDate:    "2026-04-08",
 		},
 		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/recovery/BackupProfiles": {
+				"post": {
+					OperationID: "CreateRecoveryBackupProfile",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Properties: map[string]*NormalizedSchema{
+										"Organization": {Relationship: true, RelationshipTarget: "organization.Organization"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/resourcepool/Pools": {
+				"post": {
+					OperationID: "CreateResourcepoolPool",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Properties: map[string]*NormalizedSchema{
+										"ResourceType": {Type: "string"},
+										"ResourcePoolParameters": {
+											Type: "object",
+											Properties: map[string]*NormalizedSchema{
+												"TargetPlatform": {Type: "string"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/server/Diagnostics": {
+				"post": {
+					OperationID: "CreateServerDiagnostics",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Properties: map[string]*NormalizedSchema{
+										"ComponentList": {Type: "array", Items: &NormalizedSchema{Type: "string"}},
+										"Server":        {Relationship: true, RelationshipTarget: "compute.Physical"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"/api/v1/fcpool/Reservations": {
 				"post": {
 					OperationID: "CreateFcpoolReservation",
@@ -1074,9 +1166,12 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 			},
 		},
 		Schemas: map[string]NormalizedSchema{
+			"compute.Physical":          {Type: "object"},
 			"fcpool.Pool":               {Type: "object"},
 			"fcpool.Reservation":        {Type: "object"},
 			"organization.Organization": {Type: "object"},
+			"recovery.BackupProfile":    {Type: "object"},
+			"resourcepool.Pool":         {Type: "object"},
 		},
 	}
 
@@ -1084,7 +1179,9 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 		Metadata: spec.Metadata,
 		Methods: map[string]SDKMethod{
 			"inventory.request.create":       {SDKMethod: "inventory.request.create", Resource: "inventory.Request", Descriptor: OperationDescriptor{OperationID: "CreateInventoryRequest", Method: "POST", PathTemplate: "/api/v1/inventory/Requests"}},
+			"recovery.backupProfile.create":  {SDKMethod: "recovery.backupProfile.create", Resource: "recovery.BackupProfile", Descriptor: OperationDescriptor{OperationID: "CreateRecoveryBackupProfile", Method: "POST", PathTemplate: "/api/v1/recovery/BackupProfiles"}},
 			"recovery.onDemandBackup.create": {SDKMethod: "recovery.onDemandBackup.create", Resource: "recovery.OnDemandBackup", Descriptor: OperationDescriptor{OperationID: "CreateRecoveryOnDemandBackup", Method: "POST", PathTemplate: "/api/v1/recovery/OnDemandBackups"}},
+			"resourcepool.pool.create":       {SDKMethod: "resourcepool.pool.create", Resource: "resourcepool.Pool", Descriptor: OperationDescriptor{OperationID: "CreateResourcepoolPool", Method: "POST", PathTemplate: "/api/v1/resourcepool/Pools"}},
 			"server.diagnostics.create":      {SDKMethod: "server.diagnostics.create", Resource: "server.Diagnostics", Descriptor: OperationDescriptor{OperationID: "CreateServerDiagnostics", Method: "POST", PathTemplate: "/api/v1/server/Diagnostics"}},
 			"uuidpool.pool.create":           {SDKMethod: "uuidpool.pool.create", Resource: "uuidpool.Pool", Descriptor: OperationDescriptor{OperationID: "CreateUuidpoolPool", Method: "POST", PathTemplate: "/api/v1/uuidpool/Pools"}},
 			"iqnpool.pool.create":            {SDKMethod: "iqnpool.pool.create", Resource: "iqnpool.Pool", Descriptor: OperationDescriptor{OperationID: "CreateIqnpoolPool", Method: "POST", PathTemplate: "/api/v1/iqnpool/Pools"}},
@@ -1106,6 +1203,13 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 			},
 		},
 		{
+			SDKMethod: "recovery.backupProfile.create",
+			Resource:  "recovery.BackupProfile",
+			Rules: []SemanticRule{
+				NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
 			SDKMethod: "recovery.onDemandBackup.create",
 			Resource:  "recovery.OnDemandBackup",
 			Rules: []SemanticRule{
@@ -1113,9 +1217,17 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 			},
 		},
 		{
+			SDKMethod: "resourcepool.pool.create",
+			Resource:  "resourcepool.Pool",
+			Rules: []SemanticRule{
+				NewConditionalRequireRule("ResourceType", "Server", FieldRule{Field: "ResourcePoolParameters"}),
+			},
+		},
+		{
 			SDKMethod: "server.diagnostics.create",
 			Resource:  "server.Diagnostics",
 			Rules: []SemanticRule{
+				NewRequiredRule("Server", "compute.Physical"),
 				NewRequiredRule("ComponentList", "", 1),
 			},
 		},
@@ -1156,6 +1268,9 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 			NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: poolTarget}),
 			NewConditionalForbidRule("AllocationType", "static", "Pool"),
 		}
+		if sdkMethod == "ippool.reservation.create" || sdkMethod == "macpool.reservation.create" {
+			rules = append(rules[:2], append([]SemanticRule{NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Identity"})}, rules[2:]...)...)
+		}
 		if sdkMethod == "fcpool.reservation.create" {
 			rules = append([]SemanticRule{NewRequiredRule("Organization", "organization.Organization")}, rules...)
 		}
@@ -1188,6 +1303,10 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 				t.Fatalf("unexpected reservation organization rule for %s: %#v", sdkMethod, got[0])
 			}
 			offset = 1
+		} else if sdkMethod == "ippool.reservation.create" || sdkMethod == "macpool.reservation.create" {
+			if len(got) != 4 {
+				t.Fatalf("%s rules = %#v, want four rules", sdkMethod, got)
+			}
 		} else if len(got) != 3 {
 			t.Fatalf("%s rules = %#v, want three rules", sdkMethod, got)
 		}
@@ -1197,9 +1316,292 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 		if got[offset+1].When == nil || got[offset+1].When.Field != "AllocationType" || got[offset+1].When.Equals != "dynamic" || len(got[offset+1].Require) != 1 || got[offset+1].Require[0].Field != "Pool" {
 			t.Fatalf("unexpected reservation dynamic rule for %s: %#v", sdkMethod, got[offset+1])
 		}
-		if got[offset+2].When == nil || got[offset+2].When.Field != "AllocationType" || got[offset+2].When.Equals != "static" || !reflect.DeepEqual(got[offset+2].Forbid, []string{"Pool"}) {
-			t.Fatalf("unexpected reservation static forbid rule for %s: %#v", sdkMethod, got[offset+2])
+		staticIndex := offset + 2
+		if sdkMethod == "ippool.reservation.create" || sdkMethod == "macpool.reservation.create" {
+			if got[offset+2].When == nil || got[offset+2].When.Field != "AllocationType" || got[offset+2].When.Equals != "dynamic" || len(got[offset+2].Require) != 1 || got[offset+2].Require[0].Field != "Identity" {
+				t.Fatalf("unexpected reservation dynamic identity rule for %s: %#v", sdkMethod, got[offset+2])
+			}
+			staticIndex++
 		}
+		if got[staticIndex].When == nil || got[staticIndex].When.Field != "AllocationType" || got[staticIndex].When.Equals != "static" || !reflect.DeepEqual(got[staticIndex].Forbid, []string{"Pool"}) {
+			t.Fatalf("unexpected reservation static forbid rule for %s: %#v", sdkMethod, got[staticIndex])
+		}
+	}
+
+	if got := rules.Methods["recovery.backupProfile.create"].Rules; len(got) != 1 {
+		t.Fatalf("recovery.backupProfile.create rules = %#v, want one rule", got)
+	} else if got[0].Kind != "required" || len(got[0].Require) != 1 || got[0].Require[0].Field != "Organization" || got[0].Require[0].Target != "organization.Organization" {
+		t.Fatalf("unexpected backup profile rule: %#v", got[0])
+	}
+
+	if got := rules.Methods["resourcepool.pool.create"].Rules; len(got) != 1 {
+		t.Fatalf("resourcepool.pool.create rules = %#v, want one rule", got)
+	} else {
+		if got[0].When == nil || got[0].When.Field != "ResourceType" || got[0].When.Equals != "Server" || len(got[0].Require) != 1 || got[0].Require[0].Field != "ResourcePoolParameters" {
+			t.Fatalf("unexpected resource pool parameters rule: %#v", got[0])
+		}
+	}
+
+	if got := rules.Methods["server.diagnostics.create"].Rules; len(got) != 2 {
+		t.Fatalf("server.diagnostics.create rules = %#v, want two rules", got)
+	} else {
+		if got[0].Kind != "required" || len(got[0].Require) != 1 || got[0].Require[0].Field != "Server" || got[0].Require[0].Target != "compute.Physical" {
+			t.Fatalf("unexpected server diagnostics server rule: %#v", got[0])
+		}
+		if got[1].Kind != "required" || len(got[1].Require) != 1 || got[1].Require[0].Field != "ComponentList" {
+			t.Fatalf("unexpected server diagnostics component rule: %#v", got[1])
+		}
+	}
+}
+
+func TestBuildRuleCatalogAllowsBodyScopedCustomRules(t *testing.T) {
+	t.Parallel()
+
+	spec := NormalizedSpec{
+		Metadata: ArtifactSourceMetadata{
+			PublishedVersion: "1.0.0-test",
+			SourceURL:        "https://example.com/spec",
+			SHA256:           "abc123",
+			RetrievalDate:    "2026-04-08",
+		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/ippool/Pools": {
+				"post": {
+					OperationID: "CreateIppoolPool",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Circular: "ippool.Pool",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"ippool.Pool": {
+				Type: "object",
+				Properties: map[string]*NormalizedSchema{
+					"Name":       {Type: "string"},
+					"IpV4Blocks": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
+				},
+			},
+		},
+	}
+	catalog, err := BuildSDKCatalog(spec)
+	if err != nil {
+		t.Fatalf("BuildSDKCatalog() error = %v", err)
+	}
+	templates := []RuleTemplate{
+		{
+			SDKMethod: "ippool.pools.create",
+			Resource:  "ippool.Pool",
+			Rules: []SemanticRule{
+				NewCustomRule(CustomRule{Field: ".", Validator: "ippool_ipv4_blocks_require_config"}),
+			},
+		},
+	}
+
+	rules, err := BuildRuleCatalog(spec, catalog, templates)
+	if err != nil {
+		t.Fatalf("BuildRuleCatalog() error = %v", err)
+	}
+	method, ok := rules.Methods["ippool.pools.create"]
+	if !ok {
+		t.Fatalf("rules missing ippool.pools.create")
+	}
+	if len(method.Rules) != 1 || len(method.Rules[0].Custom) != 1 || method.Rules[0].Custom[0].Field != "." {
+		t.Fatalf("body-scoped custom rule was not preserved: %#v", method.Rules)
+	}
+}
+
+func TestBuildRuleCatalogPropagatesRulesAcrossWriteAliasesForSameOperation(t *testing.T) {
+	t.Parallel()
+
+	spec := NormalizedSpec{
+		Metadata: ArtifactSourceMetadata{
+			PublishedVersion: "1.0.0-test",
+			SourceURL:        "https://example.com/spec",
+			SHA256:           "abc123",
+			RetrievalDate:    "2026-04-16",
+		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/iam/GuestAccessSettings": {
+				"post": {
+					OperationID: "CreateIamGuestAccessSettings",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"AllowedDomainNames":          {Type: "array", Items: &NormalizedSchema{Type: "string"}},
+										"MaxGuestAccessLinkShelfLife": {Type: "integer"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"iam.GuestAccessSettings": {Type: "object"},
+		},
+	}
+
+	catalog := SDKCatalog{
+		Metadata: spec.Metadata,
+		Methods: map[string]SDKMethod{
+			"iam.guestAccessSetting.create": {
+				SDKMethod: "iam.guestAccessSetting.create",
+				Resource:  "iam.GuestAccessSettings",
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateIamGuestAccessSettings",
+					Method:       "POST",
+					PathTemplate: "/api/v1/iam/GuestAccessSettings",
+				},
+			},
+			"iam.guestAccessSettings.create": {
+				SDKMethod: "iam.guestAccessSettings.create",
+				Resource:  "iam.GuestAccessSettings",
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateIamGuestAccessSettings",
+					Method:       "POST",
+					PathTemplate: "/api/v1/iam/GuestAccessSettings",
+				},
+			},
+		},
+	}
+
+	templates := []RuleTemplate{
+		{
+			SDKMethod: "iam.guestAccessSetting.create",
+			Resource:  "iam.GuestAccessSettings",
+			Rules: []SemanticRule{
+				NewRequiredRule("AllowedDomainNames", "", 1),
+				NewMinimumRule(MinimumRule{Field: "MaxGuestAccessLinkShelfLife", Value: 86400}),
+			},
+		},
+	}
+
+	rules, err := BuildRuleCatalog(spec, catalog, templates)
+	if err != nil {
+		t.Fatalf("BuildRuleCatalog() error = %v", err)
+	}
+
+	for _, sdkMethod := range []string{"iam.guestAccessSetting.create", "iam.guestAccessSettings.create"} {
+		got, ok := rules.Methods[sdkMethod]
+		if !ok {
+			t.Fatalf("rules missing %s", sdkMethod)
+		}
+		if len(got.Rules) != 2 {
+			t.Fatalf("%s rules = %#v, want two rules", sdkMethod, got.Rules)
+		}
+	}
+}
+
+func TestBuildRuleCatalogResolvesSingularTemplateMethodsToPluralSDKMethods(t *testing.T) {
+	t.Parallel()
+
+	spec := NormalizedSpec{
+		Metadata: ArtifactSourceMetadata{
+			PublishedVersion: "1.0.0-test",
+			SourceURL:        "https://example.com/spec",
+			SHA256:           "abc123",
+			RetrievalDate:    "2026-04-16",
+		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/cond/ThresholdDefinitions": {
+				"post": {
+					OperationID: "CreateCondThresholdDefinition",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Condition": {Type: "object"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/deviceconnector/Policies": {
+				"post": {
+					OperationID: "CreateDeviceconnectorPolicy",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Organization": {Relationship: true, RelationshipTarget: "organization.Organization"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"cond.ThresholdDefinition":  {Type: "object"},
+			"deviceconnector.Policy":    {Type: "object"},
+			"organization.Organization": {Type: "object"},
+		},
+	}
+
+	catalog := SDKCatalog{
+		Metadata: spec.Metadata,
+		Methods: map[string]SDKMethod{
+			"cond.thresholdDefinitions.create": {
+				SDKMethod: "cond.thresholdDefinitions.create",
+				Resource:  "cond.ThresholdDefinition",
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateCondThresholdDefinition",
+					Method:       "POST",
+					PathTemplate: "/api/v1/cond/ThresholdDefinitions",
+				},
+			},
+			"deviceconnector.policies.create": {
+				SDKMethod: "deviceconnector.policies.create",
+				Resource:  "deviceconnector.Policy",
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateDeviceconnectorPolicy",
+					Method:       "POST",
+					PathTemplate: "/api/v1/deviceconnector/Policies",
+				},
+			},
+		},
+	}
+
+	rules, err := BuildRuleCatalog(spec, catalog, testIntersightRuleTemplates())
+	if err != nil {
+		t.Fatalf("BuildRuleCatalog() error = %v", err)
+	}
+
+	threshold, ok := rules.Methods["cond.thresholdDefinitions.create"]
+	if !ok {
+		t.Fatalf("rules missing cond.thresholdDefinitions.create")
+	}
+	if len(threshold.Rules) != 1 || len(threshold.Rules[0].Require) != 1 || threshold.Rules[0].Require[0].Field != "Condition" {
+		t.Fatalf("unexpected threshold rules: %#v", threshold.Rules)
+	}
+
+	deviceconnector, ok := rules.Methods["deviceconnector.policies.create"]
+	if !ok {
+		t.Fatalf("rules missing deviceconnector.policies.create")
+	}
+	if len(deviceconnector.Rules) != 1 || len(deviceconnector.Rules[0].Require) != 1 {
+		t.Fatalf("unexpected deviceconnector rules: %#v", deviceconnector.Rules)
+	}
+	if deviceconnector.Rules[0].Require[0].Field != "Organization" || deviceconnector.Rules[0].Require[0].Target != "organization.Organization" {
+		t.Fatalf("unexpected deviceconnector organization rule: %#v", deviceconnector.Rules[0])
 	}
 }
 

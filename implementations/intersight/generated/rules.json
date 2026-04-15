@@ -238,6 +238,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "Settings[].SlotId"
+            }
+          ]
         }
       ]
     },
@@ -254,6 +262,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "Settings[].SlotId"
+            }
+          ]
         }
       ]
     },
@@ -268,6 +284,14 @@
             {
               "field": "Settings",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "Settings[].SlotId"
             }
           ]
         }
@@ -630,6 +654,99 @@
           "requireEach": [
             {
               "field": "AlarmRules[].Property"
+            }
+          ]
+        }
+      ]
+    },
+    "cond.thresholdDefinitions.create": {
+      "sdkMethod": "cond.thresholdDefinitions.create",
+      "operationId": "CreateCondThresholdDefinition",
+      "resource": "cond.ThresholdDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Condition"
+            }
+          ]
+        }
+      ]
+    },
+    "cond.thresholdDefinitions.post": {
+      "sdkMethod": "cond.thresholdDefinitions.post",
+      "operationId": "UpdateCondThresholdDefinition",
+      "resource": "cond.ThresholdDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Condition"
+            }
+          ]
+        }
+      ]
+    },
+    "cond.thresholdDefinitions.update": {
+      "sdkMethod": "cond.thresholdDefinitions.update",
+      "operationId": "PatchCondThresholdDefinition",
+      "resource": "cond.ThresholdDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Condition"
+            }
+          ]
+        }
+      ]
+    },
+    "deviceconnector.policies.create": {
+      "sdkMethod": "deviceconnector.policies.create",
+      "operationId": "CreateDeviceconnectorPolicy",
+      "resource": "deviceconnector.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "deviceconnector.policies.post": {
+      "sdkMethod": "deviceconnector.policies.post",
+      "operationId": "UpdateDeviceconnectorPolicy",
+      "resource": "deviceconnector.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "deviceconnector.policies.update": {
+      "sdkMethod": "deviceconnector.policies.update",
+      "operationId": "PatchDeviceconnectorPolicy",
+      "resource": "deviceconnector.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
             }
           ]
         }
@@ -1511,6 +1628,858 @@
         }
       ]
     },
+    "fabric.netFlowMonitors.create": {
+      "sdkMethod": "fabric.netFlowMonitors.create",
+      "operationId": "CreateFabricNetFlowMonitor",
+      "resource": "fabric.NetFlowMonitor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowRecord",
+              "target": "fabric.NetFlowRecord"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowExporters",
+              "target": "fabric.NetFlowExporter",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowMonitors.post": {
+      "sdkMethod": "fabric.netFlowMonitors.post",
+      "operationId": "UpdateFabricNetFlowMonitor",
+      "resource": "fabric.NetFlowMonitor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowRecord",
+              "target": "fabric.NetFlowRecord"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowExporters",
+              "target": "fabric.NetFlowExporter",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowMonitors.update": {
+      "sdkMethod": "fabric.netFlowMonitors.update",
+      "operationId": "PatchFabricNetFlowMonitor",
+      "resource": "fabric.NetFlowMonitor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowRecord",
+              "target": "fabric.NetFlowRecord"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowExporters",
+              "target": "fabric.NetFlowExporter",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowPolicies.create": {
+      "sdkMethod": "fabric.netFlowPolicies.create",
+      "operationId": "CreateFabricNetFlowPolicy",
+      "resource": "fabric.NetFlowPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowPolicies.post": {
+      "sdkMethod": "fabric.netFlowPolicies.post",
+      "operationId": "UpdateFabricNetFlowPolicy",
+      "resource": "fabric.NetFlowPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowPolicies.update": {
+      "sdkMethod": "fabric.netFlowPolicies.update",
+      "operationId": "PatchFabricNetFlowPolicy",
+      "resource": "fabric.NetFlowPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowRecords.create": {
+      "sdkMethod": "fabric.netFlowRecords.create",
+      "operationId": "CreateFabricNetFlowRecord",
+      "resource": "fabric.NetFlowRecord",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "RecordType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowNonKey"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "RecordType",
+              "validator": "netflow_record_type"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "require": [
+            {
+              "field": "Ipv4FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "custom": [
+            {
+              "field": "Ipv4FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "require": [
+            {
+              "field": "Ipv6FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "custom": [
+            {
+              "field": "Ipv6FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "require": [
+            {
+              "field": "L2FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "custom": [
+            {
+              "field": "L2FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "FlowNonKey",
+              "validator": "netflow_non_key_fields"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowRecords.post": {
+      "sdkMethod": "fabric.netFlowRecords.post",
+      "operationId": "UpdateFabricNetFlowRecord",
+      "resource": "fabric.NetFlowRecord",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "RecordType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowNonKey"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "RecordType",
+              "validator": "netflow_record_type"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "require": [
+            {
+              "field": "Ipv4FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "custom": [
+            {
+              "field": "Ipv4FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "require": [
+            {
+              "field": "Ipv6FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "custom": [
+            {
+              "field": "Ipv6FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "require": [
+            {
+              "field": "L2FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "custom": [
+            {
+              "field": "L2FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "FlowNonKey",
+              "validator": "netflow_non_key_fields"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowRecords.update": {
+      "sdkMethod": "fabric.netFlowRecords.update",
+      "operationId": "PatchFabricNetFlowRecord",
+      "resource": "fabric.NetFlowRecord",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "RecordType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowNonKey"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "RecordType",
+              "validator": "netflow_record_type"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "require": [
+            {
+              "field": "Ipv4FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "custom": [
+            {
+              "field": "Ipv4FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "require": [
+            {
+              "field": "Ipv6FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "custom": [
+            {
+              "field": "Ipv6FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "require": [
+            {
+              "field": "L2FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "custom": [
+            {
+              "field": "L2FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "FlowNonKey",
+              "validator": "netflow_non_key_fields"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.pcOperations.create": {
+      "sdkMethod": "fabric.pcOperations.create",
+      "operationId": "CreateFabricPcOperation",
+      "resource": "fabric.PcOperation",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.pcOperations.post": {
+      "sdkMethod": "fabric.pcOperations.post",
+      "operationId": "UpdateFabricPcOperation",
+      "resource": "fabric.PcOperation",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.pcOperations.update": {
+      "sdkMethod": "fabric.pcOperations.update",
+      "operationId": "PatchFabricPcOperation",
+      "resource": "fabric.PcOperation",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.portModes.create": {
+      "sdkMethod": "fabric.portModes.create",
+      "operationId": "CreateFabricPortMode",
+      "resource": "fabric.PortMode",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.portModes.post": {
+      "sdkMethod": "fabric.portModes.post",
+      "operationId": "UpdateFabricPortMode",
+      "resource": "fabric.PortMode",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.portModes.update": {
+      "sdkMethod": "fabric.portModes.update",
+      "operationId": "PatchFabricPortMode",
+      "resource": "fabric.PortMode",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.portOperations.create": {
+      "sdkMethod": "fabric.portOperations.create",
+      "operationId": "CreateFabricPortOperation",
+      "resource": "fabric.PortOperation",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.portOperations.post": {
+      "sdkMethod": "fabric.portOperations.post",
+      "operationId": "UpdateFabricPortOperation",
+      "resource": "fabric.PortOperation",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.portOperations.update": {
+      "sdkMethod": "fabric.portOperations.update",
+      "operationId": "PatchFabricPortOperation",
+      "resource": "fabric.PortOperation",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
     "fabric.portPolicies.create": {
       "sdkMethod": "fabric.portPolicies.create",
       "operationId": "CreateFabricPortPolicy",
@@ -1583,6 +2552,790 @@
         }
       ]
     },
+    "fabric.sanPinGroups.create": {
+      "sdkMethod": "fabric.sanPinGroups.create",
+      "operationId": "CreateFabricSanPinGroup",
+      "resource": "fabric.SanPinGroup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.sanPinGroups.post": {
+      "sdkMethod": "fabric.sanPinGroups.post",
+      "operationId": "UpdateFabricSanPinGroup",
+      "resource": "fabric.SanPinGroup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.sanPinGroups.update": {
+      "sdkMethod": "fabric.sanPinGroups.update",
+      "operationId": "PatchFabricSanPinGroup",
+      "resource": "fabric.SanPinGroup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.serverRoles.create": {
+      "sdkMethod": "fabric.serverRoles.create",
+      "operationId": "CreateFabricServerRole",
+      "resource": "fabric.ServerRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.serverRoles.post": {
+      "sdkMethod": "fabric.serverRoles.post",
+      "operationId": "UpdateFabricServerRole",
+      "resource": "fabric.ServerRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.serverRoles.update": {
+      "sdkMethod": "fabric.serverRoles.update",
+      "operationId": "PatchFabricServerRole",
+      "resource": "fabric.ServerRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanDestEthPorts.create": {
+      "sdkMethod": "fabric.spanDestEthPorts.create",
+      "operationId": "CreateFabricSpanDestEthPort",
+      "resource": "fabric.SpanDestEthPort",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanDestEthPorts.post": {
+      "sdkMethod": "fabric.spanDestEthPorts.post",
+      "operationId": "UpdateFabricSpanDestEthPort",
+      "resource": "fabric.SpanDestEthPort",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanDestEthPorts.update": {
+      "sdkMethod": "fabric.spanDestEthPorts.update",
+      "operationId": "PatchFabricSpanDestEthPort",
+      "resource": "fabric.SpanDestEthPort",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanSessions.create": {
+      "sdkMethod": "fabric.spanSessions.create",
+      "operationId": "CreateFabricSpanSession",
+      "resource": "fabric.SpanSession",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanSessions.post": {
+      "sdkMethod": "fabric.spanSessions.post",
+      "operationId": "UpdateFabricSpanSession",
+      "resource": "fabric.SpanSession",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanSessions.update": {
+      "sdkMethod": "fabric.spanSessions.update",
+      "operationId": "PatchFabricSpanSession",
+      "resource": "fabric.SpanSession",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanSourceEthPortChannels.create": {
+      "sdkMethod": "fabric.spanSourceEthPortChannels.create",
+      "operationId": "CreateFabricSpanSourceEthPortChannel",
+      "resource": "fabric.SpanSourceEthPortChannel",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanSourceEthPorts.create": {
+      "sdkMethod": "fabric.spanSourceEthPorts.create",
+      "operationId": "CreateFabricSpanSourceEthPort",
+      "resource": "fabric.SpanSourceEthPort",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanSourceVlans.create": {
+      "sdkMethod": "fabric.spanSourceVlans.create",
+      "operationId": "CreateFabricSpanSourceVlan",
+      "resource": "fabric.SpanSourceVlan",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.spanSourceVnicEthIfs.create": {
+      "sdkMethod": "fabric.spanSourceVnicEthIfs.create",
+      "operationId": "CreateFabricSpanSourceVnicEthIf",
+      "resource": "fabric.SpanSourceVnicEthIf",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Name"
+          ]
+        }
+      ]
+    },
+    "fabric.switchClusterProfileTemplates.create": {
+      "sdkMethod": "fabric.switchClusterProfileTemplates.create",
+      "operationId": "CreateFabricSwitchClusterProfileTemplate",
+      "resource": "fabric.SwitchClusterProfileTemplate",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchClusterProfileTemplates.post": {
+      "sdkMethod": "fabric.switchClusterProfileTemplates.post",
+      "operationId": "UpdateFabricSwitchClusterProfileTemplate",
+      "resource": "fabric.SwitchClusterProfileTemplate",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchClusterProfileTemplates.update": {
+      "sdkMethod": "fabric.switchClusterProfileTemplates.update",
+      "operationId": "PatchFabricSwitchClusterProfileTemplate",
+      "resource": "fabric.SwitchClusterProfileTemplate",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchClusterProfiles.create": {
+      "sdkMethod": "fabric.switchClusterProfiles.create",
+      "operationId": "CreateFabricSwitchClusterProfile",
+      "resource": "fabric.SwitchClusterProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchClusterProfiles.post": {
+      "sdkMethod": "fabric.switchClusterProfiles.post",
+      "operationId": "UpdateFabricSwitchClusterProfile",
+      "resource": "fabric.SwitchClusterProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchClusterProfiles.update": {
+      "sdkMethod": "fabric.switchClusterProfiles.update",
+      "operationId": "PatchFabricSwitchClusterProfile",
+      "resource": "fabric.SwitchClusterProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchControlPolicies.create": {
+      "sdkMethod": "fabric.switchControlPolicies.create",
+      "operationId": "CreateFabricSwitchControlPolicy",
+      "resource": "fabric.SwitchControlPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchControlPolicies.post": {
+      "sdkMethod": "fabric.switchControlPolicies.post",
+      "operationId": "UpdateFabricSwitchControlPolicy",
+      "resource": "fabric.SwitchControlPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchControlPolicies.update": {
+      "sdkMethod": "fabric.switchControlPolicies.update",
+      "operationId": "PatchFabricSwitchControlPolicy",
+      "resource": "fabric.SwitchControlPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchProfileTemplates.create": {
+      "sdkMethod": "fabric.switchProfileTemplates.create",
+      "operationId": "CreateFabricSwitchProfileTemplate",
+      "resource": "fabric.SwitchProfileTemplate",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfileTemplate",
+              "target": "fabric.SwitchClusterProfileTemplate"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchProfileTemplates.post": {
+      "sdkMethod": "fabric.switchProfileTemplates.post",
+      "operationId": "UpdateFabricSwitchProfileTemplate",
+      "resource": "fabric.SwitchProfileTemplate",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfileTemplate",
+              "target": "fabric.SwitchClusterProfileTemplate"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchProfileTemplates.update": {
+      "sdkMethod": "fabric.switchProfileTemplates.update",
+      "operationId": "PatchFabricSwitchProfileTemplate",
+      "resource": "fabric.SwitchProfileTemplate",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfileTemplate",
+              "target": "fabric.SwitchClusterProfileTemplate"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchProfiles.create": {
+      "sdkMethod": "fabric.switchProfiles.create",
+      "operationId": "CreateFabricSwitchProfile",
+      "resource": "fabric.SwitchProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfile",
+              "target": "fabric.SwitchClusterProfile"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchProfiles.post": {
+      "sdkMethod": "fabric.switchProfiles.post",
+      "operationId": "UpdateFabricSwitchProfile",
+      "resource": "fabric.SwitchProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfile",
+              "target": "fabric.SwitchClusterProfile"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.switchProfiles.update": {
+      "sdkMethod": "fabric.switchProfiles.update",
+      "operationId": "PatchFabricSwitchProfile",
+      "resource": "fabric.SwitchProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfile",
+              "target": "fabric.SwitchClusterProfile"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.systemQosPolicies.create": {
+      "sdkMethod": "fabric.systemQosPolicies.create",
+      "operationId": "CreateFabricSystemQosPolicy",
+      "resource": "fabric.SystemQosPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.systemQosPolicies.post": {
+      "sdkMethod": "fabric.systemQosPolicies.post",
+      "operationId": "UpdateFabricSystemQosPolicy",
+      "resource": "fabric.SystemQosPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.systemQosPolicies.update": {
+      "sdkMethod": "fabric.systemQosPolicies.update",
+      "operationId": "PatchFabricSystemQosPolicy",
+      "resource": "fabric.SystemQosPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.uplinkPcRoles.create": {
+      "sdkMethod": "fabric.uplinkPcRoles.create",
+      "operationId": "CreateFabricUplinkPcRole",
+      "resource": "fabric.UplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.uplinkPcRoles.post": {
+      "sdkMethod": "fabric.uplinkPcRoles.post",
+      "operationId": "UpdateFabricUplinkPcRole",
+      "resource": "fabric.UplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.uplinkPcRoles.update": {
+      "sdkMethod": "fabric.uplinkPcRoles.update",
+      "operationId": "PatchFabricUplinkPcRole",
+      "resource": "fabric.UplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.uplinkRoles.create": {
+      "sdkMethod": "fabric.uplinkRoles.create",
+      "operationId": "CreateFabricUplinkRole",
+      "resource": "fabric.UplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.uplinkRoles.post": {
+      "sdkMethod": "fabric.uplinkRoles.post",
+      "operationId": "UpdateFabricUplinkRole",
+      "resource": "fabric.UplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.uplinkRoles.update": {
+      "sdkMethod": "fabric.uplinkRoles.update",
+      "operationId": "PatchFabricUplinkRole",
+      "resource": "fabric.UplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.vlans.create": {
+      "sdkMethod": "fabric.vlans.create",
+      "operationId": "CreateFabricVlan",
+      "resource": "fabric.Vlan",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "MulticastPolicy",
+              "target": "fabric.MulticastPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "VlanSet"
+          ]
+        }
+      ]
+    },
+    "fabric.vlans.post": {
+      "sdkMethod": "fabric.vlans.post",
+      "operationId": "UpdateFabricVlan",
+      "resource": "fabric.Vlan",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "MulticastPolicy",
+              "target": "fabric.MulticastPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "VlanSet"
+          ]
+        }
+      ]
+    },
+    "fabric.vlans.update": {
+      "sdkMethod": "fabric.vlans.update",
+      "operationId": "PatchFabricVlan",
+      "resource": "fabric.Vlan",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "MulticastPolicy",
+              "target": "fabric.MulticastPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "VlanSet"
+          ]
+        }
+      ]
+    },
+    "fabric.vsans.create": {
+      "sdkMethod": "fabric.vsans.create",
+      "operationId": "CreateFabricVsan",
+      "resource": "fabric.Vsan",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FcoeVlan"
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "FcoeVlan",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.vsans.post": {
+      "sdkMethod": "fabric.vsans.post",
+      "operationId": "UpdateFabricVsan",
+      "resource": "fabric.Vsan",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FcoeVlan"
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "FcoeVlan",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.vsans.update": {
+      "sdkMethod": "fabric.vsans.update",
+      "operationId": "PatchFabricVsan",
+      "resource": "fabric.Vsan",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FcoeVlan"
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "FcoeVlan",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
     "fcpool.pools.create": {
       "sdkMethod": "fcpool.pools.create",
       "operationId": "CreateFcpoolPool",
@@ -1593,6 +3346,15 @@
           "require": [
             {
               "field": "PoolPurpose"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
             }
           ]
         }
@@ -1610,6 +3372,15 @@
               "field": "PoolPurpose"
             }
           ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
         }
       ]
     },
@@ -1623,6 +3394,15 @@
           "require": [
             {
               "field": "PoolPurpose"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
             }
           ]
         }
@@ -1778,6 +3558,54 @@
         }
       ]
     },
+    "firmware.policies.create": {
+      "sdkMethod": "firmware.policies.create",
+      "operationId": "CreateFirmwarePolicy",
+      "resource": "firmware.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "firmware.policies.post": {
+      "sdkMethod": "firmware.policies.post",
+      "operationId": "UpdateFirmwarePolicy",
+      "resource": "firmware.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "firmware.policies.update": {
+      "sdkMethod": "firmware.policies.update",
+      "operationId": "PatchFirmwarePolicy",
+      "resource": "firmware.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
     "firmware.serverConfigurationUtilityDistributables.create": {
       "sdkMethod": "firmware.serverConfigurationUtilityDistributables.create",
       "operationId": "CreateFirmwareServerConfigurationUtilityDistributable",
@@ -1826,6 +3654,118 @@
         }
       ]
     },
+    "firmware.unsupportedVersionUpgrades.create": {
+      "sdkMethod": "firmware.unsupportedVersionUpgrades.create",
+      "operationId": "CreateFirmwareUnsupportedVersionUpgrade",
+      "resource": "firmware.UnsupportedVersionUpgrade"
+    },
+    "firmware.unsupportedVersionUpgrades.post": {
+      "sdkMethod": "firmware.unsupportedVersionUpgrades.post",
+      "operationId": "UpdateFirmwareUnsupportedVersionUpgrade",
+      "resource": "firmware.UnsupportedVersionUpgrade"
+    },
+    "firmware.unsupportedVersionUpgrades.update": {
+      "sdkMethod": "firmware.unsupportedVersionUpgrades.update",
+      "operationId": "PatchFirmwareUnsupportedVersionUpgrade",
+      "resource": "firmware.UnsupportedVersionUpgrade"
+    },
+    "firmware.upgradeImpacts.create": {
+      "sdkMethod": "firmware.upgradeImpacts.create",
+      "operationId": "CreateFirmwareUpgradeImpact",
+      "resource": "firmware.UpgradeImpact",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Chassis"
+            },
+            {
+              "field": "NetworkElements"
+            },
+            {
+              "field": "PciNode"
+            },
+            {
+              "field": "Server"
+            }
+          ]
+        }
+      ]
+    },
+    "firmware.upgradeValidities.create": {
+      "sdkMethod": "firmware.upgradeValidities.create",
+      "operationId": "CreateFirmwareUpgradeValidity",
+      "resource": "firmware.UpgradeValidity",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server",
+              "target": "compute.Physical"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.apiKeys.create": {
+      "sdkMethod": "iam.apiKeys.create",
+      "operationId": "CreateIamApiKey",
+      "resource": "iam.ApiKey",
+      "rules": [
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "User"
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Permission"
+          ]
+        }
+      ]
+    },
+    "iam.apiKeys.post": {
+      "sdkMethod": "iam.apiKeys.post",
+      "operationId": "UpdateIamApiKey",
+      "resource": "iam.ApiKey",
+      "rules": [
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "User"
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Permission"
+          ]
+        }
+      ]
+    },
+    "iam.apiKeys.update": {
+      "sdkMethod": "iam.apiKeys.update",
+      "operationId": "PatchIamApiKey",
+      "resource": "iam.ApiKey",
+      "rules": [
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "User"
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Permission"
+          ]
+        }
+      ]
+    },
     "iam.appRegistrations.create": {
       "sdkMethod": "iam.appRegistrations.create",
       "operationId": "CreateIamAppRegistration",
@@ -1836,6 +3776,14 @@
           "require": [
             {
               "field": "ClientName"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Description"
             }
           ]
         }
@@ -1851,6 +3799,14 @@
           "require": [
             {
               "field": "ClientName"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Description"
             }
           ]
         }
@@ -1871,11 +3827,154 @@
         }
       ]
     },
+    "iam.certificates.create": {
+      "sdkMethod": "iam.certificates.create",
+      "operationId": "CreateIamCertificate",
+      "resource": "iam.Certificate",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Certificate"
+            },
+            {
+              "field": "CertificateRequest"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.certificates.post": {
+      "sdkMethod": "iam.certificates.post",
+      "operationId": "UpdateIamCertificate",
+      "resource": "iam.Certificate",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Certificate"
+            },
+            {
+              "field": "CertificateRequest"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.certificates.update": {
+      "sdkMethod": "iam.certificates.update",
+      "operationId": "PatchIamCertificate",
+      "resource": "iam.Certificate",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Certificate"
+            },
+            {
+              "field": "CertificateRequest"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.endPointUserPolicies.create": {
+      "sdkMethod": "iam.endPointUserPolicies.create",
+      "operationId": "CreateIamEndPointUserPolicy",
+      "resource": "iam.EndPointUserPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.endPointUserPolicies.post": {
+      "sdkMethod": "iam.endPointUserPolicies.post",
+      "operationId": "UpdateIamEndPointUserPolicy",
+      "resource": "iam.EndPointUserPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.endPointUserPolicies.update": {
+      "sdkMethod": "iam.endPointUserPolicies.update",
+      "operationId": "PatchIamEndPointUserPolicy",
+      "resource": "iam.EndPointUserPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
     "iam.endPointUsers.create": {
       "sdkMethod": "iam.endPointUsers.create",
       "operationId": "CreateIamEndPointUser",
       "resource": "iam.EndPointUser",
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
         {
           "kind": "maximum",
           "maximum": [
@@ -1893,6 +3992,23 @@
       "resource": "iam.EndPointUser",
       "rules": [
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
           "kind": "maximum",
           "maximum": [
             {
@@ -1909,11 +4025,160 @@
       "resource": "iam.EndPointUser",
       "rules": [
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
           "kind": "maximum",
           "maximum": [
             {
               "field": "Name",
               "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "iam.guestAccessSettings.create": {
+      "sdkMethod": "iam.guestAccessSettings.create",
+      "operationId": "CreateIamGuestAccessSettings",
+      "resource": "iam.GuestAccessSettings",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "AllowedDomainNames",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "MaxGuestAccessLinkShelfLife",
+              "value": 86400
+            }
+          ]
+        }
+      ]
+    },
+    "iam.guestAccessSettings.post": {
+      "sdkMethod": "iam.guestAccessSettings.post",
+      "operationId": "UpdateIamGuestAccessSettings",
+      "resource": "iam.GuestAccessSettings",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "AllowedDomainNames",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "MaxGuestAccessLinkShelfLife",
+              "value": 86400
+            }
+          ]
+        }
+      ]
+    },
+    "iam.guestAccessSettings.update": {
+      "sdkMethod": "iam.guestAccessSettings.update",
+      "operationId": "PatchIamGuestAccessSettings",
+      "resource": "iam.GuestAccessSettings",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "AllowedDomainNames",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "MaxGuestAccessLinkShelfLife",
+              "value": 86400
+            }
+          ]
+        }
+      ]
+    },
+    "iam.idps.create": {
+      "sdkMethod": "iam.idps.create",
+      "operationId": "CreateIamIdp",
+      "resource": "iam.Idp",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Type",
+            "equals": "saml"
+          },
+          "require": [
+            {
+              "field": "Metadata"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.idps.post": {
+      "sdkMethod": "iam.idps.post",
+      "operationId": "UpdateIamIdp",
+      "resource": "iam.Idp",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Type",
+            "equals": "saml"
+          },
+          "require": [
+            {
+              "field": "Metadata"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.idps.update": {
+      "sdkMethod": "iam.idps.update",
+      "operationId": "PatchIamIdp",
+      "resource": "iam.Idp",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Type",
+            "equals": "saml"
+          },
+          "require": [
+            {
+              "field": "Metadata"
             }
           ]
         }
@@ -2060,6 +4325,207 @@
         }
       ]
     },
+    "iam.privilegeSets.create": {
+      "sdkMethod": "iam.privilegeSets.create",
+      "operationId": "CreateIamPrivilegeSet",
+      "resource": "iam.PrivilegeSet",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.privilegeSets.post": {
+      "sdkMethod": "iam.privilegeSets.post",
+      "operationId": "UpdateIamPrivilegeSet",
+      "resource": "iam.PrivilegeSet",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.privilegeSets.update": {
+      "sdkMethod": "iam.privilegeSets.update",
+      "operationId": "PatchIamPrivilegeSet",
+      "resource": "iam.PrivilegeSet",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.sharingRules.create": {
+      "sdkMethod": "iam.sharingRules.create",
+      "operationId": "CreateIamSharingRule",
+      "resource": "iam.SharingRule",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SharedResource",
+              "target": "mo.BaseMo"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.sharingRules.post": {
+      "sdkMethod": "iam.sharingRules.post",
+      "operationId": "UpdateIamSharingRule",
+      "resource": "iam.SharingRule",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SharedResource",
+              "target": "mo.BaseMo"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.sharingRules.update": {
+      "sdkMethod": "iam.sharingRules.update",
+      "operationId": "PatchIamSharingRule",
+      "resource": "iam.SharingRule",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SharedResource",
+              "target": "mo.BaseMo"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.userGroups.create": {
+      "sdkMethod": "iam.userGroups.create",
+      "operationId": "CreateIamUserGroup",
+      "resource": "iam.UserGroup",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Idp"
+            },
+            {
+              "field": "Idpreference"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.userGroups.post": {
+      "sdkMethod": "iam.userGroups.post",
+      "operationId": "UpdateIamUserGroup",
+      "resource": "iam.UserGroup",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Idp"
+            },
+            {
+              "field": "Idpreference"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.userGroups.update": {
+      "sdkMethod": "iam.userGroups.update",
+      "operationId": "PatchIamUserGroup",
+      "resource": "iam.UserGroup",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Idp"
+            },
+            {
+              "field": "Idpreference"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.users.create": {
+      "sdkMethod": "iam.users.create",
+      "operationId": "CreateIamUser",
+      "resource": "iam.User",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Idp"
+            },
+            {
+              "field": "Idpreference"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.users.post": {
+      "sdkMethod": "iam.users.post",
+      "operationId": "UpdateIamUser",
+      "resource": "iam.User",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Idp"
+            },
+            {
+              "field": "Idpreference"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.users.update": {
+      "sdkMethod": "iam.users.update",
+      "operationId": "PatchIamUser",
+      "resource": "iam.User",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "Idp"
+            },
+            {
+              "field": "Idpreference"
+            }
+          ]
+        }
+      ]
+    },
     "inventory.requests.create": {
       "sdkMethod": "inventory.requests.create",
       "operationId": "CreateInventoryRequest",
@@ -2071,6 +4537,105 @@
             {
               "field": "Device",
               "target": "asset.DeviceRegistration"
+            }
+          ]
+        }
+      ]
+    },
+    "ippool.pools.create": {
+      "sdkMethod": "ippool.pools.create",
+      "operationId": "CreateIppoolPool",
+      "resource": "ippool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "ippool_ipv4_blocks_require_config"
+            }
+          ]
+        }
+      ]
+    },
+    "ippool.pools.post": {
+      "sdkMethod": "ippool.pools.post",
+      "operationId": "UpdateIppoolPool",
+      "resource": "ippool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "ippool_ipv4_blocks_require_config"
+            }
+          ]
+        }
+      ]
+    },
+    "ippool.pools.update": {
+      "sdkMethod": "ippool.pools.update",
+      "operationId": "PatchIppoolPool",
+      "resource": "ippool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "ippool_ipv4_blocks_require_config"
             }
           ]
         }
@@ -2102,6 +4667,18 @@
             {
               "field": "Pool",
               "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
             }
           ]
         },
@@ -2150,6 +4727,18 @@
           "kind": "conditional",
           "when": {
             "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
             "equals": "static"
           },
           "forbid": [
@@ -2191,6 +4780,18 @@
           "kind": "conditional",
           "when": {
             "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
             "equals": "static"
           },
           "forbid": [
@@ -2208,7 +4809,33 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Prefix"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "iqnpool_suffix_blocks_require_suffix"
             }
           ]
         }
@@ -2223,7 +4850,33 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Prefix"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "iqnpool_suffix_blocks_require_suffix"
             }
           ]
         }
@@ -2238,7 +4891,33 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Prefix"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "iqnpool_suffix_blocks_require_suffix"
             }
           ]
         }
@@ -2285,6 +4964,78 @@
         }
       ]
     },
+    "macpool.pools.create": {
+      "sdkMethod": "macpool.pools.create",
+      "operationId": "CreateMacpoolPool",
+      "resource": "macpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "macpool.pools.post": {
+      "sdkMethod": "macpool.pools.post",
+      "operationId": "UpdateMacpoolPool",
+      "resource": "macpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "macpool.pools.update": {
+      "sdkMethod": "macpool.pools.update",
+      "operationId": "PatchMacpoolPool",
+      "resource": "macpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
     "macpool.reservations.create": {
       "sdkMethod": "macpool.reservations.create",
       "operationId": "CreateMacpoolReservation",
@@ -2311,6 +5062,18 @@
             {
               "field": "Pool",
               "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
             }
           ]
         },
@@ -2359,6 +5122,18 @@
           "kind": "conditional",
           "when": {
             "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
             "equals": "static"
           },
           "forbid": [
@@ -2400,10 +5175,241 @@
           "kind": "conditional",
           "when": {
             "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
             "equals": "static"
           },
           "forbid": [
             "Pool"
+          ]
+        }
+      ]
+    },
+    "memory.persistentMemoryPolicies.create": {
+      "sdkMethod": "memory.persistentMemoryPolicies.create",
+      "operationId": "CreateMemoryPersistentMemoryPolicy",
+      "resource": "memory.PersistentMemoryPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "persistent_memory_os_mode"
+            }
+          ]
+        }
+      ]
+    },
+    "memory.persistentMemoryPolicies.post": {
+      "sdkMethod": "memory.persistentMemoryPolicies.post",
+      "operationId": "UpdateMemoryPersistentMemoryPolicy",
+      "resource": "memory.PersistentMemoryPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "persistent_memory_os_mode"
+            }
+          ]
+        }
+      ]
+    },
+    "memory.persistentMemoryPolicies.update": {
+      "sdkMethod": "memory.persistentMemoryPolicies.update",
+      "operationId": "PatchMemoryPersistentMemoryPolicy",
+      "resource": "memory.PersistentMemoryPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "persistent_memory_os_mode"
+            }
+          ]
+        }
+      ]
+    },
+    "memory.policies.create": {
+      "sdkMethod": "memory.policies.create",
+      "operationId": "CreateMemoryPolicy",
+      "resource": "memory.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "memory.policies.post": {
+      "sdkMethod": "memory.policies.post",
+      "operationId": "UpdateMemoryPolicy",
+      "resource": "memory.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "memory.policies.update": {
+      "sdkMethod": "memory.policies.update",
+      "operationId": "PatchMemoryPolicy",
+      "resource": "memory.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "metrics.metricsExplorations.create": {
+      "sdkMethod": "metrics.metricsExplorations.create",
+      "operationId": "CreateMetricsMetricsExploration",
+      "resource": "metrics.MetricsExploration",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "metrics.metricsExplorations.post": {
+      "sdkMethod": "metrics.metricsExplorations.post",
+      "operationId": "UpdateMetricsMetricsExploration",
+      "resource": "metrics.MetricsExploration",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "metrics.metricsExplorations.update": {
+      "sdkMethod": "metrics.metricsExplorations.update",
+      "operationId": "PatchMetricsMetricsExploration",
+      "resource": "metrics.MetricsExploration",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
           ]
         }
       ]
@@ -2417,7 +5423,32 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Source"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Version"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^.+\\.(?:tgz|gz)$"
             }
           ]
         }
@@ -2432,7 +5463,32 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Source"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Version"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^.+\\.(?:tgz|gz)$"
             }
           ]
         }
@@ -2447,7 +5503,32 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Source"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Version"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^.+\\.(?:tgz|gz)$"
             }
           ]
         }
@@ -2624,6 +5705,94 @@
         }
       ]
     },
+    "os.bulkInstallInfos.create": {
+      "sdkMethod": "os.bulkInstallInfos.create",
+      "operationId": "CreateOsBulkInstallInfo",
+      "resource": "os.BulkInstallInfo",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "os.configurationFiles.create": {
+      "sdkMethod": "os.configurationFiles.create",
+      "operationId": "CreateOsConfigurationFile",
+      "resource": "os.ConfigurationFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Distributions",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "os.configurationFiles.post": {
+      "sdkMethod": "os.configurationFiles.post",
+      "operationId": "UpdateOsConfigurationFile",
+      "resource": "os.ConfigurationFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Distributions",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "os.configurationFiles.update": {
+      "sdkMethod": "os.configurationFiles.update",
+      "operationId": "PatchOsConfigurationFile",
+      "resource": "os.ConfigurationFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Distributions",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
     "os.templateFiles.create": {
       "sdkMethod": "os.templateFiles.create",
       "operationId": "CreateOsTemplateFile",
@@ -2688,6 +5857,54 @@
           "require": [
             {
               "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.backupProfiles.create": {
+      "sdkMethod": "recovery.backupProfiles.create",
+      "operationId": "CreateRecoveryBackupProfile",
+      "resource": "recovery.BackupProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.backupProfiles.post": {
+      "sdkMethod": "recovery.backupProfiles.post",
+      "operationId": "UpdateRecoveryBackupProfile",
+      "resource": "recovery.BackupProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.backupProfiles.update": {
+      "sdkMethod": "recovery.backupProfiles.update",
+      "operationId": "PatchRecoveryBackupProfile",
+      "resource": "recovery.BackupProfile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
             }
           ]
         }
@@ -2855,6 +6072,99 @@
         }
       ]
     },
+    "resourcepool.pools.create": {
+      "sdkMethod": "resourcepool.pools.create",
+      "operationId": "CreateResourcepoolPool",
+      "resource": "resourcepool.Pool",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Server"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Mixed"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        }
+      ]
+    },
+    "resourcepool.pools.post": {
+      "sdkMethod": "resourcepool.pools.post",
+      "operationId": "UpdateResourcepoolPool",
+      "resource": "resourcepool.Pool",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Server"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Mixed"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        }
+      ]
+    },
+    "resourcepool.pools.update": {
+      "sdkMethod": "resourcepool.pools.update",
+      "operationId": "PatchResourcepoolPool",
+      "resource": "resourcepool.Pool",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Server"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Mixed"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        }
+      ]
+    },
     "resourcepool.qualificationPolicies.create": {
       "sdkMethod": "resourcepool.qualificationPolicies.create",
       "operationId": "CreateResourcepoolQualificationPolicy",
@@ -2946,6 +6256,14 @@
           ]
         },
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ScheduleParams[].Name"
+            }
+          ]
+        },
+        {
           "kind": "future",
           "future": [
             {
@@ -2967,6 +6285,14 @@
               "field": "ScheduleParams",
               "target": "scheduler.BaseScheduleParams",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ScheduleParams[].Name"
             }
           ]
         },
@@ -2996,10 +6322,102 @@
           ]
         },
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ScheduleParams[].Name"
+            }
+          ]
+        },
+        {
           "kind": "future",
           "future": [
             {
               "field": "ScheduleParams[].StartTime"
+            }
+          ]
+        }
+      ]
+    },
+    "scheduler.taskSchedules.create": {
+      "sdkMethod": "scheduler.taskSchedules.create",
+      "operationId": "CreateSchedulerTaskSchedule",
+      "resource": "scheduler.TaskSchedule",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "UsePolicy",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "Policy",
+              "target": "scheduler.SchedulePolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TaskRequest.Url"
+            }
+          ]
+        }
+      ]
+    },
+    "scheduler.taskSchedules.post": {
+      "sdkMethod": "scheduler.taskSchedules.post",
+      "operationId": "UpdateSchedulerTaskSchedule",
+      "resource": "scheduler.TaskSchedule",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "UsePolicy",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "Policy",
+              "target": "scheduler.SchedulePolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TaskRequest.Url"
+            }
+          ]
+        }
+      ]
+    },
+    "scheduler.taskSchedules.update": {
+      "sdkMethod": "scheduler.taskSchedules.update",
+      "operationId": "PatchSchedulerTaskSchedule",
+      "resource": "scheduler.TaskSchedule",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "UsePolicy",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "Policy",
+              "target": "scheduler.SchedulePolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TaskRequest.Url"
             }
           ]
         }
@@ -3029,6 +6447,15 @@
           "kind": "required",
           "require": [
             {
+              "field": "Server",
+              "target": "compute.Physical"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "ComponentList",
               "minCount": 1
             }
@@ -3045,6 +6472,15 @@
           "kind": "required",
           "require": [
             {
+              "field": "Server",
+              "target": "compute.Physical"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "ComponentList",
               "minCount": 1
             }
@@ -3057,6 +6493,15 @@
       "operationId": "PatchServerDiagnostics",
       "resource": "server.Diagnostics",
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server",
+              "target": "compute.Physical"
+            }
+          ]
+        },
         {
           "kind": "required",
           "require": [
@@ -3574,6 +7019,15 @@
       "operationId": "CreateUuidpoolReservation",
       "resource": "uuidpool.Reservation",
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
         {
           "kind": "one_of",
           "requireAny": [
@@ -4273,6 +7727,22 @@
         }
       ]
     },
+    "vnic.ethQosPolicies.create": {
+      "sdkMethod": "vnic.ethQosPolicies.create",
+      "operationId": "CreateVnicEthQosPolicy",
+      "resource": "vnic.EthQosPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
     "vnic.fcAdapterPolicies.create": {
       "sdkMethod": "vnic.fcAdapterPolicies.create",
       "operationId": "CreateVnicFcAdapterPolicy",
@@ -4289,21 +7759,25 @@
         }
       ]
     },
-    "vnic.fcQosPolicies.create": {
-      "sdkMethod": "vnic.fcQosPolicies.create",
-      "operationId": "CreateVnicFcQosPolicy",
-      "resource": "vnic.FcQosPolicy",
+    "vnic.fcIfs.create": {
+      "sdkMethod": "vnic.fcIfs.create",
+      "operationId": "CreateVnicFcIf",
+      "resource": "vnic.FcIf",
       "rules": [
         {
-          "kind": "minimum",
-          "minimum": [
+          "kind": "required",
+          "require": [
             {
-              "field": "MaxDataFieldSize",
-              "value": 256
+              "field": "Placement"
             }
           ]
         }
       ]
+    },
+    "vnic.fcQosPolicies.create": {
+      "sdkMethod": "vnic.fcQosPolicies.create",
+      "operationId": "CreateVnicFcQosPolicy",
+      "resource": "vnic.FcQosPolicy"
     },
     "vnic.iscsiAdapterPolicies.create": {
       "sdkMethod": "vnic.iscsiAdapterPolicies.create",
@@ -4737,6 +8211,186 @@
         }
       ]
     },
+    "vnic.sanConnectivityPolicies.create": {
+      "sdkMethod": "vnic.sanConnectivityPolicies.create",
+      "operationId": "CreateVnicSanConnectivityPolicy",
+      "resource": "vnic.SanConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "WwnnAddressType"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "require": [
+            {
+              "field": "WwnnPool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "forbid": [
+            "StaticWwnnAddress"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "require": [
+            {
+              "field": "StaticWwnnAddress"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "forbid": [
+            "WwnnPool"
+          ]
+        }
+      ]
+    },
+    "vnic.sanConnectivityPolicies.post": {
+      "sdkMethod": "vnic.sanConnectivityPolicies.post",
+      "operationId": "UpdateVnicSanConnectivityPolicy",
+      "resource": "vnic.SanConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "WwnnAddressType"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "require": [
+            {
+              "field": "WwnnPool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "forbid": [
+            "StaticWwnnAddress"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "require": [
+            {
+              "field": "StaticWwnnAddress"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "forbid": [
+            "WwnnPool"
+          ]
+        }
+      ]
+    },
+    "vnic.sanConnectivityPolicies.update": {
+      "sdkMethod": "vnic.sanConnectivityPolicies.update",
+      "operationId": "PatchVnicSanConnectivityPolicy",
+      "resource": "vnic.SanConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "WwnnAddressType"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "require": [
+            {
+              "field": "WwnnPool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "forbid": [
+            "StaticWwnnAddress"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "require": [
+            {
+              "field": "StaticWwnnAddress"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "forbid": [
+            "WwnnPool"
+          ]
+        }
+      ]
+    },
     "vnic.vhbaTemplates.create": {
       "sdkMethod": "vnic.vhbaTemplates.create",
       "operationId": "CreateVnicVhbaTemplate",
@@ -4748,6 +8402,66 @@
             {
               "field": "Name",
               "value": 16
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FcQosPolicy",
+              "target": "vnic.FcQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "FcAdapterPolicy",
+              "target": "vnic.FcAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "FcNetworkPolicy",
+              "target": "vnic.FcNetworkPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "WwpnPool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "SwitchId"
             }
           ]
         }
@@ -4796,6 +8510,72 @@
             {
               "field": "Name",
               "value": 16
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthQosPolicy",
+              "target": "vnic.EthQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "EthAdapterPolicy",
+              "target": "vnic.EthAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "MacPool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "SwitchId"
             }
           ]
         }

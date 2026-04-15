@@ -89,53 +89,87 @@ func BuildRuleCatalog(spec NormalizedSpec, catalog SDKCatalog, templates []RuleT
 	}
 
 	for _, entry := range templates {
-		method, ok := resolveRuleTemplateMethod(catalog, entry)
-		if !ok {
+		methods := resolveRuleTemplateMethods(catalog, entry)
+		if len(methods) == 0 {
 			continue
 		}
-		_, bodySchema, _ := findSpecOperationForDescriptor(spec, method.Descriptor)
-		filteredRules := make([]SemanticRule, 0, len(entry.Rules))
-		for _, rule := range entry.Rules {
-			if strings.TrimSpace(rule.Kind) == "required" && shouldOmitRequiredRule(spec, bodySchema, rule) {
-				continue
+		for _, method := range methods {
+			_, bodySchema, _ := findSpecOperationForDescriptor(spec, method.Descriptor)
+			filteredRules := make([]SemanticRule, 0, len(entry.Rules))
+			for _, rule := range entry.Rules {
+				if strings.TrimSpace(rule.Kind) == "required" && shouldOmitRequiredRule(spec, bodySchema, rule) {
+					continue
+				}
+				filteredRules = append(filteredRules, rule)
 			}
-			filteredRules = append(filteredRules, rule)
-		}
-		rules.Methods[method.SDKMethod] = MethodRules{
-			SDKMethod:   method.SDKMethod,
-			OperationID: method.Descriptor.OperationID,
-			Resource:    entry.Resource,
-			Rules:       filteredRules,
+			rules.Methods[method.SDKMethod] = MethodRules{
+				SDKMethod:   method.SDKMethod,
+				OperationID: method.Descriptor.OperationID,
+				Resource:    entry.Resource,
+				Rules:       filteredRules,
+			}
 		}
 	}
 
 	return rules, nil
 }
 
-func resolveRuleTemplateMethod(catalog SDKCatalog, entry RuleTemplate) (SDKMethod, bool) {
+func resolveRuleTemplateMethods(catalog SDKCatalog, entry RuleTemplate) []SDKMethod {
 	if method, ok := catalog.Methods[entry.SDKMethod]; ok {
-		return method, true
+		return ruleTemplateAliasMethods(catalog, method)
 	}
 
 	verb := sdkMethodVerb(entry.SDKMethod)
 	if verb == "" || strings.TrimSpace(entry.Resource) == "" {
-		return SDKMethod{}, false
+		return nil
 	}
 
-	var match SDKMethod
+	var matches []SDKMethod
+	var operationIDs = map[string]struct{}{}
 	for _, method := range catalog.Methods {
 		if method.Resource != entry.Resource || sdkMethodVerb(method.SDKMethod) != verb {
 			continue
 		}
-		if match.SDKMethod != "" {
-			return SDKMethod{}, false
+		matches = append(matches, method)
+		operationIDs[method.Descriptor.OperationID] = struct{}{}
+	}
+	if len(matches) == 0 {
+		return nil
+	}
+	if len(operationIDs) != 1 {
+		if len(matches) != 1 {
+			return nil
 		}
-		match = method
+		return []SDKMethod{matches[0]}
 	}
-	if match.SDKMethod == "" {
-		return SDKMethod{}, false
+	return normalizeRuleTemplateMatches(matches)
+}
+
+func ruleTemplateAliasMethods(catalog SDKCatalog, canonical SDKMethod) []SDKMethod {
+	var matches []SDKMethod
+	for _, method := range catalog.Methods {
+		if method.Descriptor.OperationID != canonical.Descriptor.OperationID {
+			continue
+		}
+		if method.Resource != canonical.Resource {
+			continue
+		}
+		if sdkMethodVerb(method.SDKMethod) != sdkMethodVerb(canonical.SDKMethod) {
+			continue
+		}
+		matches = append(matches, method)
 	}
-	return match, true
+	if len(matches) == 0 {
+		return []SDKMethod{canonical}
+	}
+	return normalizeRuleTemplateMatches(matches)
+}
+
+func normalizeRuleTemplateMatches(matches []SDKMethod) []SDKMethod {
+	slices.SortFunc(matches, func(a, b SDKMethod) int {
+		return strings.Compare(a.SDKMethod, b.SDKMethod)
+	})
+	return matches
 }
 
 func sdkMethodVerb(name string) string {
@@ -335,8 +369,13 @@ func validateRelationshipTarget(target string, schema *NormalizedSchema) error {
 }
 
 func schemaAtFieldPath(spec NormalizedSpec, root *NormalizedSchema, fieldPath string) (*NormalizedSchema, bool) {
+	fieldPath = strings.TrimSpace(fieldPath)
+	if fieldPath == "." || fieldPath == "$" {
+		return dereferenceSchema(spec, root), root != nil
+	}
+
 	current := root
-	for _, segment := range strings.Split(strings.TrimSpace(fieldPath), ".") {
+	for _, segment := range strings.Split(fieldPath, ".") {
 		if segment == "" {
 			return nil, false
 		}

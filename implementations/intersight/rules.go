@@ -72,6 +72,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "adapter.ConfigPolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Settings", "", 1),
+				contracts.NewEachRequiredRule("Settings[].SlotId"),
 			},
 		},
 		{
@@ -79,6 +80,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "adapter.ConfigPolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Settings", "", 1),
+				contracts.NewEachRequiredRule("Settings[].SlotId"),
 			},
 		},
 		{
@@ -86,6 +88,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "adapter.ConfigPolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Settings", "", 1),
+				contracts.NewEachRequiredRule("Settings[].SlotId"),
 			},
 		},
 		{
@@ -140,6 +143,27 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "cond.thresholdDefinition.create",
+			Resource:  "cond.ThresholdDefinition",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Condition", ""),
+			},
+		},
+		{
+			SDKMethod: "cond.thresholdDefinition.post",
+			Resource:  "cond.ThresholdDefinition",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Condition", ""),
+			},
+		},
+		{
+			SDKMethod: "cond.thresholdDefinition.update",
+			Resource:  "cond.ThresholdDefinition",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Condition", ""),
+			},
+		},
+		{
 			SDKMethod: "comm.httpProxyPolicy.create",
 			Resource:  "comm.HttpProxyPolicy",
 			Rules: []SemanticRule{
@@ -182,10 +206,32 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "deviceconnector.policy.create",
+			Resource:  "deviceconnector.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "deviceconnector.policy.post",
+			Resource:  "deviceconnector.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "deviceconnector.policy.update",
+			Resource:  "deviceconnector.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
 			SDKMethod: "fcpool.pool.create",
 			Resource:  "fcpool.Pool",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("PoolPurpose", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 			},
 		},
 		{
@@ -193,6 +239,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "fcpool.Pool",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("PoolPurpose", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 			},
 		},
 		{
@@ -200,6 +247,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "fcpool.Pool",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("PoolPurpose", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 			},
 		},
 		{
@@ -259,6 +307,7 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "ippool.Pool"}),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Identity"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
 			},
 		},
@@ -268,6 +317,7 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "ippool.Pool"}),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Identity"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
 			},
 		},
@@ -277,28 +327,65 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "ippool.Pool"}),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Identity"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "ippool.pools.create",
+			Resource:  "ippool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "ippool_ipv4_blocks_require_config"}),
+			},
+		},
+		{
+			SDKMethod: "ippool.pools.post",
+			Resource:  "ippool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "ippool_ipv4_blocks_require_config"}),
+			},
+		},
+		{
+			SDKMethod: "ippool.pools.update",
+			Resource:  "ippool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "ippool_ipv4_blocks_require_config"}),
 			},
 		},
 		{
 			SDKMethod: "iqnpool.pool.create",
 			Resource:  "iqnpool.Pool",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewRequiredRule("Prefix", ""),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "iqnpool_suffix_blocks_require_suffix"}),
 			},
 		},
 		{
 			SDKMethod: "iqnpool.pool.post",
 			Resource:  "iqnpool.Pool",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewRequiredRule("Prefix", ""),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "iqnpool_suffix_blocks_require_suffix"}),
 			},
 		},
 		{
 			SDKMethod: "iqnpool.pool.update",
 			Resource:  "iqnpool.Pool",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewRequiredRule("Prefix", ""),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "iqnpool_suffix_blocks_require_suffix"}),
 			},
 		},
 		{
@@ -329,11 +416,36 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "macpool.pools.create",
+			Resource:  "macpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "macpool.pools.post",
+			Resource:  "macpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "macpool.pools.update",
+			Resource:  "macpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
 			SDKMethod: "macpool.reservation.create",
 			Resource:  "macpool.Reservation",
 			Rules: []SemanticRule{
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "macpool.Pool"}),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Identity"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
 			},
 		},
@@ -343,6 +455,7 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "macpool.Pool"}),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Identity"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
 			},
 		},
@@ -352,7 +465,80 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "macpool.Pool"}),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Identity"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "memory.policies.create",
+			Resource:  "memory.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "memory.policies.post",
+			Resource:  "memory.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "memory.policies.update",
+			Resource:  "memory.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "memory.persistentMemoryPolicies.create",
+			Resource:  "memory.PersistentMemoryPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "persistent_memory_os_mode"}),
+			},
+		},
+		{
+			SDKMethod: "memory.persistentMemoryPolicies.post",
+			Resource:  "memory.PersistentMemoryPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "persistent_memory_os_mode"}),
+			},
+		},
+		{
+			SDKMethod: "memory.persistentMemoryPolicies.update",
+			Resource:  "memory.PersistentMemoryPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+				contracts.NewCustomRule(CustomRule{Field: ".", Validator: "persistent_memory_os_mode"}),
+			},
+		},
+		{
+			SDKMethod: "metrics.metricsExplorations.create",
+			Resource:  "metrics.MetricsExploration",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "metrics.metricsExplorations.post",
+			Resource:  "metrics.MetricsExploration",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "metrics.metricsExplorations.update",
+			Resource:  "metrics.MetricsExploration",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 			},
 		},
 		{
@@ -490,6 +676,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "vnic.ethNetworkPolicy.create",
 			Resource:  "vnic.EthNetworkPolicy",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewRequiredRule("VlanSettings", ""),
 				contracts.NewConditionalRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
 				contracts.NewConditionalRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
@@ -500,6 +687,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "vnic.ethNetworkPolicy.post",
 			Resource:  "vnic.EthNetworkPolicy",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewRequiredRule("VlanSettings", ""),
 				contracts.NewConditionalRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
 				contracts.NewConditionalRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
@@ -510,10 +698,54 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "vnic.ethNetworkPolicy.update",
 			Resource:  "vnic.EthNetworkPolicy",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewRequiredRule("VlanSettings", ""),
 				contracts.NewConditionalRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
 				contracts.NewConditionalRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
 				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
+			},
+		},
+		{
+			SDKMethod: "vnic.sanConnectivityPolicy.create",
+			Resource:  "vnic.SanConnectivityPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("WwnnAddressType", ""),
+				contracts.NewConditionalRequireRule("WwnnAddressType", "POOL", FieldRule{Field: "WwnnPool", Target: "fcpool.Pool"}),
+				contracts.NewConditionalForbidRule("WwnnAddressType", "POOL", "StaticWwnnAddress"),
+				contracts.NewConditionalRequireRule("WwnnAddressType", "STATIC", FieldRule{Field: "StaticWwnnAddress"}),
+				contracts.NewConditionalForbidRule("WwnnAddressType", "STATIC", "WwnnPool"),
+			},
+		},
+		{
+			SDKMethod: "vnic.sanConnectivityPolicy.post",
+			Resource:  "vnic.SanConnectivityPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("WwnnAddressType", ""),
+				contracts.NewConditionalRequireRule("WwnnAddressType", "POOL", FieldRule{Field: "WwnnPool", Target: "fcpool.Pool"}),
+				contracts.NewConditionalForbidRule("WwnnAddressType", "POOL", "StaticWwnnAddress"),
+				contracts.NewConditionalRequireRule("WwnnAddressType", "STATIC", FieldRule{Field: "StaticWwnnAddress"}),
+				contracts.NewConditionalForbidRule("WwnnAddressType", "STATIC", "WwnnPool"),
+			},
+		},
+		{
+			SDKMethod: "vnic.sanConnectivityPolicy.update",
+			Resource:  "vnic.SanConnectivityPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("WwnnAddressType", ""),
+				contracts.NewConditionalRequireRule("WwnnAddressType", "POOL", FieldRule{Field: "WwnnPool", Target: "fcpool.Pool"}),
+				contracts.NewConditionalForbidRule("WwnnAddressType", "POOL", "StaticWwnnAddress"),
+				contracts.NewConditionalRequireRule("WwnnAddressType", "STATIC", FieldRule{Field: "StaticWwnnAddress"}),
+				contracts.NewConditionalForbidRule("WwnnAddressType", "STATIC", "WwnnPool"),
+			},
+		},
+		{
+			SDKMethod: "vnic.sanConnectivityPolicy.patch",
+			Resource:  "vnic.SanConnectivityPolicy",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("WwnnAddressType", "POOL", FieldRule{Field: "WwnnPool", Target: "fcpool.Pool"}),
+				contracts.NewConditionalForbidRule("WwnnAddressType", "POOL", "StaticWwnnAddress"),
+				contracts.NewConditionalRequireRule("WwnnAddressType", "STATIC", FieldRule{Field: "StaticWwnnAddress"}),
+				contracts.NewConditionalForbidRule("WwnnAddressType", "STATIC", "WwnnPool"),
 			},
 		},
 		{
@@ -665,6 +897,54 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "fabric.netFlowMonitors.create",
+			Resource:  "fabric.NetFlowMonitor",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetFlowPolicy", "fabric.NetFlowPolicy"),
+				contracts.NewRequiredRule("FlowRecord", "fabric.NetFlowRecord"),
+				contracts.NewRequiredRule("FlowExporters", "fabric.NetFlowExporter", 1),
+			},
+		},
+		{
+			SDKMethod: "fabric.netFlowMonitors.post",
+			Resource:  "fabric.NetFlowMonitor",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetFlowPolicy", "fabric.NetFlowPolicy"),
+				contracts.NewRequiredRule("FlowRecord", "fabric.NetFlowRecord"),
+				contracts.NewRequiredRule("FlowExporters", "fabric.NetFlowExporter", 1),
+			},
+		},
+		{
+			SDKMethod: "fabric.netFlowMonitors.update",
+			Resource:  "fabric.NetFlowMonitor",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetFlowPolicy", "fabric.NetFlowPolicy"),
+				contracts.NewRequiredRule("FlowRecord", "fabric.NetFlowRecord"),
+				contracts.NewRequiredRule("FlowExporters", "fabric.NetFlowExporter", 1),
+			},
+		},
+		{
+			SDKMethod: "fabric.netFlowPolicies.create",
+			Resource:  "fabric.NetFlowPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.netFlowPolicies.post",
+			Resource:  "fabric.NetFlowPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.netFlowPolicies.update",
+			Resource:  "fabric.NetFlowPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
 			SDKMethod: "fabric.netFlowExporter.create",
 			Resource:  "fabric.NetFlowExporter",
 			Rules: []SemanticRule{
@@ -683,6 +963,186 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "fabric.NetFlowExporter",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("NetFlowPolicy", "fabric.NetFlowPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.netFlowRecords.create",
+			Resource:  "fabric.NetFlowRecord",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetFlowPolicy", "fabric.NetFlowPolicy"),
+				contracts.NewRequiredRule("RecordType", ""),
+				contracts.NewRequiredRule("FlowNonKey", ""),
+				contracts.NewCustomRule(CustomRule{Field: "RecordType", Validator: "netflow_record_type"}),
+				contracts.NewConditionalRequireRule("RecordType", "IPv4", FieldRule{Field: "Ipv4FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "IPv4", "Ipv6FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "IPv4", "L2FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "IPv4", CustomRule{Field: "Ipv4FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewConditionalRequireRule("RecordType", "IPv6", FieldRule{Field: "Ipv6FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "IPv6", "Ipv4FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "IPv6", "L2FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "IPv6", CustomRule{Field: "Ipv6FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewConditionalRequireRule("RecordType", "L2", FieldRule{Field: "L2FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "L2", "Ipv4FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "L2", "Ipv6FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "L2", CustomRule{Field: "L2FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewCustomRule(CustomRule{Field: "FlowNonKey", Validator: "netflow_non_key_fields"}),
+			},
+		},
+		{
+			SDKMethod: "fabric.netFlowRecords.post",
+			Resource:  "fabric.NetFlowRecord",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetFlowPolicy", "fabric.NetFlowPolicy"),
+				contracts.NewRequiredRule("RecordType", ""),
+				contracts.NewRequiredRule("FlowNonKey", ""),
+				contracts.NewCustomRule(CustomRule{Field: "RecordType", Validator: "netflow_record_type"}),
+				contracts.NewConditionalRequireRule("RecordType", "IPv4", FieldRule{Field: "Ipv4FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "IPv4", "Ipv6FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "IPv4", "L2FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "IPv4", CustomRule{Field: "Ipv4FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewConditionalRequireRule("RecordType", "IPv6", FieldRule{Field: "Ipv6FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "IPv6", "Ipv4FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "IPv6", "L2FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "IPv6", CustomRule{Field: "Ipv6FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewConditionalRequireRule("RecordType", "L2", FieldRule{Field: "L2FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "L2", "Ipv4FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "L2", "Ipv6FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "L2", CustomRule{Field: "L2FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewCustomRule(CustomRule{Field: "FlowNonKey", Validator: "netflow_non_key_fields"}),
+			},
+		},
+		{
+			SDKMethod: "fabric.netFlowRecords.update",
+			Resource:  "fabric.NetFlowRecord",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetFlowPolicy", "fabric.NetFlowPolicy"),
+				contracts.NewRequiredRule("RecordType", ""),
+				contracts.NewRequiredRule("FlowNonKey", ""),
+				contracts.NewCustomRule(CustomRule{Field: "RecordType", Validator: "netflow_record_type"}),
+				contracts.NewConditionalRequireRule("RecordType", "IPv4", FieldRule{Field: "Ipv4FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "IPv4", "Ipv6FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "IPv4", "L2FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "IPv4", CustomRule{Field: "Ipv4FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewConditionalRequireRule("RecordType", "IPv6", FieldRule{Field: "Ipv6FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "IPv6", "Ipv4FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "IPv6", "L2FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "IPv6", CustomRule{Field: "Ipv6FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewConditionalRequireRule("RecordType", "L2", FieldRule{Field: "L2FlowKey"}),
+				contracts.NewConditionalForbidRule("RecordType", "L2", "Ipv4FlowKey"),
+				contracts.NewConditionalForbidRule("RecordType", "L2", "Ipv6FlowKey"),
+				contracts.NewConditionalCustomRule("RecordType", "L2", CustomRule{Field: "L2FlowKey", Validator: "netflow_key_fields"}),
+				contracts.NewCustomRule(CustomRule{Field: "FlowNonKey", Validator: "netflow_non_key_fields"}),
+			},
+		},
+		{
+			SDKMethod: "fabric.vlans.create",
+			Resource:  "fabric.Vlan",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("MulticastPolicy", "fabric.MulticastPolicy"),
+				contracts.NewForbidRule("VlanSet"),
+			},
+		},
+		{
+			SDKMethod: "fabric.vlans.post",
+			Resource:  "fabric.Vlan",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("MulticastPolicy", "fabric.MulticastPolicy"),
+				contracts.NewForbidRule("VlanSet"),
+			},
+		},
+		{
+			SDKMethod: "fabric.vlans.update",
+			Resource:  "fabric.Vlan",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("MulticastPolicy", "fabric.MulticastPolicy"),
+				contracts.NewForbidRule("VlanSet"),
+			},
+		},
+		{
+			SDKMethod: "fabric.vsans.create",
+			Resource:  "fabric.Vsan",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("FcoeVlan", ""),
+				contracts.NewMinimumRule(MinimumRule{Field: "FcoeVlan", Value: 1}),
+			},
+		},
+		{
+			SDKMethod: "fabric.vsans.post",
+			Resource:  "fabric.Vsan",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("FcoeVlan", ""),
+				contracts.NewMinimumRule(MinimumRule{Field: "FcoeVlan", Value: 1}),
+			},
+		},
+		{
+			SDKMethod: "fabric.vsans.update",
+			Resource:  "fabric.Vsan",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("FcoeVlan", ""),
+				contracts.NewMinimumRule(MinimumRule{Field: "FcoeVlan", Value: 1}),
+			},
+		},
+		{
+			SDKMethod: "fabric.pcOperations.create",
+			Resource:  "fabric.PcOperation",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
+			},
+		},
+		{
+			SDKMethod: "fabric.pcOperations.post",
+			Resource:  "fabric.PcOperation",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
+			},
+		},
+		{
+			SDKMethod: "fabric.pcOperations.update",
+			Resource:  "fabric.PcOperation",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
+			},
+		},
+		{
+			SDKMethod: "fabric.portModes.create",
+			Resource:  "fabric.PortMode",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.portModes.post",
+			Resource:  "fabric.PortMode",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.portModes.update",
+			Resource:  "fabric.PortMode",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.portOperations.create",
+			Resource:  "fabric.PortOperation",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
+			},
+		},
+		{
+			SDKMethod: "fabric.portOperations.post",
+			Resource:  "fabric.PortOperation",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
+			},
+		},
+		{
+			SDKMethod: "fabric.portOperations.update",
+			Resource:  "fabric.PortOperation",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
 			},
 		},
 		{
@@ -863,6 +1323,287 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "fabric.sanPinGroups.create",
+			Resource:  "fabric.SanPinGroup",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.sanPinGroups.post",
+			Resource:  "fabric.SanPinGroup",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.sanPinGroups.update",
+			Resource:  "fabric.SanPinGroup",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.serverRoles.create",
+			Resource:  "fabric.ServerRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.serverRoles.post",
+			Resource:  "fabric.ServerRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.serverRoles.update",
+			Resource:  "fabric.ServerRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanDestEthPorts.create",
+			Resource:  "fabric.SpanDestEthPort",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SpanSession", "fabric.SpanSession"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanDestEthPorts.post",
+			Resource:  "fabric.SpanDestEthPort",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SpanSession", "fabric.SpanSession"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanDestEthPorts.update",
+			Resource:  "fabric.SpanDestEthPort",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SpanSession", "fabric.SpanSession"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanSessions.create",
+			Resource:  "fabric.SpanSession",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanSessions.post",
+			Resource:  "fabric.SpanSession",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanSessions.update",
+			Resource:  "fabric.SpanSession",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("NetworkElement", "network.Element"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanSourceEthPorts.create",
+			Resource:  "fabric.SpanSourceEthPort",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SpanSession", "fabric.SpanSession"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanSourceEthPortChannels.create",
+			Resource:  "fabric.SpanSourceEthPortChannel",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SpanSession", "fabric.SpanSession"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanSourceVlans.create",
+			Resource:  "fabric.SpanSourceVlan",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SpanSession", "fabric.SpanSession"),
+			},
+		},
+		{
+			SDKMethod: "fabric.spanSourceVnicEthIfs.create",
+			Resource:  "fabric.SpanSourceVnicEthIf",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SpanSession", "fabric.SpanSession"),
+				contracts.NewForbidRule("Name"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchClusterProfiles.create",
+			Resource:  "fabric.SwitchClusterProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchClusterProfiles.post",
+			Resource:  "fabric.SwitchClusterProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchClusterProfiles.update",
+			Resource:  "fabric.SwitchClusterProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchClusterProfileTemplates.create",
+			Resource:  "fabric.SwitchClusterProfileTemplate",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchClusterProfileTemplates.post",
+			Resource:  "fabric.SwitchClusterProfileTemplate",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchClusterProfileTemplates.update",
+			Resource:  "fabric.SwitchClusterProfileTemplate",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchControlPolicies.create",
+			Resource:  "fabric.SwitchControlPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchControlPolicies.post",
+			Resource:  "fabric.SwitchControlPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchControlPolicies.update",
+			Resource:  "fabric.SwitchControlPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchProfiles.create",
+			Resource:  "fabric.SwitchProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SwitchClusterProfile", "fabric.SwitchClusterProfile"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchProfiles.post",
+			Resource:  "fabric.SwitchProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SwitchClusterProfile", "fabric.SwitchClusterProfile"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchProfiles.update",
+			Resource:  "fabric.SwitchProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SwitchClusterProfile", "fabric.SwitchClusterProfile"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchProfileTemplates.create",
+			Resource:  "fabric.SwitchProfileTemplate",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SwitchClusterProfileTemplate", "fabric.SwitchClusterProfileTemplate"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchProfileTemplates.post",
+			Resource:  "fabric.SwitchProfileTemplate",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SwitchClusterProfileTemplate", "fabric.SwitchClusterProfileTemplate"),
+			},
+		},
+		{
+			SDKMethod: "fabric.switchProfileTemplates.update",
+			Resource:  "fabric.SwitchProfileTemplate",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SwitchClusterProfileTemplate", "fabric.SwitchClusterProfileTemplate"),
+			},
+		},
+		{
+			SDKMethod: "fabric.systemQosPolicies.create",
+			Resource:  "fabric.SystemQosPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.systemQosPolicies.post",
+			Resource:  "fabric.SystemQosPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.systemQosPolicies.update",
+			Resource:  "fabric.SystemQosPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.uplinkPcRoles.create",
+			Resource:  "fabric.UplinkPcRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.uplinkPcRoles.post",
+			Resource:  "fabric.UplinkPcRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.uplinkPcRoles.update",
+			Resource:  "fabric.UplinkPcRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.uplinkRoles.create",
+			Resource:  "fabric.UplinkRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.uplinkRoles.post",
+			Resource:  "fabric.UplinkRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
+			SDKMethod: "fabric.uplinkRoles.update",
+			Resource:  "fabric.UplinkRole",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
+			},
+		},
+		{
 			SDKMethod: "hyperflex.clusterReplicationNetworkPolicy.create",
 			Resource:  "hyperflex.ClusterReplicationNetworkPolicy",
 			Rules: []SemanticRule{
@@ -980,6 +1721,51 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "iam.certificates.create",
+			Resource:  "iam.Certificate",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Certificate", "CertificateRequest"),
+			},
+		},
+		{
+			SDKMethod: "iam.certificates.post",
+			Resource:  "iam.Certificate",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Certificate", "CertificateRequest"),
+			},
+		},
+		{
+			SDKMethod: "iam.certificates.update",
+			Resource:  "iam.Certificate",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Certificate", "CertificateRequest"),
+			},
+		},
+		{
+			SDKMethod: "iam.apiKeys.create",
+			Resource:  "iam.ApiKey",
+			Rules: []SemanticRule{
+				contracts.NewForbidRule("User"),
+				contracts.NewForbidRule("Permission"),
+			},
+		},
+		{
+			SDKMethod: "iam.apiKeys.post",
+			Resource:  "iam.ApiKey",
+			Rules: []SemanticRule{
+				contracts.NewForbidRule("User"),
+				contracts.NewForbidRule("Permission"),
+			},
+		},
+		{
+			SDKMethod: "iam.apiKeys.update",
+			Resource:  "iam.ApiKey",
+			Rules: []SemanticRule{
+				contracts.NewForbidRule("User"),
+				contracts.NewForbidRule("Permission"),
+			},
+		},
+		{
 			SDKMethod: "iam.ldapPolicy.create",
 			Resource:  "iam.LdapPolicy",
 			Rules: []SemanticRule{
@@ -1076,6 +1862,56 @@ func RuleTemplates() []RuleTemplate {
 				contracts.NewRequiredRule("Hostname", ""),
 				contracts.NewRequiredRule("Username", ""),
 				contracts.NewRequiredRule("Password", ""),
+			},
+		},
+		{
+			SDKMethod: "firmware.policies.create",
+			Resource:  "firmware.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "firmware.policies.post",
+			Resource:  "firmware.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "firmware.policies.update",
+			Resource:  "firmware.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "firmware.unsupportedVersionUpgrades.create",
+			Resource:  "firmware.UnsupportedVersionUpgrade",
+			Rules:     []SemanticRule{},
+		},
+		{
+			SDKMethod: "firmware.unsupportedVersionUpgrades.post",
+			Resource:  "firmware.UnsupportedVersionUpgrade",
+			Rules:     []SemanticRule{},
+		},
+		{
+			SDKMethod: "firmware.unsupportedVersionUpgrades.update",
+			Resource:  "firmware.UnsupportedVersionUpgrade",
+			Rules:     []SemanticRule{},
+		},
+		{
+			SDKMethod: "firmware.upgradeImpacts.create",
+			Resource:  "firmware.UpgradeImpact",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Server", "NetworkElements", "Chassis", "PciNode"),
+			},
+		},
+		{
+			SDKMethod: "firmware.upgradeValidities.create",
+			Resource:  "firmware.UpgradeValidity",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Server", "compute.Physical"),
 			},
 		},
 		{
@@ -1199,6 +2035,27 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "recovery.backupProfile.create",
+			Resource:  "recovery.BackupProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "recovery.backupProfile.post",
+			Resource:  "recovery.BackupProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "recovery.backupProfile.update",
+			Resource:  "recovery.BackupProfile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
 			SDKMethod: "recovery.scheduleConfigPolicy.create",
 			Resource:  "recovery.ScheduleConfigPolicy",
 			Rules: []SemanticRule{
@@ -1244,6 +2101,30 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "recovery.OnDemandBackup",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("FileNamePrefix", ""),
+			},
+		},
+		{
+			SDKMethod: "resourcepool.pool.create",
+			Resource:  "resourcepool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("ResourceType", "Server", FieldRule{Field: "ResourcePoolParameters"}),
+				contracts.NewConditionalRequireRule("ResourceType", "Mixed", FieldRule{Field: "ResourcePoolParameters"}),
+			},
+		},
+		{
+			SDKMethod: "resourcepool.pool.post",
+			Resource:  "resourcepool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("ResourceType", "Server", FieldRule{Field: "ResourcePoolParameters"}),
+				contracts.NewConditionalRequireRule("ResourceType", "Mixed", FieldRule{Field: "ResourcePoolParameters"}),
+			},
+		},
+		{
+			SDKMethod: "resourcepool.pool.update",
+			Resource:  "resourcepool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("ResourceType", "Server", FieldRule{Field: "ResourcePoolParameters"}),
+				contracts.NewConditionalRequireRule("ResourceType", "Mixed", FieldRule{Field: "ResourcePoolParameters"}),
 			},
 		},
 		{
@@ -1329,6 +2210,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
+				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
 			},
 		},
 		{
@@ -1336,6 +2218,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
+				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
 			},
 		},
 		{
@@ -1343,12 +2226,38 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
+				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
+			},
+		},
+		{
+			SDKMethod: "scheduler.taskSchedule.create",
+			Resource:  "scheduler.TaskSchedule",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("UsePolicy", true, FieldRule{Field: "Policy", Target: "scheduler.SchedulePolicy"}),
+				contracts.NewRequiredRule("TaskRequest.Url", ""),
+			},
+		},
+		{
+			SDKMethod: "scheduler.taskSchedule.post",
+			Resource:  "scheduler.TaskSchedule",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("UsePolicy", true, FieldRule{Field: "Policy", Target: "scheduler.SchedulePolicy"}),
+				contracts.NewRequiredRule("TaskRequest.Url", ""),
+			},
+		},
+		{
+			SDKMethod: "scheduler.taskSchedule.update",
+			Resource:  "scheduler.TaskSchedule",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("UsePolicy", true, FieldRule{Field: "Policy", Target: "scheduler.SchedulePolicy"}),
+				contracts.NewRequiredRule("TaskRequest.Url", ""),
 			},
 		},
 		{
 			SDKMethod: "server.diagnostics.create",
 			Resource:  "server.Diagnostics",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Server", "compute.Physical"),
 				contracts.NewRequiredRule("ComponentList", "", 1),
 			},
 		},
@@ -1356,6 +2265,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "server.diagnostics.post",
 			Resource:  "server.Diagnostics",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Server", "compute.Physical"),
 				contracts.NewRequiredRule("ComponentList", "", 1),
 			},
 		},
@@ -1363,6 +2273,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "server.diagnostics.update",
 			Resource:  "server.Diagnostics",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Server", "compute.Physical"),
 				contracts.NewRequiredRule("ComponentList", "", 1),
 			},
 		},
@@ -1412,6 +2323,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "uuidpool.reservation.create",
 			Resource:  "uuidpool.Reservation",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "uuidpool.Pool"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
@@ -1421,6 +2333,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "uuidpool.reservation.post",
 			Resource:  "uuidpool.Reservation",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "uuidpool.Pool"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
@@ -1430,6 +2343,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "uuidpool.reservation.update",
 			Resource:  "uuidpool.Reservation",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewOneOfRule("AllocationType", "Pool"),
 				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "uuidpool.Pool"}),
 				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
@@ -1478,6 +2392,13 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "vnic.ethQosPolicy.create",
+			Resource:  "vnic.EthQosPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
 			SDKMethod: "vnic.fcAdapterPolicy.create",
 			Resource:  "vnic.FcAdapterPolicy",
 			Rules: []SemanticRule{
@@ -1487,8 +2408,12 @@ func RuleTemplates() []RuleTemplate {
 		{
 			SDKMethod: "vnic.fcQosPolicy.create",
 			Resource:  "vnic.FcQosPolicy",
+		},
+		{
+			SDKMethod: "vnic.fcIf.create",
+			Resource:  "vnic.FcIf",
 			Rules: []SemanticRule{
-				contracts.NewMinimumRule(MinimumRule{Field: "MaxDataFieldSize", Value: 256}),
+				contracts.NewRequiredRule("Placement", ""),
 			},
 		},
 		{
@@ -1891,6 +2816,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "iam.AppRegistration",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ClientName", ""),
+				contracts.NewRequiredRule("Description", ""),
 			},
 		},
 		{
@@ -1898,6 +2824,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "iam.AppRegistration",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ClientName", ""),
+				contracts.NewRequiredRule("Description", ""),
 			},
 		},
 		{
@@ -1905,6 +2832,95 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "iam.AppRegistration",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ClientName", ""),
+			},
+		},
+		{
+			SDKMethod: "iam.appRegistrations.create",
+			Resource:  "iam.AppRegistration",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("ClientName", ""),
+				contracts.NewRequiredRule("Description", ""),
+			},
+		},
+		{
+			SDKMethod: "iam.appRegistrations.post",
+			Resource:  "iam.AppRegistration",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("ClientName", ""),
+				contracts.NewRequiredRule("Description", ""),
+			},
+		},
+		{
+			SDKMethod: "iam.appRegistrations.update",
+			Resource:  "iam.AppRegistration",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("ClientName", ""),
+			},
+		},
+		{
+			SDKMethod: "iam.privilegeSets.create",
+			Resource:  "iam.PrivilegeSet",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+			},
+		},
+		{
+			SDKMethod: "iam.privilegeSets.post",
+			Resource:  "iam.PrivilegeSet",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+			},
+		},
+		{
+			SDKMethod: "iam.privilegeSets.update",
+			Resource:  "iam.PrivilegeSet",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+			},
+		},
+		{
+			SDKMethod: "iam.guestAccessSettings.create",
+			Resource:  "iam.GuestAccessSettings",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("AllowedDomainNames", "", 1),
+				contracts.NewMinimumRule(MinimumRule{Field: "MaxGuestAccessLinkShelfLife", Value: 86400}),
+			},
+		},
+		{
+			SDKMethod: "iam.guestAccessSettings.post",
+			Resource:  "iam.GuestAccessSettings",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("AllowedDomainNames", "", 1),
+				contracts.NewMinimumRule(MinimumRule{Field: "MaxGuestAccessLinkShelfLife", Value: 86400}),
+			},
+		},
+		{
+			SDKMethod: "iam.guestAccessSettings.update",
+			Resource:  "iam.GuestAccessSettings",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("AllowedDomainNames", "", 1),
+				contracts.NewMinimumRule(MinimumRule{Field: "MaxGuestAccessLinkShelfLife", Value: 86400}),
+			},
+		},
+		{
+			SDKMethod: "iam.idp.create",
+			Resource:  "iam.Idp",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("Type", "saml", FieldRule{Field: "Metadata"}),
+			},
+		},
+		{
+			SDKMethod: "iam.idp.post",
+			Resource:  "iam.Idp",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("Type", "saml", FieldRule{Field: "Metadata"}),
+			},
+		},
+		{
+			SDKMethod: "iam.idp.update",
+			Resource:  "iam.Idp",
+			Rules: []SemanticRule{
+				contracts.NewConditionalRequireRule("Type", "saml", FieldRule{Field: "Metadata"}),
 			},
 		},
 		{
@@ -1929,24 +2945,141 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "iam.sharingRule.create",
+			Resource:  "iam.SharingRule",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SharedResource", "mo.BaseMo"),
+			},
+		},
+		{
+			SDKMethod: "iam.sharingRule.post",
+			Resource:  "iam.SharingRule",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SharedResource", "mo.BaseMo"),
+			},
+		},
+		{
+			SDKMethod: "iam.sharingRule.update",
+			Resource:  "iam.SharingRule",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("SharedResource", "mo.BaseMo"),
+			},
+		},
+		{
+			SDKMethod: "iam.user.create",
+			Resource:  "iam.User",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Idp", "Idpreference"),
+			},
+		},
+		{
+			SDKMethod: "iam.user.post",
+			Resource:  "iam.User",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Idp", "Idpreference"),
+			},
+		},
+		{
+			SDKMethod: "iam.user.update",
+			Resource:  "iam.User",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Idp", "Idpreference"),
+			},
+		},
+		{
+			SDKMethod: "iam.userGroup.create",
+			Resource:  "iam.UserGroup",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Idp", "Idpreference"),
+			},
+		},
+		{
+			SDKMethod: "iam.userGroup.post",
+			Resource:  "iam.UserGroup",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Idp", "Idpreference"),
+			},
+		},
+		{
+			SDKMethod: "iam.userGroup.update",
+			Resource:  "iam.UserGroup",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("Idp", "Idpreference"),
+			},
+		},
+		{
 			SDKMethod: "mgmt.configBackupFile.create",
 			Resource:  "mgmt.ConfigBackupFile",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Source", ""),
 				contracts.NewRequiredRule("Version", ""),
+				contracts.NewPatternRule(PatternRule{Field: "Name", Value: "^.+\\.(?:tgz|gz)$"}),
 			},
 		},
 		{
 			SDKMethod: "mgmt.configBackupFile.post",
 			Resource:  "mgmt.ConfigBackupFile",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Source", ""),
 				contracts.NewRequiredRule("Version", ""),
+				contracts.NewPatternRule(PatternRule{Field: "Name", Value: "^.+\\.(?:tgz|gz)$"}),
 			},
 		},
 		{
 			SDKMethod: "mgmt.configBackupFile.update",
 			Resource:  "mgmt.ConfigBackupFile",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Source", ""),
 				contracts.NewRequiredRule("Version", ""),
+				contracts.NewPatternRule(PatternRule{Field: "Name", Value: "^.+\\.(?:tgz|gz)$"}),
+			},
+		},
+		{
+			SDKMethod: "os.bulkInstallInfo.create",
+			Resource:  "os.BulkInstallInfo",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "os.bulkInstallInfo.post",
+			Resource:  "os.BulkInstallInfo",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "os.bulkInstallInfo.update",
+			Resource:  "os.BulkInstallInfo",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "os.configurationFile.create",
+			Resource:  "os.ConfigurationFile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Distributions", "", 1),
+			},
+		},
+		{
+			SDKMethod: "os.configurationFile.post",
+			Resource:  "os.ConfigurationFile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Distributions", "", 1),
+			},
+		},
+		{
+			SDKMethod: "os.configurationFile.update",
+			Resource:  "os.ConfigurationFile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Distributions", "", 1),
 			},
 		},
 		{
@@ -2168,9 +3301,35 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "iam.endPointUserPolicies.create",
+			Resource:  "iam.EndPointUserPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "iam.endPointUserPolicies.post",
+			Resource:  "iam.EndPointUserPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "iam.endPointUserPolicies.update",
+			Resource:  "iam.EndPointUserPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
 			SDKMethod: "iam.endPointUser.create",
 			Resource:  "iam.EndPointUser",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewMaximumRule(LengthRule{Field: "Name", Value: 16}),
 			},
 		},
@@ -2178,6 +3337,8 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "iam.endPointUser.post",
 			Resource:  "iam.EndPointUser",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewMaximumRule(LengthRule{Field: "Name", Value: 16}),
 			},
 		},
@@ -2185,6 +3346,8 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "iam.endPointUser.update",
 			Resource:  "iam.EndPointUser",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 				contracts.NewMaximumRule(LengthRule{Field: "Name", Value: 16}),
 			},
 		},
@@ -2193,6 +3356,11 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "vnic.VhbaTemplate",
 			Rules: []SemanticRule{
 				contracts.NewMaximumRule(LengthRule{Field: "Name", Value: 16}),
+				contracts.NewRequiredRule("FcQosPolicy", "vnic.FcQosPolicy"),
+				contracts.NewConditionalRequireRule("EnableOverride", false, FieldRule{Field: "FcAdapterPolicy", Target: "vnic.FcAdapterPolicy"}),
+				contracts.NewConditionalRequireRule("EnableOverride", false, FieldRule{Field: "FcNetworkPolicy", Target: "vnic.FcNetworkPolicy"}),
+				contracts.NewConditionalRequireRule("EnableOverride", false, FieldRule{Field: "WwpnPool", Target: "fcpool.Pool"}),
+				contracts.NewConditionalRequireRule("EnableOverride", false, FieldRule{Field: "SwitchId"}),
 			},
 		},
 		{
@@ -2214,6 +3382,12 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "vnic.VnicTemplate",
 			Rules: []SemanticRule{
 				contracts.NewMaximumRule(LengthRule{Field: "Name", Value: 16}),
+				contracts.NewRequiredRule("EthQosPolicy", "vnic.EthQosPolicy"),
+				contracts.NewRequiredRule("FabricEthNetworkControlPolicy", "fabric.EthNetworkControlPolicy"),
+				contracts.NewRequiredRule("FabricEthNetworkGroupPolicy", "fabric.EthNetworkGroupPolicy", 1),
+				contracts.NewConditionalRequireRule("EnableOverride", false, FieldRule{Field: "EthAdapterPolicy", Target: "vnic.EthAdapterPolicy"}),
+				contracts.NewConditionalRequireRule("EnableOverride", false, FieldRule{Field: "MacPool", Target: "macpool.Pool"}),
+				contracts.NewConditionalRequireRule("EnableOverride", false, FieldRule{Field: "SwitchId"}),
 			},
 		},
 		{
@@ -2265,6 +3439,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
+				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
 				contracts.NewFutureRule("ScheduleParams[].StartTime"),
 			},
 		},
@@ -2273,6 +3448,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
+				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
 				contracts.NewFutureRule("ScheduleParams[].StartTime"),
 			},
 		},
@@ -2281,6 +3457,7 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
+				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
 				contracts.NewFutureRule("ScheduleParams[].StartTime"),
 			},
 		},

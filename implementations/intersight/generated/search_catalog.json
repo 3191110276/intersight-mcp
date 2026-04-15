@@ -446,6 +446,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "Settings[].SlotId"
+            }
+          ]
         }
       ],
       "operations": [
@@ -495,6 +503,14 @@
             {
               "field": "Settings",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "Settings[].SlotId"
             }
           ]
         }
@@ -11095,6 +11111,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Condition"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -11137,6 +11163,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Condition"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -11464,6 +11500,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -11502,6 +11549,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14793,7 +14851,12 @@
         "FlowExporters": {
           "type": "array",
           "items": "fabric.NetFlowExporter.Relationship",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cnetFlowExporter-moid\u003e"
+            }
+          ]
         },
         "FlowRecord": {
           "ref": "fabric.NetFlowRecord.Relationship",
@@ -14816,6 +14879,36 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowRecord",
+              "target": "fabric.NetFlowRecord"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowExporters",
+              "target": "fabric.NetFlowExporter",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14831,7 +14924,12 @@
         "FlowExporters": {
           "type": "array",
           "items": "fabric.NetFlowExporter.Relationship",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cnetFlowExporter-moid\u003e"
+            }
+          ]
         },
         "FlowRecord": {
           "ref": "fabric.NetFlowRecord.Relationship",
@@ -14854,6 +14952,36 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowRecord",
+              "target": "fabric.NetFlowRecord"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowExporters",
+              "target": "fabric.NetFlowExporter",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14889,6 +15017,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14924,6 +15063,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14983,6 +15133,177 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "RecordType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowNonKey"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "RecordType",
+              "validator": "netflow_record_type"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "require": [
+            {
+              "field": "Ipv4FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "custom": [
+            {
+              "field": "Ipv4FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "require": [
+            {
+              "field": "Ipv6FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "custom": [
+            {
+              "field": "Ipv6FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "require": [
+            {
+              "field": "L2FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "custom": [
+            {
+              "field": "L2FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15042,6 +15363,177 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "RecordType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FlowNonKey"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "RecordType",
+              "validator": "netflow_record_type"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "require": [
+            {
+              "field": "Ipv4FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv4"
+          },
+          "custom": [
+            {
+              "field": "Ipv4FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "require": [
+            {
+              "field": "Ipv6FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "forbid": [
+            "L2FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "IPv6"
+          },
+          "custom": [
+            {
+              "field": "Ipv6FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "require": [
+            {
+              "field": "L2FlowKey"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv4FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "forbid": [
+            "Ipv6FlowKey"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RecordType",
+            "equals": "L2"
+          },
+          "custom": [
+            {
+              "field": "L2FlowKey",
+              "validator": "netflow_key_fields"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15101,6 +15593,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15144,6 +15647,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15184,6 +15698,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15224,6 +15749,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15279,6 +15815,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15334,6 +15881,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15483,6 +16041,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15516,6 +16085,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15570,6 +16150,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15624,6 +16215,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15674,6 +16276,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15724,6 +16337,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15784,6 +16408,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15844,6 +16479,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetworkElement",
+              "target": "network.Element"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15891,6 +16537,17 @@
         }
       },
       "path": "/api/v1/fabric/SpanSourceEthPorts",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15928,6 +16585,17 @@
         }
       },
       "path": "/api/v1/fabric/SpanSourceEthPortChannels",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -15965,6 +16633,17 @@
         }
       },
       "path": "/api/v1/fabric/SpanSourceEthPortChannels",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16010,6 +16689,17 @@
         }
       },
       "path": "/api/v1/fabric/SpanSourceEthPorts",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16041,6 +16731,17 @@
         }
       },
       "path": "/api/v1/fabric/SpanSourceVlans",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16072,6 +16773,17 @@
         }
       },
       "path": "/api/v1/fabric/SpanSourceVlans",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16105,6 +16817,23 @@
         }
       },
       "path": "/api/v1/fabric/SpanSourceVnicEthIfs",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Name"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16138,6 +16867,23 @@
         }
       },
       "path": "/api/v1/fabric/SpanSourceVnicEthIfs",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SpanSession",
+              "target": "fabric.SpanSession"
+            }
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Name"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16209,6 +16955,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16258,6 +17015,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16307,6 +17075,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16380,6 +17159,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16465,6 +17255,17 @@
           "type": "boolean"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16550,6 +17351,17 @@
           "type": "boolean"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16695,6 +17507,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfile",
+              "target": "fabric.SwitchClusterProfile"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16807,6 +17630,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfileTemplate",
+              "target": "fabric.SwitchClusterProfileTemplate"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -16919,6 +17753,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfileTemplate",
+              "target": "fabric.SwitchClusterProfileTemplate"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17064,6 +17909,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SwitchClusterProfile",
+              "target": "fabric.SwitchClusterProfile"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17115,6 +17971,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17166,6 +18033,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17239,6 +18117,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17312,6 +18201,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17382,6 +18282,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17452,6 +18363,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17512,6 +18434,23 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "MulticastPolicy",
+              "target": "fabric.MulticastPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "VlanSet"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17604,6 +18543,23 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "MulticastPolicy",
+              "target": "fabric.MulticastPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "VlanSet"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17650,6 +18606,25 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FcoeVlan"
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "FcoeVlan",
+              "value": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17712,6 +18687,25 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FcoeVlan"
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "FcoeVlan",
+              "value": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17844,6 +18838,15 @@
               "field": "PoolPurpose"
             }
           ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
         }
       ],
       "operations": [
@@ -17915,6 +18918,15 @@
           "require": [
             {
               "field": "PoolPurpose"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
             }
           ]
         }
@@ -19274,6 +20286,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -19323,6 +20346,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -20076,7 +21110,13 @@
         "Chassis": {
           "type": "array",
           "items": "equipment.Chassis.Relationship",
-          "nullable": true
+          "nullable": true,
+          "oneOf": [
+            "Chassis",
+            "NetworkElements",
+            "PciNode",
+            "Server"
+          ]
         },
         "Components": {
           "type": "array",
@@ -20111,12 +21151,24 @@
         "NetworkElements": {
           "type": "array",
           "items": "network.Element.Relationship",
-          "nullable": true
+          "nullable": true,
+          "oneOf": [
+            "Chassis",
+            "NetworkElements",
+            "PciNode",
+            "Server"
+          ]
         },
         "PciNode": {
           "type": "array",
           "items": "pci.Node.Relationship",
-          "nullable": true
+          "nullable": true,
+          "oneOf": [
+            "Chassis",
+            "NetworkElements",
+            "PciNode",
+            "Server"
+          ]
         },
         "Release": {
           "ref": "softwarerepository.Release.Relationship",
@@ -20127,7 +21179,13 @@
         "Server": {
           "type": "array",
           "items": "compute.Physical.Relationship",
-          "nullable": true
+          "nullable": true,
+          "oneOf": [
+            "Chassis",
+            "NetworkElements",
+            "PciNode",
+            "Server"
+          ]
         },
         "Summary": {
           "type": "string",
@@ -20170,7 +21228,13 @@
         "Chassis": {
           "type": "array",
           "items": "equipment.Chassis.Relationship",
-          "nullable": true
+          "nullable": true,
+          "oneOf": [
+            "Chassis",
+            "NetworkElements",
+            "PciNode",
+            "Server"
+          ]
         },
         "Components": {
           "type": "array",
@@ -20205,12 +21269,24 @@
         "NetworkElements": {
           "type": "array",
           "items": "network.Element.Relationship",
-          "nullable": true
+          "nullable": true,
+          "oneOf": [
+            "Chassis",
+            "NetworkElements",
+            "PciNode",
+            "Server"
+          ]
         },
         "PciNode": {
           "type": "array",
           "items": "pci.Node.Relationship",
-          "nullable": true
+          "nullable": true,
+          "oneOf": [
+            "Chassis",
+            "NetworkElements",
+            "PciNode",
+            "Server"
+          ]
         },
         "Release": {
           "ref": "softwarerepository.Release.Relationship",
@@ -20221,7 +21297,13 @@
         "Server": {
           "type": "array",
           "items": "compute.Physical.Relationship",
-          "nullable": true
+          "nullable": true,
+          "oneOf": [
+            "Chassis",
+            "NetworkElements",
+            "PciNode",
+            "Server"
+          ]
         },
         "Summary": {
           "type": "string",
@@ -20274,6 +21356,17 @@
         }
       },
       "path": "/api/v1/firmware/UpgradeValidities",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server",
+              "target": "compute.Physical"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -20294,6 +21387,17 @@
         }
       },
       "path": "/api/v1/firmware/UpgradeValidities",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server",
+              "target": "compute.Physical"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -21216,6 +22320,20 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "User"
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Permission"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -21285,6 +22403,20 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "User"
+          ]
+        },
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Permission"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -21393,6 +22525,14 @@
           "require": [
             {
               "field": "ClientName"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Description"
             }
           ]
         }
@@ -21507,6 +22647,14 @@
               "field": "ClientName"
             }
           ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Description"
+            }
+          ]
         }
       ],
       "operations": [
@@ -21544,12 +22692,20 @@
         "Certificate": {
           "ref": "x509.Certificate",
           "nullable": true,
+          "oneOf": [
+            "Certificate",
+            "CertificateRequest"
+          ],
           "example": {
             "Moid": "\u003ccertificate-moid\u003e"
           }
         },
         "CertificateRequest": {
           "ref": "iam.CertificateRequest.Relationship",
+          "oneOf": [
+            "Certificate",
+            "CertificateRequest"
+          ],
           "example": {
             "Moid": "\u003ccertificateRequest.Relationship-moid\u003e"
           }
@@ -21681,12 +22837,20 @@
         "Certificate": {
           "ref": "x509.Certificate",
           "nullable": true,
+          "oneOf": [
+            "Certificate",
+            "CertificateRequest"
+          ],
           "example": {
             "Moid": "\u003ccertificate-moid\u003e"
           }
         },
         "CertificateRequest": {
           "ref": "iam.CertificateRequest.Relationship",
+          "oneOf": [
+            "Certificate",
+            "CertificateRequest"
+          ],
           "example": {
             "Moid": "\u003ccertificateRequest.Relationship-moid\u003e"
           }
@@ -21879,6 +23043,23 @@
       },
       "rules": [
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
           "kind": "maximum",
           "maximum": [
             {
@@ -21951,6 +23132,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -21998,6 +23198,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -22162,6 +23381,23 @@
       },
       "rules": [
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
           "kind": "maximum",
           "maximum": [
             {
@@ -22207,6 +23443,26 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "AllowedDomainNames",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "MaxGuestAccessLinkShelfLife",
+              "value": 86400
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -22283,6 +23539,20 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Type",
+            "equals": "saml"
+          },
+          "require": [
+            {
+              "field": "Metadata"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -22379,6 +23649,20 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Type",
+            "equals": "saml"
+          },
+          "require": [
+            {
+              "field": "Metadata"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -23212,6 +24496,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -23330,6 +24624,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -23589,6 +24893,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SharedResource",
+              "target": "mo.BaseMo"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -23619,6 +24934,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SharedResource",
+              "target": "mo.BaseMo"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -23728,12 +25054,20 @@
         },
         "Idp": {
           "ref": "iam.Idp.Relationship",
+          "oneOf": [
+            "Idp",
+            "Idpreference"
+          ],
           "example": {
             "Moid": "\u003cidp.Relationship-moid\u003e"
           }
         },
         "Idpreference": {
           "ref": "iam.IdpReference.Relationship",
+          "oneOf": [
+            "Idp",
+            "Idpreference"
+          ],
           "example": {
             "Moid": "\u003cidpReference.Relationship-moid\u003e"
           }
@@ -23787,12 +25121,20 @@
         },
         "Idp": {
           "ref": "iam.Idp.Relationship",
+          "oneOf": [
+            "Idp",
+            "Idpreference"
+          ],
           "example": {
             "Moid": "\u003cidp.Relationship-moid\u003e"
           }
         },
         "Idpreference": {
           "ref": "iam.IdpReference.Relationship",
+          "oneOf": [
+            "Idp",
+            "Idpreference"
+          ],
           "example": {
             "Moid": "\u003cidpReference.Relationship-moid\u003e"
           }
@@ -23846,12 +25188,20 @@
         },
         "Idp": {
           "ref": "iam.Idp.Relationship",
+          "oneOf": [
+            "Idp",
+            "Idpreference"
+          ],
           "example": {
             "Moid": "\u003cidp.Relationship-moid\u003e"
           }
         },
         "Idpreference": {
           "ref": "iam.IdpReference.Relationship",
+          "oneOf": [
+            "Idp",
+            "Idpreference"
+          ],
           "example": {
             "Moid": "\u003cidpReference.Relationship-moid\u003e"
           }
@@ -24060,12 +25410,20 @@
         },
         "Idp": {
           "ref": "iam.Idp.Relationship",
+          "oneOf": [
+            "Idp",
+            "Idpreference"
+          ],
           "example": {
             "Moid": "\u003cidp.Relationship-moid\u003e"
           }
         },
         "Idpreference": {
           "ref": "iam.IdpReference.Relationship",
+          "oneOf": [
+            "Idp",
+            "Idpreference"
+          ],
           "example": {
             "Moid": "\u003cidpReference.Relationship-moid\u003e"
           }
@@ -24434,6 +25792,34 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "ippool_ipv4_blocks_require_config"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -24516,6 +25902,34 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "ippool_ipv4_blocks_require_config"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -24609,6 +26023,18 @@
             {
               "field": "Pool",
               "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
             }
           ]
         },
@@ -24716,6 +26142,18 @@
             {
               "field": "Pool",
               "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
             }
           ]
         },
@@ -24855,7 +26293,33 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Prefix"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "iqnpool_suffix_blocks_require_suffix"
             }
           ]
         }
@@ -24928,7 +26392,33 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Prefix"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "iqnpool_suffix_blocks_require_suffix"
             }
           ]
         }
@@ -26100,6 +27590,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26160,6 +27669,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26239,6 +27767,18 @@
             {
               "field": "Pool",
               "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
             }
           ]
         },
@@ -26332,6 +27872,18 @@
             {
               "field": "Pool",
               "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Identity"
             }
           ]
         },
@@ -26581,6 +28133,34 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "persistent_memory_os_mode"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26640,6 +28220,34 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": ".",
+              "validator": "persistent_memory_os_mode"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26718,6 +28326,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26756,6 +28383,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26882,6 +28528,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26936,6 +28593,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -27065,7 +28733,32 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Source"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Version"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^.+\\.(?:tgz|gz)$"
             }
           ]
         }
@@ -27133,7 +28826,32 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Source"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Version"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^.+\\.(?:tgz|gz)$"
             }
           ]
         }
@@ -28724,6 +30442,17 @@
         }
       },
       "path": "/api/v1/os/BulkInstallInfos/{Moid??}",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "get",
@@ -28792,6 +30521,17 @@
         }
       },
       "path": "/api/v1/os/BulkInstallInfos/{Moid??}",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "get",
@@ -28851,6 +30591,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Distributions",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -28897,6 +30656,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Distributions",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -30034,6 +31812,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -30151,6 +31940,17 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -31014,6 +32814,32 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Server"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Mixed"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -31100,6 +32926,32 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Server"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ResourceType",
+            "equals": "Mixed"
+          },
+          "require": [
+            {
+              "field": "ResourcePoolParameters"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -31314,6 +33166,14 @@
           ]
         },
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ScheduleParams[].Name"
+            }
+          ]
+        },
+        {
           "kind": "future",
           "future": [
             {
@@ -31378,6 +33238,14 @@
               "field": "ScheduleParams",
               "target": "scheduler.BaseScheduleParams",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ScheduleParams[].Name"
             }
           ]
         },
@@ -31487,6 +33355,29 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "UsePolicy",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "Policy",
+              "target": "scheduler.SchedulePolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TaskRequest.Url"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -31568,6 +33459,29 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "UsePolicy",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "Policy",
+              "target": "scheduler.SchedulePolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TaskRequest.Url"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -32075,6 +33989,15 @@
         }
       },
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server",
+              "target": "compute.Physical"
+            }
+          ]
+        },
         {
           "kind": "required",
           "require": [
@@ -40398,6 +42321,15 @@
       "path": "/api/v1/uuidpool/Reservations",
       "rules": [
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
           "kind": "conditional",
           "when": {
             "field": "AllocationType",
@@ -40484,6 +42416,15 @@
       },
       "path": "/api/v1/uuidpool/Reservations",
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
         {
           "kind": "conditional",
           "when": {
@@ -42818,6 +44759,17 @@
           "type": "boolean"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -42871,6 +44823,17 @@
           "type": "boolean"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -43285,6 +45248,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Placement"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -43431,6 +45404,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Placement"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -43567,17 +45550,6 @@
           "nullable": true
         }
       },
-      "rules": [
-        {
-          "kind": "minimum",
-          "minimum": [
-            {
-              "field": "MaxDataFieldSize",
-              "value": 256
-            }
-          ]
-        }
-      ],
       "operations": [
         "create",
         "delete",
@@ -43624,17 +45596,6 @@
           "nullable": true
         }
       },
-      "rules": [
-        {
-          "kind": "minimum",
-          "minimum": [
-            {
-              "field": "MaxDataFieldSize",
-              "value": 256
-            }
-          ]
-        }
-      ],
       "operations": [
         "create",
         "delete",
@@ -44600,6 +46561,61 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "WwnnAddressType"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "require": [
+            {
+              "field": "WwnnPool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "forbid": [
+            "StaticWwnnAddress"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "require": [
+            {
+              "field": "StaticWwnnAddress"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "forbid": [
+            "WwnnPool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44661,6 +46677,61 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "WwnnAddressType"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "require": [
+            {
+              "field": "WwnnPool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "POOL"
+          },
+          "forbid": [
+            "StaticWwnnAddress"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "require": [
+            {
+              "field": "StaticWwnnAddress"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "WwnnAddressType",
+            "equals": "STATIC"
+          },
+          "forbid": [
+            "WwnnPool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44826,6 +46897,66 @@
               "value": 16
             }
           ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FcQosPolicy",
+              "target": "vnic.FcQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "FcAdapterPolicy",
+              "target": "vnic.FcAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "FcNetworkPolicy",
+              "target": "vnic.FcNetworkPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "WwpnPool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "SwitchId"
+            }
+          ]
         }
       ],
       "operations": [
@@ -44921,6 +47052,66 @@
               "value": 16
             }
           ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FcQosPolicy",
+              "target": "vnic.FcQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "FcAdapterPolicy",
+              "target": "vnic.FcAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "FcNetworkPolicy",
+              "target": "vnic.FcNetworkPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "WwpnPool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "SwitchId"
+            }
+          ]
         }
       ],
       "operations": [
@@ -44991,7 +47182,12 @@
         "FabricEthNetworkGroupPolicy": {
           "type": "array",
           "items": "fabric.EthNetworkGroupPolicy.Relationship",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cethNetworkGroupPolicy-moid\u003e"
+            }
+          ]
         },
         "FailoverEnabled": {
           "type": "boolean"
@@ -45073,6 +47269,72 @@
               "value": 16
             }
           ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthQosPolicy",
+              "target": "vnic.EthQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "EthAdapterPolicy",
+              "target": "vnic.EthAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "MacPool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "SwitchId"
+            }
+          ]
         }
       ],
       "operations": [
@@ -45127,7 +47389,12 @@
         "FabricEthNetworkGroupPolicy": {
           "type": "array",
           "items": "fabric.EthNetworkGroupPolicy.Relationship",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cethNetworkGroupPolicy-moid\u003e"
+            }
+          ]
         },
         "FailoverEnabled": {
           "type": "boolean"
@@ -45207,6 +47474,72 @@
             {
               "field": "Name",
               "value": 16
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthQosPolicy",
+              "target": "vnic.EthQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "EthAdapterPolicy",
+              "target": "vnic.EthAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "MacPool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EnableOverride",
+            "equals": false
+          },
+          "require": [
+            {
+              "field": "SwitchId"
             }
           ]
         }

@@ -332,8 +332,13 @@ func fieldValue(body map[string]any, fieldPath string) (any, bool) {
 }
 
 func fieldValues(body map[string]any, fieldPath string) ([]any, bool) {
+	fieldPath = strings.TrimSpace(fieldPath)
+	if fieldPath == "." || fieldPath == "$" {
+		return []any{body}, true
+	}
+
 	current := []any{body}
-	for _, rawSegment := range strings.Split(strings.TrimSpace(fieldPath), ".") {
+	for _, rawSegment := range strings.Split(fieldPath, ".") {
 		if rawSegment == "" {
 			return nil, false
 		}
@@ -531,9 +536,112 @@ func validateCustomRule(name string, value any) error {
 			return nil
 		}
 		return fmt.Errorf("NativeVlan must be included in AllowedVlans.")
+	case "netflow_record_type":
+		text, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("Field must be a string.")
+		}
+		if strings.TrimSpace(text) == "" || text == "Invalid" {
+			return fmt.Errorf("RecordType must be one of \"IPv4\", \"IPv6\", or \"L2\".")
+		}
+		return nil
+	case "netflow_key_fields":
+		settings, ok := value.(map[string]any)
+		if !ok {
+			return fmt.Errorf("Field must be an object.")
+		}
+		if anyTrueBoolean(settings) {
+			return nil
+		}
+		return fmt.Errorf("At least one key field must be enabled.")
+	case "netflow_non_key_fields":
+		settings, ok := value.(map[string]any)
+		if !ok {
+			return fmt.Errorf("Field must be an object.")
+		}
+		if anyTrueBoolean(settings) {
+			return nil
+		}
+		return fmt.Errorf("At least one non-key field must be enabled.")
+	case "ippool_ipv4_blocks_require_config":
+		body, ok := value.(map[string]any)
+		if !ok {
+			return fmt.Errorf("Field must be an object.")
+		}
+		blocks, ok := body["IpV4Blocks"].([]any)
+		if !ok || len(blocks) == 0 {
+			return nil
+		}
+		if ipv4ConfigHasNetmask(body["IpV4Config"]) {
+			return nil
+		}
+		for _, block := range blocks {
+			blockMap, ok := block.(map[string]any)
+			if !ok {
+				continue
+			}
+			if ipv4ConfigHasNetmask(blockMap["IpV4Config"]) {
+				return nil
+			}
+		}
+		return fmt.Errorf("IPv4 pools require IpV4Config.Netmask at the pool level or on each IPv4 block.")
+	case "persistent_memory_os_mode":
+		body, ok := value.(map[string]any)
+		if !ok {
+			return fmt.Errorf("Field must be an object.")
+		}
+		mode, _ := body["ManagementMode"].(string)
+		if mode != "configured-from-operating-system" {
+			return nil
+		}
+		for _, field := range []string{"Goals", "LocalSecurity", "LogicalNamespaces", "RetainNamespaces"} {
+			if present, _ := fieldPresence(body, field); present {
+				return fmt.Errorf("%s must not be provided when ManagementMode is configured-from-operating-system.", field)
+			}
+		}
+		return nil
+	case "iqnpool_suffix_blocks_require_suffix":
+		body, ok := value.(map[string]any)
+		if !ok {
+			return fmt.Errorf("Field must be an object.")
+		}
+		blocks, ok := body["IqnSuffixBlocks"].([]any)
+		if !ok || len(blocks) == 0 {
+			return nil
+		}
+		for _, block := range blocks {
+			blockMap, ok := block.(map[string]any)
+			if !ok {
+				continue
+			}
+			suffix, _ := blockMap["Suffix"].(string)
+			if strings.TrimSpace(suffix) == "" {
+				return fmt.Errorf("Each IqnSuffixBlocks entry must include a non-empty Suffix.")
+			}
+		}
+		return nil
 	default:
 		return fmt.Errorf("Unsupported semantic validator %q.", name)
 	}
+}
+
+func ipv4ConfigHasNetmask(value any) bool {
+	config, ok := value.(map[string]any)
+	if !ok {
+		return false
+	}
+	netmask, _ := config["Netmask"].(string)
+	return strings.TrimSpace(netmask) != ""
+}
+
+func anyTrueBoolean(settings map[string]any) bool {
+	for _, value := range settings {
+		enabled, ok := value.(bool)
+		if ok && enabled {
+			return true
+		}
+	}
+	return false
 }
 
 func vlanInRanges(vlan int, allowed string) bool {
