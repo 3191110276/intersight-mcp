@@ -812,6 +812,9 @@ func normalizeSchemaBody(schema *highbase.Schema, ctx normalizationContext) *nor
 	if schema.Format != "" {
 		out.Format = schema.Format
 	}
+	if schema.Pattern != "" {
+		out.Pattern = schema.Pattern
+	}
 	if schema.Nullable != nil {
 		out.Nullable = *schema.Nullable
 	}
@@ -873,6 +876,9 @@ func normalizeNestedSchemaProxy(proxy *highbase.SchemaProxy, ctx normalizationCo
 		}
 		if schema.Format != "" {
 			out.Format = schema.Format
+		}
+		if schema.Pattern != "" {
+			out.Pattern = schema.Pattern
 		}
 		if schema.Nullable != nil {
 			out.Nullable = *schema.Nullable
@@ -943,6 +949,9 @@ func mergeNormalizedSchema(dst, src *normalizedSchema) {
 	}
 	if dst.Format == "" {
 		dst.Format = src.Format
+	}
+	if dst.Pattern == "" {
+		dst.Pattern = src.Pattern
 	}
 	if !dst.Nullable && src.Nullable {
 		dst.Nullable = true

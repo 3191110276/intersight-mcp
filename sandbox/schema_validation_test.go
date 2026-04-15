@@ -61,6 +61,31 @@ func TestValidateRequestBodyAgainstSchemaEnumIssue(t *testing.T) {
 	assertDryRunIssue(t, errs[0], "$", "enum", validationSourceOpenAPI)
 }
 
+func TestValidateRequestBodyAgainstSchemaPatternIssue(t *testing.T) {
+	t.Parallel()
+
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{}, &dryRunSchema{
+		Type:    "string",
+		Pattern: "^[a-z]+$",
+	}, "ABC123")
+	if len(errs) != 1 {
+		t.Fatalf("len(errs) = %d, want 1", len(errs))
+	}
+	assertDryRunIssue(t, errs[0], "$", "pattern", validationSourceOpenAPI)
+}
+
+func TestValidateRequestBodyAgainstSchemaPatternPasses(t *testing.T) {
+	t.Parallel()
+
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{}, &dryRunSchema{
+		Type:    "string",
+		Pattern: "^[a-z]+$",
+	}, "alpha")
+	if len(errs) != 0 {
+		t.Fatalf("len(errs) = %d, want 0: %#v", len(errs), errs)
+	}
+}
+
 func TestValidateRequestBodyAgainstSchemaIntegerEnumAcceptsNumericTypes(t *testing.T) {
 	t.Parallel()
 

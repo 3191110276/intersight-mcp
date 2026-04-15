@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
@@ -33,6 +34,7 @@ type dryRunMediaContent struct {
 type dryRunSchema struct {
 	Type                   string                   `json:"type,omitempty"`
 	Format                 string                   `json:"format,omitempty"`
+	Pattern                string                   `json:"pattern,omitempty"`
 	Properties             map[string]*dryRunSchema `json:"properties,omitempty"`
 	Required               []string                 `json:"required,omitempty"`
 	Items                  *dryRunSchema            `json:"items,omitempty"`
@@ -332,8 +334,26 @@ anyOfMatched:
 		}
 		return validateArray(spec, schema, items, fieldPath, state)
 	case "string":
-		if _, ok := value.(string); !ok {
+		stringValue, ok := value.(string)
+		if !ok {
 			return []dryRunValidationError{newTypeMismatchIssue(fieldPath, "string", value)}
+		}
+		if pattern := strings.TrimSpace(schema.Pattern); pattern != "" {
+			matched, err := regexp.MatchString(pattern, stringValue)
+			if err != nil {
+				return []dryRunValidationError{newOpenAPIIssue(fieldPath, "pattern_invalid", "pattern", fmt.Sprintf("Schema pattern %q could not be compiled.", pattern))}
+			}
+			if !matched {
+				return []dryRunValidationError{{
+					Path:      fieldPath,
+					Type:      "pattern",
+					Source:    validationSourceOpenAPI,
+					Rule:      "pattern",
+					Message:   fmt.Sprintf("String value does not match required pattern %q.", pattern),
+					Condition: pattern,
+					Actual:    stringValue,
+				}}
+			}
 		}
 	case "boolean":
 		if _, ok := value.(bool); !ok {

@@ -59,6 +59,7 @@ type NormalizedMediaContent struct {
 type NormalizedSchema struct {
 	Type                   string                       `json:"type,omitempty"`
 	Format                 string                       `json:"format,omitempty"`
+	Pattern                string                       `json:"pattern,omitempty"`
 	Properties             map[string]*NormalizedSchema `json:"properties,omitempty"`
 	Required               []string                     `json:"required,omitempty"`
 	Items                  *NormalizedSchema            `json:"items,omitempty"`
