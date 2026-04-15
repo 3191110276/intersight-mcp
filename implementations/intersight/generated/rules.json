@@ -312,6 +312,54 @@
         }
       ]
     },
+    "asset.targets.create": {
+      "sdkMethod": "asset.targets.create",
+      "operationId": "CreateAssetTarget",
+      "resource": "asset.Target",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Connections",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "asset.targets.post": {
+      "sdkMethod": "asset.targets.post",
+      "operationId": "UpdateAssetTarget",
+      "resource": "asset.Target",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Connections",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "asset.targets.update": {
+      "sdkMethod": "asset.targets.update",
+      "operationId": "PatchAssetTarget",
+      "resource": "asset.Target",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Connections",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
     "auditd.policies.create": {
       "sdkMethod": "auditd.policies.create",
       "operationId": "CreateAuditdPolicy",
@@ -432,6 +480,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "PcieZones[].RootPcieEndpoint"
+            }
+          ]
         }
       ]
     },
@@ -449,6 +505,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "PcieZones[].RootPcieEndpoint"
+            }
+          ]
         }
       ]
     },
@@ -464,6 +528,14 @@
               "field": "PcieZones",
               "target": "compute.PcieZone",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "PcieZones[].RootPcieEndpoint"
             }
           ]
         }
@@ -492,6 +564,14 @@
               "field": "Entity"
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "AlarmRules[].Property"
+            }
+          ]
         }
       ]
     },
@@ -518,6 +598,14 @@
               "field": "Entity"
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "AlarmRules[].Property"
+            }
+          ]
         }
       ]
     },
@@ -534,6 +622,164 @@
             },
             {
               "field": "Entity"
+            }
+          ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "AlarmRules[].Property"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.appliancePcRoles.create": {
+      "sdkMethod": "fabric.appliancePcRoles.create",
+      "operationId": "CreateFabricAppliancePcRole",
+      "resource": "fabric.AppliancePcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.appliancePcRoles.post": {
+      "sdkMethod": "fabric.appliancePcRoles.post",
+      "operationId": "UpdateFabricAppliancePcRole",
+      "resource": "fabric.AppliancePcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.appliancePcRoles.update": {
+      "sdkMethod": "fabric.appliancePcRoles.update",
+      "operationId": "PatchFabricAppliancePcRole",
+      "resource": "fabric.AppliancePcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.applianceRoles.create": {
+      "sdkMethod": "fabric.applianceRoles.create",
+      "operationId": "CreateFabricApplianceRole",
+      "resource": "fabric.ApplianceRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.applianceRoles.post": {
+      "sdkMethod": "fabric.applianceRoles.post",
+      "operationId": "UpdateFabricApplianceRole",
+      "resource": "fabric.ApplianceRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.applianceRoles.update": {
+      "sdkMethod": "fabric.applianceRoles.update",
+      "operationId": "PatchFabricApplianceRole",
+      "resource": "fabric.ApplianceRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy"
             }
           ]
         }
@@ -571,6 +817,19 @@
               "field": "VlanSettings.QinqVlan"
             }
           ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
+            }
+          ]
         }
       ]
     },
@@ -606,6 +865,19 @@
               "field": "VlanSettings.QinqVlan"
             }
           ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
+            }
+          ]
         }
       ]
     },
@@ -639,6 +911,451 @@
           "require": [
             {
               "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcStorageRoles.create": {
+      "sdkMethod": "fabric.fcStorageRoles.create",
+      "operationId": "CreateFabricFcStorageRole",
+      "resource": "fabric.FcStorageRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcStorageRoles.post": {
+      "sdkMethod": "fabric.fcStorageRoles.post",
+      "operationId": "UpdateFabricFcStorageRole",
+      "resource": "fabric.FcStorageRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcStorageRoles.update": {
+      "sdkMethod": "fabric.fcStorageRoles.update",
+      "operationId": "PatchFabricFcStorageRole",
+      "resource": "fabric.FcStorageRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcUplinkPcRoles.create": {
+      "sdkMethod": "fabric.fcUplinkPcRoles.create",
+      "operationId": "CreateFabricFcUplinkPcRole",
+      "resource": "fabric.FcUplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcUplinkPcRoles.post": {
+      "sdkMethod": "fabric.fcUplinkPcRoles.post",
+      "operationId": "UpdateFabricFcUplinkPcRole",
+      "resource": "fabric.FcUplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcUplinkPcRoles.update": {
+      "sdkMethod": "fabric.fcUplinkPcRoles.update",
+      "operationId": "PatchFabricFcUplinkPcRole",
+      "resource": "fabric.FcUplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcUplinkRoles.create": {
+      "sdkMethod": "fabric.fcUplinkRoles.create",
+      "operationId": "CreateFabricFcUplinkRole",
+      "resource": "fabric.FcUplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcUplinkRoles.post": {
+      "sdkMethod": "fabric.fcUplinkRoles.post",
+      "operationId": "UpdateFabricFcUplinkRole",
+      "resource": "fabric.FcUplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcUplinkRoles.update": {
+      "sdkMethod": "fabric.fcUplinkRoles.update",
+      "operationId": "PatchFabricFcUplinkRole",
+      "resource": "fabric.FcUplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcoeUplinkPcRoles.create": {
+      "sdkMethod": "fabric.fcoeUplinkPcRoles.create",
+      "operationId": "CreateFabricFcoeUplinkPcRole",
+      "resource": "fabric.FcoeUplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcoeUplinkPcRoles.post": {
+      "sdkMethod": "fabric.fcoeUplinkPcRoles.post",
+      "operationId": "UpdateFabricFcoeUplinkPcRole",
+      "resource": "fabric.FcoeUplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcoeUplinkPcRoles.update": {
+      "sdkMethod": "fabric.fcoeUplinkPcRoles.update",
+      "operationId": "PatchFabricFcoeUplinkPcRole",
+      "resource": "fabric.FcoeUplinkPcRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcoeUplinkRoles.create": {
+      "sdkMethod": "fabric.fcoeUplinkRoles.create",
+      "operationId": "CreateFabricFcoeUplinkRole",
+      "resource": "fabric.FcoeUplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcoeUplinkRoles.post": {
+      "sdkMethod": "fabric.fcoeUplinkRoles.post",
+      "operationId": "UpdateFabricFcoeUplinkRole",
+      "resource": "fabric.FcoeUplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.fcoeUplinkRoles.update": {
+      "sdkMethod": "fabric.fcoeUplinkRoles.update",
+      "operationId": "PatchFabricFcoeUplinkRole",
+      "resource": "fabric.FcoeUplinkRole",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.flowControlPolicies.create": {
+      "sdkMethod": "fabric.flowControlPolicies.create",
+      "operationId": "CreateFabricFlowControlPolicy",
+      "resource": "fabric.FlowControlPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PriorityFlowControlMode",
+            "in": [
+              "auto",
+              "on"
+            ]
+          },
+          "custom": [
+            {
+              "field": "ReceiveDirection",
+              "validator": "disabled_string"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PriorityFlowControlMode",
+            "in": [
+              "auto",
+              "on"
+            ]
+          },
+          "custom": [
+            {
+              "field": "SendDirection",
+              "validator": "disabled_string"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.flowControlPolicies.post": {
+      "sdkMethod": "fabric.flowControlPolicies.post",
+      "operationId": "UpdateFabricFlowControlPolicy",
+      "resource": "fabric.FlowControlPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PriorityFlowControlMode",
+            "in": [
+              "auto",
+              "on"
+            ]
+          },
+          "custom": [
+            {
+              "field": "ReceiveDirection",
+              "validator": "disabled_string"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PriorityFlowControlMode",
+            "in": [
+              "auto",
+              "on"
+            ]
+          },
+          "custom": [
+            {
+              "field": "SendDirection",
+              "validator": "disabled_string"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.flowControlPolicies.update": {
+      "sdkMethod": "fabric.flowControlPolicies.update",
+      "operationId": "PatchFabricFlowControlPolicy",
+      "resource": "fabric.FlowControlPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PriorityFlowControlMode",
+            "in": [
+              "auto",
+              "on"
+            ]
+          },
+          "custom": [
+            {
+              "field": "ReceiveDirection",
+              "validator": "disabled_string"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PriorityFlowControlMode",
+            "in": [
+              "auto",
+              "on"
+            ]
+          },
+          "custom": [
+            {
+              "field": "SendDirection",
+              "validator": "disabled_string"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.lanPinGroups.create": {
+      "sdkMethod": "fabric.lanPinGroups.create",
+      "operationId": "CreateFabricLanPinGroup",
+      "resource": "fabric.LanPinGroup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PinTargetInterfaceRole",
+              "target": "fabric.AbstractInterfaceRole"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.lanPinGroups.post": {
+      "sdkMethod": "fabric.lanPinGroups.post",
+      "operationId": "UpdateFabricLanPinGroup",
+      "resource": "fabric.LanPinGroup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PinTargetInterfaceRole",
+              "target": "fabric.AbstractInterfaceRole"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.lanPinGroups.update": {
+      "sdkMethod": "fabric.lanPinGroups.update",
+      "operationId": "PatchFabricLanPinGroup",
+      "resource": "fabric.LanPinGroup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PinTargetInterfaceRole",
+              "target": "fabric.AbstractInterfaceRole"
             }
           ]
         }
@@ -684,6 +1401,111 @@
           "require": [
             {
               "field": "PrimaryKeyChain"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.multicastPolicies.create": {
+      "sdkMethod": "fabric.multicastPolicies.create",
+      "operationId": "CreateFabricMulticastPolicy",
+      "resource": "fabric.MulticastPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "QuerierState",
+            "equals": "Enabled"
+          },
+          "require": [
+            {
+              "field": "QuerierIpAddress"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.multicastPolicies.post": {
+      "sdkMethod": "fabric.multicastPolicies.post",
+      "operationId": "UpdateFabricMulticastPolicy",
+      "resource": "fabric.MulticastPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "QuerierState",
+            "equals": "Enabled"
+          },
+          "require": [
+            {
+              "field": "QuerierIpAddress"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.multicastPolicies.update": {
+      "sdkMethod": "fabric.multicastPolicies.update",
+      "operationId": "PatchFabricMulticastPolicy",
+      "resource": "fabric.MulticastPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "QuerierState",
+            "equals": "Enabled"
+          },
+          "require": [
+            {
+              "field": "QuerierIpAddress"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowExporters.create": {
+      "sdkMethod": "fabric.netFlowExporters.create",
+      "operationId": "CreateFabricNetFlowExporter",
+      "resource": "fabric.NetFlowExporter",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowExporters.post": {
+      "sdkMethod": "fabric.netFlowExporters.post",
+      "operationId": "UpdateFabricNetFlowExporter",
+      "resource": "fabric.NetFlowExporter",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.netFlowExporters.update": {
+      "sdkMethod": "fabric.netFlowExporters.update",
+      "operationId": "PatchFabricNetFlowExporter",
+      "resource": "fabric.NetFlowExporter",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
             }
           ]
         }
@@ -812,6 +1634,15 @@
       "resource": "fcpool.Reservation",
       "rules": [
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
           "kind": "one_of",
           "requireAny": [
             {
@@ -852,6 +1683,15 @@
       "operationId": "UpdateFcpoolReservation",
       "resource": "fcpool.Reservation",
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
         {
           "kind": "one_of",
           "requireAny": [
@@ -894,6 +1734,15 @@
       "resource": "fcpool.Reservation",
       "rules": [
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
           "kind": "one_of",
           "requireAny": [
             {
@@ -929,6 +1778,147 @@
         }
       ]
     },
+    "firmware.serverConfigurationUtilityDistributables.create": {
+      "sdkMethod": "firmware.serverConfigurationUtilityDistributables.create",
+      "operationId": "CreateFirmwareServerConfigurationUtilityDistributable",
+      "resource": "firmware.ServerConfigurationUtilityDistributable",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SupportedModels",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "firmware.serverConfigurationUtilityDistributables.post": {
+      "sdkMethod": "firmware.serverConfigurationUtilityDistributables.post",
+      "operationId": "UpdateFirmwareServerConfigurationUtilityDistributable",
+      "resource": "firmware.ServerConfigurationUtilityDistributable",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SupportedModels",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "firmware.serverConfigurationUtilityDistributables.update": {
+      "sdkMethod": "firmware.serverConfigurationUtilityDistributables.update",
+      "operationId": "PatchFirmwareServerConfigurationUtilityDistributable",
+      "resource": "firmware.ServerConfigurationUtilityDistributable",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SupportedModels",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "iam.appRegistrations.create": {
+      "sdkMethod": "iam.appRegistrations.create",
+      "operationId": "CreateIamAppRegistration",
+      "resource": "iam.AppRegistration",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ClientName"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.appRegistrations.post": {
+      "sdkMethod": "iam.appRegistrations.post",
+      "operationId": "UpdateIamAppRegistration",
+      "resource": "iam.AppRegistration",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ClientName"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.appRegistrations.update": {
+      "sdkMethod": "iam.appRegistrations.update",
+      "operationId": "PatchIamAppRegistration",
+      "resource": "iam.AppRegistration",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ClientName"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.endPointUsers.create": {
+      "sdkMethod": "iam.endPointUsers.create",
+      "operationId": "CreateIamEndPointUser",
+      "resource": "iam.EndPointUser",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "iam.endPointUsers.post": {
+      "sdkMethod": "iam.endPointUsers.post",
+      "operationId": "UpdateIamEndPointUser",
+      "resource": "iam.EndPointUser",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "iam.endPointUsers.update": {
+      "sdkMethod": "iam.endPointUsers.update",
+      "operationId": "PatchIamEndPointUser",
+      "resource": "iam.EndPointUser",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
     "iam.ldapPolicies.create": {
       "sdkMethod": "iam.ldapPolicies.create",
       "operationId": "CreateIamLdapPolicy",
@@ -947,6 +1937,15 @@
           "require": [
             {
               "field": "BaseProperties"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "BaseProperties.Filter",
+              "validator": "ldap_filter"
             }
           ]
         }
@@ -972,6 +1971,15 @@
               "field": "BaseProperties"
             }
           ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "BaseProperties.Filter",
+              "validator": "ldap_filter"
+            }
+          ]
         }
       ]
     },
@@ -993,6 +2001,60 @@
           "require": [
             {
               "field": "BaseProperties"
+            }
+          ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "BaseProperties.Filter",
+              "validator": "ldap_filter"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.ldapProviders.create": {
+      "sdkMethod": "iam.ldapProviders.create",
+      "operationId": "CreateIamLdapProvider",
+      "resource": "iam.LdapProvider",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.ldapProviders.post": {
+      "sdkMethod": "iam.ldapProviders.post",
+      "operationId": "UpdateIamLdapProvider",
+      "resource": "iam.LdapProvider",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.ldapProviders.update": {
+      "sdkMethod": "iam.ldapProviders.update",
+      "operationId": "PatchIamLdapProvider",
+      "resource": "iam.LdapProvider",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server"
             }
           ]
         }
@@ -1346,6 +2408,51 @@
         }
       ]
     },
+    "mgmt.configBackupFiles.create": {
+      "sdkMethod": "mgmt.configBackupFiles.create",
+      "operationId": "CreateMgmtConfigBackupFile",
+      "resource": "mgmt.ConfigBackupFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Version"
+            }
+          ]
+        }
+      ]
+    },
+    "mgmt.configBackupFiles.post": {
+      "sdkMethod": "mgmt.configBackupFiles.post",
+      "operationId": "UpdateMgmtConfigBackupFile",
+      "resource": "mgmt.ConfigBackupFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Version"
+            }
+          ]
+        }
+      ]
+    },
+    "mgmt.configBackupFiles.update": {
+      "sdkMethod": "mgmt.configBackupFiles.update",
+      "operationId": "PatchMgmtConfigBackupFile",
+      "resource": "mgmt.ConfigBackupFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Version"
+            }
+          ]
+        }
+      ]
+    },
     "ntp.policies.create": {
       "sdkMethod": "ntp.policies.create",
       "operationId": "CreateNtpPolicy",
@@ -1517,6 +2624,30 @@
         }
       ]
     },
+    "os.templateFiles.create": {
+      "sdkMethod": "os.templateFiles.create",
+      "operationId": "CreateOsTemplateFile",
+      "resource": "os.TemplateFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TemplateContent"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "TemplateContent",
+              "value": ".*\\S.*"
+            }
+          ]
+        }
+      ]
+    },
     "recovery.backupConfigPolicies.create": {
       "sdkMethod": "recovery.backupConfigPolicies.create",
       "operationId": "CreateRecoveryBackupConfigPolicy",
@@ -1635,6 +2766,14 @@
               "field": "Schedule.FrequencyUnit"
             }
           ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "Schedule.ExecutionTime"
+            }
+          ]
         }
       ]
     },
@@ -1664,6 +2803,14 @@
           "require": [
             {
               "field": "Schedule.FrequencyUnit"
+            }
+          ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "Schedule.ExecutionTime"
             }
           ]
         }
@@ -1697,6 +2844,14 @@
               "field": "Schedule.FrequencyUnit"
             }
           ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "Schedule.ExecutionTime"
+            }
+          ]
         }
       ]
     },
@@ -1711,6 +2866,15 @@
             {
               "field": "Qualifiers",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "contains",
+          "contains": [
+            {
+              "field": "Qualifiers[].ObjectType",
+              "value": "resource.GpuQualifier"
             }
           ]
         }
@@ -1729,6 +2893,15 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "contains",
+          "contains": [
+            {
+              "field": "Qualifiers[].ObjectType",
+              "value": "resource.GpuQualifier"
+            }
+          ]
         }
       ]
     },
@@ -1743,6 +2916,15 @@
             {
               "field": "Qualifiers",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "contains",
+          "contains": [
+            {
+              "field": "Qualifiers[].ObjectType",
+              "value": "resource.GpuQualifier"
             }
           ]
         }
@@ -1762,6 +2944,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "ScheduleParams[].StartTime"
+            }
+          ]
         }
       ]
     },
@@ -1779,6 +2969,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "ScheduleParams[].StartTime"
+            }
+          ]
         }
       ]
     },
@@ -1794,6 +2992,29 @@
               "field": "ScheduleParams",
               "target": "scheduler.BaseScheduleParams",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "ScheduleParams[].StartTime"
+            }
+          ]
+        }
+      ]
+    },
+    "search.suggestItems.create": {
+      "sdkMethod": "search.suggestItems.create",
+      "operationId": "CreateSearchSuggestItem",
+      "resource": "search.SuggestItem",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SuggestTerm"
             }
           ]
         }
@@ -2157,6 +3378,51 @@
             {
               "field": "Recipients",
               "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "softwarerepository.operatingSystemFiles.create": {
+      "sdkMethod": "softwarerepository.operatingSystemFiles.create",
+      "operationId": "CreateSoftwarerepositoryOperatingSystemFile",
+      "resource": "softwarerepository.OperatingSystemFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Vendor"
+            }
+          ]
+        }
+      ]
+    },
+    "softwarerepository.operatingSystemFiles.post": {
+      "sdkMethod": "softwarerepository.operatingSystemFiles.post",
+      "operationId": "UpdateSoftwarerepositoryOperatingSystemFile",
+      "resource": "softwarerepository.OperatingSystemFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Vendor"
+            }
+          ]
+        }
+      ]
+    },
+    "softwarerepository.operatingSystemFiles.update": {
+      "sdkMethod": "softwarerepository.operatingSystemFiles.update",
+      "operationId": "PatchSoftwarerepositoryOperatingSystemFile",
+      "resource": "softwarerepository.OperatingSystemFile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Vendor"
             }
           ]
         }
@@ -2863,6 +4129,19 @@
               "field": "VlanSettings.QinqVlan"
             }
           ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
+            }
+          ]
         }
       ]
     },
@@ -2914,6 +4193,19 @@
               "field": "VlanSettings.QinqVlan"
             }
           ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
+            }
+          ]
         }
       ]
     },
@@ -2963,6 +4255,51 @@
           "require": [
             {
               "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.fcAdapterPolicies.create": {
+      "sdkMethod": "vnic.fcAdapterPolicies.create",
+      "operationId": "CreateVnicFcAdapterPolicy",
+      "resource": "vnic.FcAdapterPolicy",
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "ErrorDetectionTimeout",
+              "value": 1000
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.fcQosPolicies.create": {
+      "sdkMethod": "vnic.fcQosPolicies.create",
+      "operationId": "CreateVnicFcQosPolicy",
+      "resource": "vnic.FcQosPolicy",
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "MaxDataFieldSize",
+              "value": 256
             }
           ]
         }
@@ -3395,6 +4732,791 @@
               "field": "EthIfs",
               "target": "vnic.EthIf",
               "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.vhbaTemplates.create": {
+      "sdkMethod": "vnic.vhbaTemplates.create",
+      "operationId": "CreateVnicVhbaTemplate",
+      "resource": "vnic.VhbaTemplate",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.vhbaTemplates.post": {
+      "sdkMethod": "vnic.vhbaTemplates.post",
+      "operationId": "UpdateVnicVhbaTemplate",
+      "resource": "vnic.VhbaTemplate",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.vhbaTemplates.update": {
+      "sdkMethod": "vnic.vhbaTemplates.update",
+      "operationId": "PatchVnicVhbaTemplate",
+      "resource": "vnic.VhbaTemplate",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.vnicTemplates.create": {
+      "sdkMethod": "vnic.vnicTemplates.create",
+      "operationId": "CreateVnicVnicTemplate",
+      "resource": "vnic.VnicTemplate",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.vnicTemplates.post": {
+      "sdkMethod": "vnic.vnicTemplates.post",
+      "operationId": "UpdateVnicVnicTemplate",
+      "resource": "vnic.VnicTemplate",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.vnicTemplates.update": {
+      "sdkMethod": "vnic.vnicTemplates.update",
+      "operationId": "PatchVnicVnicTemplate",
+      "resource": "vnic.VnicTemplate",
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.ansibleBatchExecutors.create": {
+      "sdkMethod": "workflow.ansibleBatchExecutors.create",
+      "operationId": "CreateWorkflowAnsibleBatchExecutor",
+      "resource": "workflow.AnsibleBatchExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.ansibleBatchExecutors.post": {
+      "sdkMethod": "workflow.ansibleBatchExecutors.post",
+      "operationId": "UpdateWorkflowAnsibleBatchExecutor",
+      "resource": "workflow.AnsibleBatchExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.ansibleBatchExecutors.update": {
+      "sdkMethod": "workflow.ansibleBatchExecutors.update",
+      "operationId": "PatchWorkflowAnsibleBatchExecutor",
+      "resource": "workflow.AnsibleBatchExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.batchApiExecutors.create": {
+      "sdkMethod": "workflow.batchApiExecutors.create",
+      "operationId": "CreateWorkflowBatchApiExecutor",
+      "resource": "workflow.BatchApiExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.batchApiExecutors.post": {
+      "sdkMethod": "workflow.batchApiExecutors.post",
+      "operationId": "UpdateWorkflowBatchApiExecutor",
+      "resource": "workflow.BatchApiExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.batchApiExecutors.update": {
+      "sdkMethod": "workflow.batchApiExecutors.update",
+      "operationId": "PatchWorkflowBatchApiExecutor",
+      "resource": "workflow.BatchApiExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.catalogItemDefinitions.create": {
+      "sdkMethod": "workflow.catalogItemDefinitions.create",
+      "operationId": "CreateWorkflowCatalogItemDefinition",
+      "resource": "workflow.CatalogItemDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.catalogItemDefinitions.post": {
+      "sdkMethod": "workflow.catalogItemDefinitions.post",
+      "operationId": "UpdateWorkflowCatalogItemDefinition",
+      "resource": "workflow.CatalogItemDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.catalogItemDefinitions.update": {
+      "sdkMethod": "workflow.catalogItemDefinitions.update",
+      "operationId": "PatchWorkflowCatalogItemDefinition",
+      "resource": "workflow.CatalogItemDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.customDataTypeDefinitions.create": {
+      "sdkMethod": "workflow.customDataTypeDefinitions.create",
+      "operationId": "CreateWorkflowCustomDataTypeDefinition",
+      "resource": "workflow.CustomDataTypeDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.customDataTypeDefinitions.post": {
+      "sdkMethod": "workflow.customDataTypeDefinitions.post",
+      "operationId": "UpdateWorkflowCustomDataTypeDefinition",
+      "resource": "workflow.CustomDataTypeDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.customDataTypeDefinitions.update": {
+      "sdkMethod": "workflow.customDataTypeDefinitions.update",
+      "operationId": "PatchWorkflowCustomDataTypeDefinition",
+      "resource": "workflow.CustomDataTypeDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.powerShellBatchApiExecutors.create": {
+      "sdkMethod": "workflow.powerShellBatchApiExecutors.create",
+      "operationId": "CreateWorkflowPowerShellBatchApiExecutor",
+      "resource": "workflow.PowerShellBatchApiExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.powerShellBatchApiExecutors.post": {
+      "sdkMethod": "workflow.powerShellBatchApiExecutors.post",
+      "operationId": "UpdateWorkflowPowerShellBatchApiExecutor",
+      "resource": "workflow.PowerShellBatchApiExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.powerShellBatchApiExecutors.update": {
+      "sdkMethod": "workflow.powerShellBatchApiExecutors.update",
+      "operationId": "PatchWorkflowPowerShellBatchApiExecutor",
+      "resource": "workflow.PowerShellBatchApiExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.serviceItemActionDefinitions.create": {
+      "sdkMethod": "workflow.serviceItemActionDefinitions.create",
+      "operationId": "CreateWorkflowServiceItemActionDefinition",
+      "resource": "workflow.ServiceItemActionDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.serviceItemActionDefinitions.post": {
+      "sdkMethod": "workflow.serviceItemActionDefinitions.post",
+      "operationId": "UpdateWorkflowServiceItemActionDefinition",
+      "resource": "workflow.ServiceItemActionDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.serviceItemActionDefinitions.update": {
+      "sdkMethod": "workflow.serviceItemActionDefinitions.update",
+      "operationId": "PatchWorkflowServiceItemActionDefinition",
+      "resource": "workflow.ServiceItemActionDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.serviceItemDefinitions.create": {
+      "sdkMethod": "workflow.serviceItemDefinitions.create",
+      "operationId": "CreateWorkflowServiceItemDefinition",
+      "resource": "workflow.ServiceItemDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.serviceItemDefinitions.post": {
+      "sdkMethod": "workflow.serviceItemDefinitions.post",
+      "operationId": "UpdateWorkflowServiceItemDefinition",
+      "resource": "workflow.ServiceItemDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.serviceItemDefinitions.update": {
+      "sdkMethod": "workflow.serviceItemDefinitions.update",
+      "operationId": "PatchWorkflowServiceItemDefinition",
+      "resource": "workflow.ServiceItemDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.sshBatchExecutors.create": {
+      "sdkMethod": "workflow.sshBatchExecutors.create",
+      "operationId": "CreateWorkflowSshBatchExecutor",
+      "resource": "workflow.SshBatchExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.sshBatchExecutors.post": {
+      "sdkMethod": "workflow.sshBatchExecutors.post",
+      "operationId": "UpdateWorkflowSshBatchExecutor",
+      "resource": "workflow.SshBatchExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.sshBatchExecutors.update": {
+      "sdkMethod": "workflow.sshBatchExecutors.update",
+      "operationId": "PatchWorkflowSshBatchExecutor",
+      "resource": "workflow.SshBatchExecutor",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.taskDefinitions.create": {
+      "sdkMethod": "workflow.taskDefinitions.create",
+      "operationId": "CreateWorkflowTaskDefinition",
+      "resource": "workflow.TaskDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.taskDefinitions.post": {
+      "sdkMethod": "workflow.taskDefinitions.post",
+      "operationId": "UpdateWorkflowTaskDefinition",
+      "resource": "workflow.TaskDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.taskDefinitions.update": {
+      "sdkMethod": "workflow.taskDefinitions.update",
+      "operationId": "PatchWorkflowTaskDefinition",
+      "resource": "workflow.TaskDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.templateParsers.create": {
+      "sdkMethod": "workflow.templateParsers.create",
+      "operationId": "CreateWorkflowTemplateParser",
+      "resource": "workflow.TemplateParser",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TemplateContent"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "TemplateContent",
+              "value": ".*\\S.*"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.workflowDefinitions.create": {
+      "sdkMethod": "workflow.workflowDefinitions.create",
+      "operationId": "CreateWorkflowWorkflowDefinition",
+      "resource": "workflow.WorkflowDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.workflowDefinitions.post": {
+      "sdkMethod": "workflow.workflowDefinitions.post",
+      "operationId": "UpdateWorkflowWorkflowDefinition",
+      "resource": "workflow.WorkflowDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.workflowDefinitions.update": {
+      "sdkMethod": "workflow.workflowDefinitions.update",
+      "operationId": "PatchWorkflowWorkflowDefinition",
+      "resource": "workflow.WorkflowDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workflow.workflowInfos.create": {
+      "sdkMethod": "workflow.workflowInfos.create",
+      "operationId": "CreateWorkflowWorkflowInfo",
+      "resource": "workflow.WorkflowInfo",
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "FailedWorkflowCleanupDuration",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "SuccessWorkflowCleanupDuration",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Action",
+            "equals": "None"
+          },
+          "forbid": [
+            "Action"
+          ]
+        }
+      ]
+    },
+    "workload.blueprints.create": {
+      "sdkMethod": "workload.blueprints.create",
+      "operationId": "CreateWorkloadBlueprint",
+      "resource": "workload.Blueprint",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ServiceItems",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9_]{0,31}$"
+            }
+          ]
+        }
+      ]
+    },
+    "workload.blueprints.post": {
+      "sdkMethod": "workload.blueprints.post",
+      "operationId": "UpdateWorkloadBlueprint",
+      "resource": "workload.Blueprint",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workload.blueprints.update": {
+      "sdkMethod": "workload.blueprints.update",
+      "operationId": "PatchWorkloadBlueprint",
+      "resource": "workload.Blueprint",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ]
+    },
+    "workload.workloadDefinitions.create": {
+      "sdkMethod": "workload.workloadDefinitions.create",
+      "operationId": "CreateWorkloadWorkloadDefinition",
+      "resource": "workload.WorkloadDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Blueprints",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ]
+    },
+    "workload.workloadDefinitions.post": {
+      "sdkMethod": "workload.workloadDefinitions.post",
+      "operationId": "UpdateWorkloadWorkloadDefinition",
+      "resource": "workload.WorkloadDefinition",
+      "rules": [
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ]
+    },
+    "workload.workloadDefinitions.update": {
+      "sdkMethod": "workload.workloadDefinitions.update",
+      "operationId": "PatchWorkloadWorkloadDefinition",
+      "resource": "workload.WorkloadDefinition",
+      "rules": [
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ]
+    },
+    "workload.workloadDeployments.create": {
+      "sdkMethod": "workload.workloadDeployments.create",
+      "operationId": "CreateWorkloadWorkloadDeployment",
+      "resource": "workload.WorkloadDeployment",
+      "rules": [
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ]
+    },
+    "workload.workloadDeployments.post": {
+      "sdkMethod": "workload.workloadDeployments.post",
+      "operationId": "UpdateWorkloadWorkloadDeployment",
+      "resource": "workload.WorkloadDeployment",
+      "rules": [
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ]
+    },
+    "workload.workloadDeployments.update": {
+      "sdkMethod": "workload.workloadDeployments.update",
+      "operationId": "PatchWorkloadWorkloadDeployment",
+      "resource": "workload.WorkloadDeployment",
+      "rules": [
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
             }
           ]
         }

@@ -3125,6 +3125,17 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Connections",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -3222,6 +3233,17 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Connections",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -10123,6 +10145,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "PcieZones[].RootPcieEndpoint"
+            }
+          ]
         }
       ],
       "operations": [
@@ -10178,6 +10208,14 @@
               "field": "PcieZones",
               "target": "compute.PcieZone",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "PcieZones[].RootPcieEndpoint"
             }
           ]
         }
@@ -10614,6 +10652,14 @@
               "field": "StartDate"
             }
           ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "AlarmRules[].Property"
+            }
+          ]
         }
       ],
       "operations": [
@@ -10745,6 +10791,14 @@
           "require": [
             {
               "field": "StartDate"
+            }
+          ]
+        },
+        {
+          "kind": "required_each",
+          "requireEach": [
+            {
+              "field": "AlarmRules[].Property"
             }
           ]
         }
@@ -12334,6 +12388,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -12404,6 +12469,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -12483,6 +12559,35 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -12562,6 +12667,35 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -12865,6 +12999,19 @@
               "field": "VlanSettings.QinqVlan"
             }
           ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
+            }
+          ]
         }
       ],
       "operations": [
@@ -12930,6 +13077,19 @@
           "require": [
             {
               "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
             }
           ]
         }
@@ -13151,6 +13311,17 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13198,6 +13369,17 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13246,6 +13428,17 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13294,6 +13487,17 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13345,6 +13549,17 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13396,6 +13611,17 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13530,6 +13756,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13586,6 +13823,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13639,6 +13887,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13692,6 +13951,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13734,6 +14004,24 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PriorityFlowControlMode",
+            "in": [
+              "auto",
+              "on"
+            ]
+          },
+          "custom": [
+            {
+              "field": "ReceiveDirection",
+              "validator": "disabled_string"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13776,6 +14064,24 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PriorityFlowControlMode",
+            "in": [
+              "auto",
+              "on"
+            ]
+          },
+          "custom": [
+            {
+              "field": "ReceiveDirection",
+              "validator": "disabled_string"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13809,6 +14115,26 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PinTargetInterfaceRole",
+              "target": "fabric.AbstractInterfaceRole"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -13842,6 +14168,26 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PortPolicy",
+              "target": "fabric.PortPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PinTargetInterfaceRole",
+              "target": "fabric.AbstractInterfaceRole"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14214,6 +14560,20 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "QuerierState",
+            "equals": "Enabled"
+          },
+          "require": [
+            {
+              "field": "QuerierIpAddress"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14262,6 +14622,20 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "QuerierState",
+            "equals": "Enabled"
+          },
+          "require": [
+            {
+              "field": "QuerierIpAddress"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14322,6 +14696,17 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14382,6 +14767,17 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "NetFlowPolicy",
+              "target": "fabric.NetFlowPolicy"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17591,6 +17987,15 @@
       },
       "rules": [
         {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
+        {
           "kind": "conditional",
           "when": {
             "field": "AllocationType",
@@ -17681,6 +18086,15 @@
         }
       },
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        },
         {
           "kind": "conditional",
           "when": {
@@ -19080,6 +19494,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SupportedModels",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -19183,6 +19608,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SupportedModels",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -20951,6 +21387,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ClientName"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -21053,6 +21499,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ClientName"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -21421,6 +21877,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -21693,6 +22160,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -22192,6 +22670,15 @@
               "field": "BaseProperties"
             }
           ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "BaseProperties.Filter",
+              "validator": "ldap_filter"
+            }
+          ]
         }
       ],
       "operations": [
@@ -22279,6 +22766,15 @@
               "field": "BaseProperties"
             }
           ]
+        },
+        {
+          "kind": "custom",
+          "custom": [
+            {
+              "field": "BaseProperties.Filter",
+              "validator": "ldap_filter"
+            }
+          ]
         }
       ],
       "operations": [
@@ -22316,6 +22812,16 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -22351,6 +22857,16 @@
           "enum": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Server"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26544,6 +27060,16 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Version"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26602,6 +27128,16 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Version"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -28639,6 +29175,25 @@
         }
       },
       "path": "/api/v1/os/TemplateFiles",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TemplateContent"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "TemplateContent",
+              "value": ".*\\S.*"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -28664,6 +29219,25 @@
         }
       },
       "path": "/api/v1/os/TemplateFiles",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TemplateContent"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "TemplateContent",
+              "value": ".*\\S.*"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -29923,6 +30497,14 @@
               "field": "Schedule.FrequencyUnit"
             }
           ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "Schedule.ExecutionTime"
+            }
+          ]
         }
       ],
       "operations": [
@@ -29989,6 +30571,14 @@
           "require": [
             {
               "field": "Schedule.FrequencyUnit"
+            }
+          ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "Schedule.ExecutionTime"
             }
           ]
         }
@@ -30554,6 +31144,15 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "contains",
+          "contains": [
+            {
+              "field": "Qualifiers[].ObjectType",
+              "value": "resource.GpuQualifier"
+            }
+          ]
         }
       ],
       "operations": [
@@ -30598,6 +31197,15 @@
             {
               "field": "Qualifiers",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "contains",
+          "contains": [
+            {
+              "field": "Qualifiers[].ObjectType",
+              "value": "resource.GpuQualifier"
             }
           ]
         }
@@ -30704,6 +31312,14 @@
               "minCount": 1
             }
           ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "ScheduleParams[].StartTime"
+            }
+          ]
         }
       ],
       "operations": [
@@ -30762,6 +31378,14 @@
               "field": "ScheduleParams",
               "target": "scheduler.BaseScheduleParams",
               "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "future",
+          "future": [
+            {
+              "field": "ScheduleParams[].StartTime"
             }
           ]
         }
@@ -31068,6 +31692,16 @@
     "search.suggestItem": {
       "schema": "search.SuggestItem",
       "path": "/api/v1/search/SuggestItems",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SuggestTerm"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -31075,6 +31709,16 @@
     "search.suggestItems": {
       "schema": "search.SuggestItem",
       "path": "/api/v1/search/SuggestItems",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SuggestTerm"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -35000,6 +35644,16 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Vendor"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -35098,6 +35752,16 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Vendor"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -41970,6 +42634,19 @@
               "field": "VlanSettings.QinqVlan"
             }
           ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
+            }
+          ]
         }
       ],
       "operations": [
@@ -42055,6 +42732,19 @@
           "require": [
             {
               "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "VlanSettings.QinqVlan",
+              "value": 2
             }
           ]
         }
@@ -42328,6 +43018,17 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "ErrorDetectionTimeout",
+              "value": 1000
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -42427,6 +43128,17 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "ErrorDetectionTimeout",
+              "value": 1000
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -42855,6 +43567,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "MaxDataFieldSize",
+              "value": 256
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -42901,6 +43624,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "MaxDataFieldSize",
+              "value": 256
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44083,6 +44817,17 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44167,6 +44912,17 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44308,6 +45064,17 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44433,6 +45200,17 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "maximum",
+          "maximum": [
+            {
+              "field": "Name",
+              "value": 16
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44709,6 +45487,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44771,6 +45560,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44839,6 +45639,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44907,6 +45718,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -44972,6 +45794,16 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -45029,6 +45861,16 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -45246,6 +46088,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -45305,6 +46157,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -45461,6 +46323,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -45529,6 +46402,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -45721,6 +46605,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -45831,6 +46725,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -46095,6 +46999,16 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -46169,6 +47083,16 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -46443,6 +47367,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -46505,6 +47440,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Batch",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -46603,6 +47549,16 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -46685,6 +47641,16 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -46806,6 +47772,25 @@
         }
       },
       "path": "/api/v1/workflow/TemplateParsers",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TemplateContent"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "TemplateContent",
+              "value": ".*\\S.*"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -46828,6 +47813,25 @@
         }
       },
       "path": "/api/v1/workflow/TemplateParsers",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TemplateContent"
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "TemplateContent",
+              "value": ".*\\S.*"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -47025,6 +48029,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47125,6 +48139,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47218,6 +48242,36 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "FailedWorkflowCleanupDuration",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "SuccessWorkflowCleanupDuration",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Action",
+            "equals": "None"
+          },
+          "forbid": [
+            "Action"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47311,6 +48365,36 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "FailedWorkflowCleanupDuration",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "SuccessWorkflowCleanupDuration",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Action",
+            "equals": "None"
+          },
+          "forbid": [
+            "Action"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47410,6 +48494,34 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ServiceItems",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9_]{0,31}$"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47501,6 +48613,34 @@
           "format": "int64"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Label"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ServiceItems",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9_]{0,31}$"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47637,6 +48777,26 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Blueprints",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47713,6 +48873,26 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Blueprints",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47841,6 +49021,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -47969,6 +49160,17 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "pattern",
+          "pattern": [
+            {
+              "field": "Name",
+              "value": "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",

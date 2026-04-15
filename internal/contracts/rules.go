@@ -24,9 +24,15 @@ type SemanticRule struct {
 	Description string         `json:"description,omitempty"`
 	When        *RuleCondition `json:"when,omitempty"`
 	Require     []FieldRule    `json:"require,omitempty"`
+	RequireEach []FieldRule    `json:"requireEach,omitempty"`
 	RequireAny  []FieldRule    `json:"requireAny,omitempty"`
 	Forbid      []string       `json:"forbid,omitempty"`
 	Minimum     []MinimumRule  `json:"minimum,omitempty"`
+	Maximum     []LengthRule   `json:"maximum,omitempty"`
+	Pattern     []PatternRule  `json:"pattern,omitempty"`
+	Future      []TimeRule     `json:"future,omitempty"`
+	Contains    []ContainsRule `json:"contains,omitempty"`
+	Custom      []CustomRule   `json:"custom,omitempty"`
 }
 
 type RuleCondition struct {
@@ -44,6 +50,30 @@ type FieldRule struct {
 type MinimumRule struct {
 	Field string  `json:"field"`
 	Value float64 `json:"value"`
+}
+
+type LengthRule struct {
+	Field string `json:"field"`
+	Value int    `json:"value"`
+}
+
+type PatternRule struct {
+	Field string `json:"field"`
+	Value string `json:"value"`
+}
+
+type TimeRule struct {
+	Field string `json:"field"`
+}
+
+type ContainsRule struct {
+	Field string `json:"field"`
+	Value any    `json:"value"`
+}
+
+type CustomRule struct {
+	Field     string `json:"field"`
+	Validator string `json:"validator"`
 }
 
 type RuleTemplate struct {
@@ -202,10 +232,10 @@ func validateMethodRules(spec NormalizedSpec, sdkMethod string, methodRules Meth
 		}
 		for _, requirement := range rule.Require {
 			schema, ok := schemaAtFieldPath(spec, bodySchema, requirement.Field)
-			if !ok {
+			if !ok && !allowUnknownRuleField(spec, bodySchema) {
 				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown required field %q", sdkMethod, requirement.Field)
 			}
-			if requirement.Target != "" {
+			if ok && requirement.Target != "" {
 				if _, ok := spec.Schemas[requirement.Target]; !ok {
 					return fmt.Errorf("embedded artifact validation failed: rules entry %q points at unknown relationship target %q", sdkMethod, requirement.Target)
 				}
@@ -214,12 +244,17 @@ func validateMethodRules(spec NormalizedSpec, sdkMethod string, methodRules Meth
 				}
 			}
 		}
+		for _, requirement := range rule.RequireEach {
+			if _, ok := schemaAtFieldPath(spec, bodySchema, requirement.Field); !ok && !allowUnknownRuleField(spec, bodySchema) {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown per-item required field %q", sdkMethod, requirement.Field)
+			}
+		}
 		for _, requirement := range rule.RequireAny {
 			schema, ok := schemaAtFieldPath(spec, bodySchema, requirement.Field)
-			if !ok {
+			if !ok && !allowUnknownRuleField(spec, bodySchema) {
 				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown one-of field %q", sdkMethod, requirement.Field)
 			}
-			if requirement.Target != "" {
+			if ok && requirement.Target != "" {
 				if _, ok := spec.Schemas[requirement.Target]; !ok {
 					return fmt.Errorf("embedded artifact validation failed: rules entry %q points at unknown relationship target %q", sdkMethod, requirement.Target)
 				}
@@ -230,13 +265,53 @@ func validateMethodRules(spec NormalizedSpec, sdkMethod string, methodRules Meth
 		}
 		for _, minimum := range rule.Minimum {
 			schema, ok := schemaAtFieldPath(spec, bodySchema, minimum.Field)
-			if !ok {
+			if !ok && !allowUnknownRuleField(spec, bodySchema) {
 				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown minimum field %q", sdkMethod, minimum.Field)
+			}
+			if !ok {
+				continue
 			}
 			switch schema.Type {
 			case "integer", "number":
 			default:
 				return fmt.Errorf("embedded artifact validation failed: rules entry %q minimum field %q must resolve to a numeric schema", sdkMethod, minimum.Field)
+			}
+		}
+		for _, maximum := range rule.Maximum {
+			schema, ok := schemaAtFieldPath(spec, bodySchema, maximum.Field)
+			if !ok && !allowUnknownRuleField(spec, bodySchema) {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown maximum field %q", sdkMethod, maximum.Field)
+			}
+			if ok && schema.Type != "string" {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q maximum field %q must resolve to a string schema", sdkMethod, maximum.Field)
+			}
+		}
+		for _, pattern := range rule.Pattern {
+			schema, ok := schemaAtFieldPath(spec, bodySchema, pattern.Field)
+			if !ok && !allowUnknownRuleField(spec, bodySchema) {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown pattern field %q", sdkMethod, pattern.Field)
+			}
+			if ok && schema.Type != "string" {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q pattern field %q must resolve to a string schema", sdkMethod, pattern.Field)
+			}
+		}
+		for _, future := range rule.Future {
+			schema, ok := schemaAtFieldPath(spec, bodySchema, future.Field)
+			if !ok && !allowUnknownRuleField(spec, bodySchema) {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown future field %q", sdkMethod, future.Field)
+			}
+			if ok && schema.Type != "string" {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q future field %q must resolve to a string schema", sdkMethod, future.Field)
+			}
+		}
+		for _, contains := range rule.Contains {
+			if _, ok := schemaAtFieldPath(spec, bodySchema, contains.Field); !ok && !allowUnknownRuleField(spec, bodySchema) {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown contains field %q", sdkMethod, contains.Field)
+			}
+		}
+		for _, custom := range rule.Custom {
+			if _, ok := schemaAtFieldPath(spec, bodySchema, custom.Field); !ok && !allowUnknownRuleField(spec, bodySchema) {
+				return fmt.Errorf("embedded artifact validation failed: rules entry %q references unknown custom field %q", sdkMethod, custom.Field)
 			}
 		}
 	}
@@ -265,6 +340,10 @@ func schemaAtFieldPath(spec NormalizedSpec, root *NormalizedSchema, fieldPath st
 		if segment == "" {
 			return nil, false
 		}
+		arrayItem := strings.HasSuffix(segment, "[]")
+		if arrayItem {
+			segment = strings.TrimSuffix(segment, "[]")
+		}
 		current = dereferenceSchema(spec, current)
 		if current == nil {
 			return nil, false
@@ -274,6 +353,13 @@ func schemaAtFieldPath(spec NormalizedSpec, root *NormalizedSchema, fieldPath st
 			return nil, false
 		}
 		current = next
+		if arrayItem {
+			current = dereferenceSchema(spec, current)
+			if current == nil || current.Items == nil {
+				return nil, false
+			}
+			current = current.Items
+		}
 	}
 	return dereferenceSchema(spec, current), current != nil
 }
@@ -354,6 +440,10 @@ func normalizeSemanticRules(rules []SemanticRule) []SemanticRule {
 		slices.SortFunc(out[i].Require, func(a, b FieldRule) int {
 			return strings.Compare(a.Field, b.Field)
 		})
+		out[i].RequireEach = append([]FieldRule(nil), out[i].RequireEach...)
+		slices.SortFunc(out[i].RequireEach, func(a, b FieldRule) int {
+			return strings.Compare(a.Field, b.Field)
+		})
 		out[i].RequireAny = append([]FieldRule(nil), out[i].RequireAny...)
 		slices.SortFunc(out[i].RequireAny, func(a, b FieldRule) int {
 			return strings.Compare(a.Field, b.Field)
@@ -363,11 +453,39 @@ func normalizeSemanticRules(rules []SemanticRule) []SemanticRule {
 		slices.SortFunc(out[i].Minimum, func(a, b MinimumRule) int {
 			return strings.Compare(a.Field, b.Field)
 		})
+		out[i].Maximum = append([]LengthRule(nil), out[i].Maximum...)
+		slices.SortFunc(out[i].Maximum, func(a, b LengthRule) int {
+			return strings.Compare(a.Field, b.Field)
+		})
+		out[i].Pattern = append([]PatternRule(nil), out[i].Pattern...)
+		slices.SortFunc(out[i].Pattern, func(a, b PatternRule) int {
+			return strings.Compare(a.Field, b.Field)
+		})
+		out[i].Future = append([]TimeRule(nil), out[i].Future...)
+		slices.SortFunc(out[i].Future, func(a, b TimeRule) int {
+			return strings.Compare(a.Field, b.Field)
+		})
+		out[i].Contains = append([]ContainsRule(nil), out[i].Contains...)
+		slices.SortFunc(out[i].Contains, func(a, b ContainsRule) int {
+			return strings.Compare(a.Field, b.Field)
+		})
+		out[i].Custom = append([]CustomRule(nil), out[i].Custom...)
+		slices.SortFunc(out[i].Custom, func(a, b CustomRule) int {
+			if cmp := strings.Compare(a.Field, b.Field); cmp != 0 {
+				return cmp
+			}
+			return strings.Compare(a.Validator, b.Validator)
+		})
 		if out[i].When != nil && len(out[i].When.In) > 0 {
 			out[i].When.In = append([]any(nil), out[i].When.In...)
 		}
 	}
 	return out
+}
+
+func allowUnknownRuleField(spec NormalizedSpec, bodySchema *NormalizedSchema) bool {
+	bodySchema = dereferenceSchema(spec, bodySchema)
+	return bodySchema != nil && bodySchema.Type == "object" && len(bodySchema.Properties) == 0
 }
 
 func NewRequiredRule(field, target string, minCount ...int) SemanticRule {
@@ -435,5 +553,63 @@ func NewConditionalMinimumRule(field string, equals any, minimum MinimumRule) Se
 		Kind:    "conditional",
 		When:    &RuleCondition{Field: field, Equals: equals},
 		Minimum: []MinimumRule{minimum},
+	}
+}
+
+func NewConditionalCustomRule(field string, equals any, custom CustomRule) SemanticRule {
+	return SemanticRule{
+		Kind:   "conditional",
+		When:   &RuleCondition{Field: field, Equals: equals},
+		Custom: []CustomRule{custom},
+	}
+}
+
+func NewConditionalInCustomRule(field string, values []any, custom CustomRule) SemanticRule {
+	return SemanticRule{
+		Kind:   "conditional",
+		When:   &RuleCondition{Field: field, In: append([]any(nil), values...)},
+		Custom: []CustomRule{custom},
+	}
+}
+
+func NewEachRequiredRule(field string) SemanticRule {
+	return SemanticRule{
+		Kind:        "required_each",
+		RequireEach: []FieldRule{{Field: field}},
+	}
+}
+
+func NewMaximumRule(maximum LengthRule) SemanticRule {
+	return SemanticRule{
+		Kind:    "maximum",
+		Maximum: []LengthRule{maximum},
+	}
+}
+
+func NewPatternRule(pattern PatternRule) SemanticRule {
+	return SemanticRule{
+		Kind:    "pattern",
+		Pattern: []PatternRule{pattern},
+	}
+}
+
+func NewFutureRule(field string) SemanticRule {
+	return SemanticRule{
+		Kind:   "future",
+		Future: []TimeRule{{Field: field}},
+	}
+}
+
+func NewContainsRule(contains ContainsRule) SemanticRule {
+	return SemanticRule{
+		Kind:     "contains",
+		Contains: []ContainsRule{contains},
+	}
+}
+
+func NewCustomRule(custom CustomRule) SemanticRule {
+	return SemanticRule{
+		Kind:   "custom",
+		Custom: []CustomRule{custom},
 	}
 }

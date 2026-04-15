@@ -3,7 +3,10 @@ package sandbox
 import (
 	"fmt"
 	"math"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 )
@@ -33,6 +36,19 @@ func (r *sdkRuntime) validateSemanticRules(sdkMethod string, body any) []dryRunV
 					Rule:      "require",
 					Message:   missingFieldMessage(requirement),
 					Condition: condition,
+				})
+			}
+		}
+		for _, requirement := range rule.RequireEach {
+			if missing := missingEachField(bodyMap, requirement.Field); len(missing) > 0 {
+				errs = append(errs, dryRunValidationError{
+					Path:      requirement.Field,
+					Type:      "required_each",
+					Source:    validationSourceRules,
+					Rule:      "requireEach",
+					Message:   fmt.Sprintf("Field %q must be present for every matching entry.", requirement.Field),
+					Condition: condition,
+					Actual:    missing,
 				})
 			}
 		}
@@ -99,6 +115,154 @@ func (r *sdkRuntime) validateSemanticRules(sdkMethod string, body any) []dryRunV
 				})
 			}
 		}
+		for _, maximum := range rule.Maximum {
+			values, ok := fieldValues(bodyMap, maximum.Field)
+			if !ok {
+				continue
+			}
+			for _, value := range values {
+				text, ok := value.(string)
+				if !ok || len(text) <= maximum.Value {
+					continue
+				}
+				errs = append(errs, dryRunValidationError{
+					Path:      maximum.Field,
+					Type:      "maximum",
+					Source:    validationSourceRules,
+					Rule:      "maximum",
+					Message:   fmt.Sprintf("Field %q must not exceed %d characters when %s.", maximum.Field, maximum.Value, condition),
+					Condition: condition,
+					Expected:  maximum.Value,
+					Actual:    len(text),
+				})
+				break
+			}
+		}
+		for _, patternRule := range rule.Pattern {
+			values, ok := fieldValues(bodyMap, patternRule.Field)
+			if !ok {
+				continue
+			}
+			re, err := regexp.Compile(patternRule.Value)
+			if err != nil {
+				errs = append(errs, dryRunValidationError{
+					Path:      patternRule.Field,
+					Type:      "pattern_invalid",
+					Source:    validationSourceRules,
+					Rule:      "pattern",
+					Message:   fmt.Sprintf("Rule pattern %q could not be compiled.", patternRule.Value),
+					Condition: condition,
+					Expected:  patternRule.Value,
+				})
+				continue
+			}
+			for _, value := range values {
+				text, ok := value.(string)
+				if ok && re.MatchString(text) {
+					continue
+				}
+				errs = append(errs, dryRunValidationError{
+					Path:      patternRule.Field,
+					Type:      "pattern",
+					Source:    validationSourceRules,
+					Rule:      "pattern",
+					Message:   fmt.Sprintf("Field %q must match %q when %s.", patternRule.Field, patternRule.Value, condition),
+					Condition: condition,
+					Expected:  patternRule.Value,
+					Actual:    value,
+				})
+				break
+			}
+		}
+		for _, futureRule := range rule.Future {
+			values, ok := fieldValues(bodyMap, futureRule.Field)
+			if !ok {
+				continue
+			}
+			now := time.Now().UTC()
+			for _, value := range values {
+				text, ok := value.(string)
+				if !ok {
+					errs = append(errs, dryRunValidationError{
+						Path:      futureRule.Field,
+						Type:      "future",
+						Source:    validationSourceRules,
+						Rule:      "future",
+						Message:   fmt.Sprintf("Field %q must be a future timestamp when %s.", futureRule.Field, condition),
+						Condition: condition,
+						Actual:    value,
+					})
+					break
+				}
+				parsed, err := time.Parse(time.RFC3339, text)
+				if err != nil || !parsed.After(now) {
+					errs = append(errs, dryRunValidationError{
+						Path:      futureRule.Field,
+						Type:      "future",
+						Source:    validationSourceRules,
+						Rule:      "future",
+						Message:   fmt.Sprintf("Field %q must be a future timestamp when %s.", futureRule.Field, condition),
+						Condition: condition,
+						Actual:    value,
+					})
+					break
+				}
+			}
+		}
+		for _, containsRule := range rule.Contains {
+			values, ok := fieldValues(bodyMap, containsRule.Field)
+			if !ok {
+				errs = append(errs, dryRunValidationError{
+					Path:      containsRule.Field,
+					Type:      "contains",
+					Source:    validationSourceRules,
+					Rule:      "contains",
+					Message:   fmt.Sprintf("Field %q must contain %v when %s.", containsRule.Field, containsRule.Value, condition),
+					Condition: condition,
+					Expected:  containsRule.Value,
+				})
+				continue
+			}
+			found := false
+			for _, value := range values {
+				if valuesEqual(value, containsRule.Value) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				errs = append(errs, dryRunValidationError{
+					Path:      containsRule.Field,
+					Type:      "contains",
+					Source:    validationSourceRules,
+					Rule:      "contains",
+					Message:   fmt.Sprintf("Field %q must contain %v when %s.", containsRule.Field, containsRule.Value, condition),
+					Condition: condition,
+					Expected:  containsRule.Value,
+					Actual:    values,
+				})
+			}
+		}
+		for _, custom := range rule.Custom {
+			values, ok := fieldValues(bodyMap, custom.Field)
+			if !ok {
+				continue
+			}
+			for _, value := range values {
+				if err := validateCustomRule(custom.Validator, value); err != nil {
+					errs = append(errs, dryRunValidationError{
+						Path:      custom.Field,
+						Type:      "custom",
+						Source:    validationSourceRules,
+						Rule:      custom.Validator,
+						Message:   err.Error(),
+						Condition: condition,
+						Actual:    value,
+					})
+					break
+				}
+			}
+		}
 	}
 	return errs
 }
@@ -130,8 +294,23 @@ func matchesCondition(body map[string]any, condition *contracts.RuleCondition) b
 }
 
 func fieldPresence(body map[string]any, fieldPath string) (bool, int) {
-	value, ok := fieldValue(body, fieldPath)
-	if !ok || value == nil {
+	values, ok := fieldValues(body, fieldPath)
+	if !ok || len(values) == 0 {
+		return false, 0
+	}
+	if strings.Contains(fieldPath, "[]") {
+		for _, value := range values {
+			if present, _ := singleValuePresence(value); !present {
+				return false, len(values)
+			}
+		}
+		return true, len(values)
+	}
+	return singleValuePresence(values[0])
+}
+
+func singleValuePresence(value any) (bool, int) {
+	if value == nil {
 		return false, 0
 	}
 	switch typed := value.(type) {
@@ -145,19 +324,75 @@ func fieldPresence(body map[string]any, fieldPath string) (bool, int) {
 }
 
 func fieldValue(body map[string]any, fieldPath string) (any, bool) {
-	var current any = body
-	for _, segment := range strings.Split(strings.TrimSpace(fieldPath), ".") {
-		obj, ok := current.(map[string]any)
-		if !ok {
+	values, ok := fieldValues(body, fieldPath)
+	if !ok || len(values) == 0 {
+		return nil, false
+	}
+	return values[0], true
+}
+
+func fieldValues(body map[string]any, fieldPath string) ([]any, bool) {
+	current := []any{body}
+	for _, rawSegment := range strings.Split(strings.TrimSpace(fieldPath), ".") {
+		if rawSegment == "" {
 			return nil, false
 		}
-		next, ok := obj[segment]
-		if !ok {
+		arrayItems := strings.HasSuffix(rawSegment, "[]")
+		segment := strings.TrimSuffix(rawSegment, "[]")
+		next := make([]any, 0)
+		for _, item := range current {
+			obj, ok := item.(map[string]any)
+			if !ok {
+				continue
+			}
+			value, ok := obj[segment]
+			if !ok || value == nil {
+				continue
+			}
+			if !arrayItems {
+				next = append(next, value)
+				continue
+			}
+			items, ok := value.([]any)
+			if !ok {
+				continue
+			}
+			next = append(next, items...)
+		}
+		if len(next) == 0 {
 			return nil, false
 		}
 		current = next
 	}
 	return current, true
+}
+
+func missingEachField(body map[string]any, fieldPath string) []string {
+	segments := strings.Split(strings.TrimSpace(fieldPath), ".")
+	if len(segments) < 2 {
+		if present, _ := fieldPresence(body, fieldPath); present {
+			return nil
+		}
+		return []string{fieldPath}
+	}
+	parentPath := strings.Join(segments[:len(segments)-1], ".")
+	childPath := segments[len(segments)-1]
+	items, ok := fieldValues(body, parentPath)
+	if !ok {
+		return []string{fieldPath}
+	}
+	var missing []string
+	for idx, item := range items {
+		obj, ok := item.(map[string]any)
+		if !ok {
+			missing = append(missing, fmt.Sprintf("%s[%d]", parentPath, idx))
+			continue
+		}
+		if present, _ := fieldPresence(obj, childPath); !present {
+			missing = append(missing, fmt.Sprintf("%s[%d].%s", parentPath, idx, childPath))
+		}
+	}
+	return missing
 }
 
 func missingFieldMessage(requirement contracts.FieldRule) string {
@@ -235,4 +470,100 @@ func trimFloat(value float64) string {
 		return fmt.Sprintf("%.0f", value)
 	}
 	return fmt.Sprintf("%g", value)
+}
+
+func validateCustomRule(name string, value any) error {
+	switch name {
+	case "disabled_string":
+		text, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("Field must be a string.")
+		}
+		if text != "Disabled" {
+			return fmt.Errorf("Field must be \"Disabled\" when this condition is met.")
+		}
+		return nil
+	case "ldap_filter":
+		text, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("Field must be a string LDAP filter.")
+		}
+		text = strings.TrimSpace(text)
+		if text == "" {
+			return nil
+		}
+		if !strings.HasPrefix(text, "(") || !strings.HasSuffix(text, ")") {
+			return fmt.Errorf("LDAP filter must start with '(' and end with ')'.")
+		}
+		if !strings.Contains(text, "=") {
+			return fmt.Errorf("LDAP filter must contain an attribute comparison.")
+		}
+		depth := 0
+		for _, r := range text {
+			switch r {
+			case '(':
+				depth++
+			case ')':
+				depth--
+				if depth < 0 {
+					return fmt.Errorf("LDAP filter must have balanced parentheses.")
+				}
+			}
+		}
+		if depth != 0 {
+			return fmt.Errorf("LDAP filter must have balanced parentheses.")
+		}
+		return nil
+	case "native_vlan_in_allowed_vlans":
+		settings, ok := value.(map[string]any)
+		if !ok {
+			return fmt.Errorf("Field must be an object.")
+		}
+		native, ok := asFloat64(settings["NativeVlan"])
+		if !ok {
+			return nil
+		}
+		allowed, ok := settings["AllowedVlans"].(string)
+		if !ok || strings.TrimSpace(allowed) == "" {
+			return nil
+		}
+		if vlanInRanges(int(native), allowed) {
+			return nil
+		}
+		return fmt.Errorf("NativeVlan must be included in AllowedVlans.")
+	default:
+		return fmt.Errorf("Unsupported semantic validator %q.", name)
+	}
+}
+
+func vlanInRanges(vlan int, allowed string) bool {
+	for _, part := range strings.Split(allowed, ",") {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if strings.Contains(part, "-") {
+			bounds := strings.SplitN(part, "-", 2)
+			if len(bounds) != 2 {
+				continue
+			}
+			start, err := strconv.Atoi(strings.TrimSpace(bounds[0]))
+			if err != nil {
+				continue
+			}
+			end, err := strconv.Atoi(strings.TrimSpace(bounds[1]))
+			if err != nil {
+				continue
+			}
+			if start <= vlan && vlan <= end {
+				return true
+			}
+			continue
+		}
+		value, err := strconv.Atoi(part)
+		if err == nil && value == vlan {
+			return true
+		}
+	}
+	return false
 }

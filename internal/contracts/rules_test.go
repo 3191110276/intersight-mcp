@@ -6,6 +6,38 @@ import (
 	"testing"
 )
 
+func TestSchemaAtFieldPathSupportsArraySegments(t *testing.T) {
+	t.Parallel()
+
+	spec := NormalizedSpec{
+		Schemas: map[string]NormalizedSchema{
+			"example.Child": {
+				Type: "object",
+				Properties: map[string]*NormalizedSchema{
+					"Leaf": {Type: "string"},
+				},
+			},
+		},
+	}
+	root := &NormalizedSchema{
+		Type: "object",
+		Properties: map[string]*NormalizedSchema{
+			"Items": {
+				Type:  "array",
+				Items: &NormalizedSchema{Circular: "example.Child"},
+			},
+		},
+	}
+
+	schema, ok := schemaAtFieldPath(spec, root, "Items[].Leaf")
+	if !ok {
+		t.Fatalf("schemaAtFieldPath returned !ok")
+	}
+	if schema.Type != "string" {
+		t.Fatalf("schema.Type = %q, want string", schema.Type)
+	}
+}
+
 func testIntersightRuleTemplates() []RuleTemplate {
 	return []RuleTemplate{
 		{
@@ -217,6 +249,67 @@ func testIntersightRuleTemplates() []RuleTemplate {
 			Resource:  "vnic.IscsiAdapterPolicy",
 			Rules: []SemanticRule{
 				NewMinimumRule(MinimumRule{Field: "DhcpTimeout", Value: 60}),
+			},
+		},
+		{
+			SDKMethod: "vnic.fcAdapterPolicies.create",
+			Resource:  "vnic.FcAdapterPolicy",
+			Rules: []SemanticRule{
+				NewMinimumRule(MinimumRule{Field: "ErrorDetectionTimeout", Value: 1000}),
+			},
+		},
+		{
+			SDKMethod: "vnic.fcQosPolicies.create",
+			Resource:  "vnic.FcQosPolicy",
+			Rules: []SemanticRule{
+				NewMinimumRule(MinimumRule{Field: "MaxDataFieldSize", Value: 256}),
+			},
+		},
+		{
+			SDKMethod: "workflow.ansibleBatchExecutors.create",
+			Resource:  "workflow.AnsibleBatchExecutor",
+			Rules: []SemanticRule{
+				NewRequiredRule("Batch", "", 1),
+			},
+		},
+		{
+			SDKMethod: "workflow.powerShellBatchApiExecutors.create",
+			Resource:  "workflow.PowerShellBatchApiExecutor",
+			Rules: []SemanticRule{
+				NewRequiredRule("Batch", "", 1),
+			},
+		},
+		{
+			SDKMethod: "workflow.sshBatchExecutors.create",
+			Resource:  "workflow.SshBatchExecutor",
+			Rules: []SemanticRule{
+				NewRequiredRule("Batch", "", 1),
+			},
+		},
+		{
+			SDKMethod: "workflow.workflowInfos.create",
+			Resource:  "workflow.WorkflowInfo",
+			Rules: []SemanticRule{
+				NewMinimumRule(MinimumRule{Field: "FailedWorkflowCleanupDuration", Value: 1}),
+				NewMinimumRule(MinimumRule{Field: "SuccessWorkflowCleanupDuration", Value: 1}),
+				NewConditionalForbidRule("Action", "None", "Action"),
+			},
+		},
+		{
+			SDKMethod: "workload.blueprints.create",
+			Resource:  "workload.Blueprint",
+			Rules: []SemanticRule{
+				NewRequiredRule("Label", ""),
+				NewRequiredRule("ServiceItems", "", 1),
+				NewPatternRule(PatternRule{Field: "Name", Value: "^[a-zA-Z0-9][a-zA-Z0-9_]{0,31}$"}),
+			},
+		},
+		{
+			SDKMethod: "workload.workloadDefinitions.create",
+			Resource:  "workload.WorkloadDefinition",
+			Rules: []SemanticRule{
+				NewRequiredRule("Blueprints", "", 1),
+				NewPatternRule(PatternRule{Field: "Name", Value: "^[a-zA-Z0-9][a-zA-Z0-9- _]{0,31}$"}),
 			},
 		},
 		{
@@ -603,36 +696,144 @@ func TestBuildRuleCatalogIncludesPolicyCreateRulesFromProbeFindings(t *testing.T
 			SHA256:           "abc123",
 			RetrievalDate:    "2026-04-08",
 		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/workflow/AnsibleBatchExecutors": {
+				"post": {
+					OperationID: "CreateWorkflowAnsibleBatchExecutor",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Batch": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/workflow/PowerShellBatchApiExecutors": {
+				"post": {
+					OperationID: "CreateWorkflowPowerShellBatchApiExecutor",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Batch": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/workflow/SshBatchExecutors": {
+				"post": {
+					OperationID: "CreateWorkflowSshBatchExecutor",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Batch": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/workload/Blueprints": {
+				"post": {
+					OperationID: "CreateWorkloadBlueprint",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Label":        {Type: "string"},
+										"Name":         {Type: "string"},
+										"ServiceItems": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/workload/WorkloadDefinitions": {
+				"post": {
+					OperationID: "CreateWorkloadWorkloadDefinition",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Blueprints": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
+										"Name":       {Type: "string"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"workflow.AnsibleBatchExecutor":       {Type: "object"},
+			"workflow.PowerShellBatchApiExecutor": {Type: "object"},
+			"workflow.SshBatchExecutor":           {Type: "object"},
+			"workflow.WorkflowInfo":               {Type: "object"},
+			"workload.Blueprint":                  {Type: "object"},
+			"workload.WorkloadDefinition":         {Type: "object"},
+			"vnic.FcAdapterPolicy":                {Type: "object"},
+			"vnic.FcQosPolicy":                    {Type: "object"},
+		},
 	}
 
 	catalog := SDKCatalog{
 		Metadata: spec.Metadata,
 		Methods: map[string]SDKMethod{
-			"aaa.retentionPolicy.create":             {SDKMethod: "aaa.retentionPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateAaaRetentionPolicy", Method: "POST"}},
-			"access.policy.create":                   {SDKMethod: "access.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateAccessPolicy", Method: "POST"}},
-			"appliance.dataExportPolicy.create":      {SDKMethod: "appliance.dataExportPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateApplianceDataExportPolicy", Method: "POST"}},
-			"cond.alarmSuppression.create":           {SDKMethod: "cond.alarmSuppression.create", Descriptor: OperationDescriptor{OperationID: "CreateCondAlarmSuppression", Method: "POST"}},
-			"hyperflex.extFcStoragePolicy.create":    {SDKMethod: "hyperflex.extFcStoragePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexExtFcStoragePolicy", Method: "POST"}},
-			"hyperflex.extIscsiStoragePolicy.create": {SDKMethod: "hyperflex.extIscsiStoragePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexExtIscsiStoragePolicy", Method: "POST"}},
-			"hyperflex.localCredentialPolicy.create": {SDKMethod: "hyperflex.localCredentialPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexLocalCredentialPolicy", Method: "POST"}},
-			"hyperflex.nodeConfigPolicy.create":      {SDKMethod: "hyperflex.nodeConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexNodeConfigPolicy", Method: "POST"}},
-			"hyperflex.proxySettingPolicy.create":    {SDKMethod: "hyperflex.proxySettingPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexProxySettingPolicy", Method: "POST"}},
-			"hyperflex.softwareVersionPolicy.create": {SDKMethod: "hyperflex.softwareVersionPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexSoftwareVersionPolicy", Method: "POST"}},
-			"hyperflex.sysConfigPolicy.create":       {SDKMethod: "hyperflex.sysConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexSysConfigPolicy", Method: "POST"}},
-			"hyperflex.vcenterConfigPolicy.create":   {SDKMethod: "hyperflex.vcenterConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexVcenterConfigPolicy", Method: "POST"}},
-			"iam.ldapPolicy.create":                  {SDKMethod: "iam.ldapPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateIamLdapPolicy", Method: "POST"}},
-			"ntp.policy.create":                      {SDKMethod: "ntp.policy.create", Resource: "ntp.Policy", Descriptor: OperationDescriptor{OperationID: "CreateNtpPolicy", Method: "POST", PathTemplate: "/api/v1/ntp/Policies"}},
-			"organization.organization.create":       {SDKMethod: "organization.organization.create", Resource: "organization.Organization", Descriptor: OperationDescriptor{OperationID: "CreateOrganizationOrganization", Method: "POST", PathTemplate: "/api/v1/organization/Organizations"}},
-			"fabric.portPolicy.create":               {SDKMethod: "fabric.portPolicy.create", Resource: "fabric.PortPolicy", Descriptor: OperationDescriptor{OperationID: "CreateFabricPortPolicy", Method: "POST", PathTemplate: "/api/v1/fabric/PortPolicies"}},
-			"recovery.scheduleConfigPolicy.create":   {SDKMethod: "recovery.scheduleConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateRecoveryScheduleConfigPolicy", Method: "POST"}},
-			"scheduler.schedulePolicy.create":        {SDKMethod: "scheduler.schedulePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateSchedulerSchedulePolicy", Method: "POST"}},
-			"server.profile.create":                  {SDKMethod: "server.profile.create", Resource: "server.Profile", Descriptor: OperationDescriptor{OperationID: "CreateServerProfile", Method: "POST", PathTemplate: "/api/v1/server/Profiles"}},
-			"smtp.policy.create":                     {SDKMethod: "smtp.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateSmtpPolicy", Method: "POST"}},
-			"smtp.policyTest.create":                 {SDKMethod: "smtp.policyTest.create", Descriptor: OperationDescriptor{OperationID: "CreateSmtpPolicyTest", Method: "POST"}},
-			"storage.driveSecurityPolicy.create":     {SDKMethod: "storage.driveSecurityPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateStorageDriveSecurityPolicy", Method: "POST"}},
-			"syslog.policy.create":                   {SDKMethod: "syslog.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateSyslogPolicy", Method: "POST"}},
-			"vnic.iscsiAdapterPolicy.create":         {SDKMethod: "vnic.iscsiAdapterPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateVnicIscsiAdapterPolicy", Method: "POST"}},
-			"vnic.iscsiStaticTargetPolicy.create":    {SDKMethod: "vnic.iscsiStaticTargetPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateVnicIscsiStaticTargetPolicy", Method: "POST"}},
+			"aaa.retentionPolicy.create":                  {SDKMethod: "aaa.retentionPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateAaaRetentionPolicy", Method: "POST"}},
+			"access.policy.create":                        {SDKMethod: "access.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateAccessPolicy", Method: "POST"}},
+			"appliance.dataExportPolicy.create":           {SDKMethod: "appliance.dataExportPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateApplianceDataExportPolicy", Method: "POST"}},
+			"cond.alarmSuppression.create":                {SDKMethod: "cond.alarmSuppression.create", Descriptor: OperationDescriptor{OperationID: "CreateCondAlarmSuppression", Method: "POST"}},
+			"hyperflex.extFcStoragePolicy.create":         {SDKMethod: "hyperflex.extFcStoragePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexExtFcStoragePolicy", Method: "POST"}},
+			"hyperflex.extIscsiStoragePolicy.create":      {SDKMethod: "hyperflex.extIscsiStoragePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexExtIscsiStoragePolicy", Method: "POST"}},
+			"hyperflex.localCredentialPolicy.create":      {SDKMethod: "hyperflex.localCredentialPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexLocalCredentialPolicy", Method: "POST"}},
+			"hyperflex.nodeConfigPolicy.create":           {SDKMethod: "hyperflex.nodeConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexNodeConfigPolicy", Method: "POST"}},
+			"hyperflex.proxySettingPolicy.create":         {SDKMethod: "hyperflex.proxySettingPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexProxySettingPolicy", Method: "POST"}},
+			"hyperflex.softwareVersionPolicy.create":      {SDKMethod: "hyperflex.softwareVersionPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexSoftwareVersionPolicy", Method: "POST"}},
+			"hyperflex.sysConfigPolicy.create":            {SDKMethod: "hyperflex.sysConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexSysConfigPolicy", Method: "POST"}},
+			"hyperflex.vcenterConfigPolicy.create":        {SDKMethod: "hyperflex.vcenterConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexVcenterConfigPolicy", Method: "POST"}},
+			"iam.ldapPolicy.create":                       {SDKMethod: "iam.ldapPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateIamLdapPolicy", Method: "POST"}},
+			"ntp.policy.create":                           {SDKMethod: "ntp.policy.create", Resource: "ntp.Policy", Descriptor: OperationDescriptor{OperationID: "CreateNtpPolicy", Method: "POST", PathTemplate: "/api/v1/ntp/Policies"}},
+			"organization.organization.create":            {SDKMethod: "organization.organization.create", Resource: "organization.Organization", Descriptor: OperationDescriptor{OperationID: "CreateOrganizationOrganization", Method: "POST", PathTemplate: "/api/v1/organization/Organizations"}},
+			"fabric.portPolicy.create":                    {SDKMethod: "fabric.portPolicy.create", Resource: "fabric.PortPolicy", Descriptor: OperationDescriptor{OperationID: "CreateFabricPortPolicy", Method: "POST", PathTemplate: "/api/v1/fabric/PortPolicies"}},
+			"recovery.scheduleConfigPolicy.create":        {SDKMethod: "recovery.scheduleConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateRecoveryScheduleConfigPolicy", Method: "POST"}},
+			"scheduler.schedulePolicy.create":             {SDKMethod: "scheduler.schedulePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateSchedulerSchedulePolicy", Method: "POST"}},
+			"server.profile.create":                       {SDKMethod: "server.profile.create", Resource: "server.Profile", Descriptor: OperationDescriptor{OperationID: "CreateServerProfile", Method: "POST", PathTemplate: "/api/v1/server/Profiles"}},
+			"smtp.policy.create":                          {SDKMethod: "smtp.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateSmtpPolicy", Method: "POST"}},
+			"smtp.policyTest.create":                      {SDKMethod: "smtp.policyTest.create", Descriptor: OperationDescriptor{OperationID: "CreateSmtpPolicyTest", Method: "POST"}},
+			"storage.driveSecurityPolicy.create":          {SDKMethod: "storage.driveSecurityPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateStorageDriveSecurityPolicy", Method: "POST"}},
+			"syslog.policy.create":                        {SDKMethod: "syslog.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateSyslogPolicy", Method: "POST"}},
+			"vnic.fcAdapterPolicies.create":               {SDKMethod: "vnic.fcAdapterPolicies.create", Resource: "vnic.FcAdapterPolicy", Descriptor: OperationDescriptor{OperationID: "CreateVnicFcAdapterPolicy", Method: "POST", PathTemplate: "/api/v1/vnic/FcAdapterPolicies"}},
+			"vnic.fcQosPolicies.create":                   {SDKMethod: "vnic.fcQosPolicies.create", Resource: "vnic.FcQosPolicy", Descriptor: OperationDescriptor{OperationID: "CreateVnicFcQosPolicy", Method: "POST", PathTemplate: "/api/v1/vnic/FcQosPolicies"}},
+			"vnic.iscsiAdapterPolicy.create":              {SDKMethod: "vnic.iscsiAdapterPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateVnicIscsiAdapterPolicy", Method: "POST"}},
+			"vnic.iscsiStaticTargetPolicy.create":         {SDKMethod: "vnic.iscsiStaticTargetPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateVnicIscsiStaticTargetPolicy", Method: "POST"}},
+			"workflow.ansibleBatchExecutors.create":       {SDKMethod: "workflow.ansibleBatchExecutors.create", Resource: "workflow.AnsibleBatchExecutor", Descriptor: OperationDescriptor{OperationID: "CreateWorkflowAnsibleBatchExecutor", Method: "POST", PathTemplate: "/api/v1/workflow/AnsibleBatchExecutors"}},
+			"workflow.powerShellBatchApiExecutors.create": {SDKMethod: "workflow.powerShellBatchApiExecutors.create", Resource: "workflow.PowerShellBatchApiExecutor", Descriptor: OperationDescriptor{OperationID: "CreateWorkflowPowerShellBatchApiExecutor", Method: "POST", PathTemplate: "/api/v1/workflow/PowerShellBatchApiExecutors"}},
+			"workflow.sshBatchExecutors.create":           {SDKMethod: "workflow.sshBatchExecutors.create", Resource: "workflow.SshBatchExecutor", Descriptor: OperationDescriptor{OperationID: "CreateWorkflowSshBatchExecutor", Method: "POST", PathTemplate: "/api/v1/workflow/SshBatchExecutors"}},
+			"workflow.workflowInfos.create":               {SDKMethod: "workflow.workflowInfos.create", Resource: "workflow.WorkflowInfo", Descriptor: OperationDescriptor{OperationID: "CreateWorkflowWorkflowInfo", Method: "POST", PathTemplate: "/api/v1/workflow/WorkflowInfos"}},
+			"workload.blueprints.create":                  {SDKMethod: "workload.blueprints.create", Resource: "workload.Blueprint", Descriptor: OperationDescriptor{OperationID: "CreateWorkloadBlueprint", Method: "POST", PathTemplate: "/api/v1/workload/Blueprints"}},
+			"workload.workloadDefinitions.create":         {SDKMethod: "workload.workloadDefinitions.create", Resource: "workload.WorkloadDefinition", Descriptor: OperationDescriptor{OperationID: "CreateWorkloadWorkloadDefinition", Method: "POST", PathTemplate: "/api/v1/workload/WorkloadDefinitions"}},
 		},
 	}
 
@@ -708,6 +909,72 @@ func TestBuildRuleCatalogIncludesPolicyCreateRulesFromProbeFindings(t *testing.T
 	}
 	if iscsiAdapter.Rules[0].Minimum[0].Field != "DhcpTimeout" || iscsiAdapter.Rules[0].Minimum[0].Value != 60 {
 		t.Fatalf("unexpected iSCSI adapter minimum: %#v", iscsiAdapter.Rules[0])
+	}
+
+	fcAdapter := rules.Methods["vnic.fcAdapterPolicies.create"]
+	if len(fcAdapter.Rules) != 1 || len(fcAdapter.Rules[0].Minimum) != 1 {
+		t.Fatalf("unexpected fc adapter rules: %#v", fcAdapter.Rules)
+	}
+	if fcAdapter.Rules[0].Minimum[0].Field != "ErrorDetectionTimeout" || fcAdapter.Rules[0].Minimum[0].Value != 1000 {
+		t.Fatalf("unexpected fc adapter minimum: %#v", fcAdapter.Rules[0])
+	}
+
+	fcQos := rules.Methods["vnic.fcQosPolicies.create"]
+	if len(fcQos.Rules) != 1 || len(fcQos.Rules[0].Minimum) != 1 {
+		t.Fatalf("unexpected fc qos rules: %#v", fcQos.Rules)
+	}
+	if fcQos.Rules[0].Minimum[0].Field != "MaxDataFieldSize" || fcQos.Rules[0].Minimum[0].Value != 256 {
+		t.Fatalf("unexpected fc qos minimum: %#v", fcQos.Rules[0])
+	}
+
+	for _, sdkMethod := range []string{
+		"workflow.ansibleBatchExecutors.create",
+		"workflow.powerShellBatchApiExecutors.create",
+		"workflow.sshBatchExecutors.create",
+	} {
+		got := rules.Methods[sdkMethod].Rules
+		if len(got) != 1 || len(got[0].Require) != 1 || got[0].Require[0].Field != "Batch" || got[0].Require[0].MinCount != 1 {
+			t.Fatalf("unexpected batch executor rules for %s: %#v", sdkMethod, got)
+		}
+	}
+
+	workflowInfo := rules.Methods["workflow.workflowInfos.create"]
+	if len(workflowInfo.Rules) != 3 {
+		t.Fatalf("unexpected workflow info rules: %#v", workflowInfo.Rules)
+	}
+	if workflowInfo.Rules[0].Minimum[0].Field != "FailedWorkflowCleanupDuration" || workflowInfo.Rules[0].Minimum[0].Value != 1 {
+		t.Fatalf("unexpected workflow info failed cleanup minimum: %#v", workflowInfo.Rules[0])
+	}
+	if workflowInfo.Rules[1].Minimum[0].Field != "SuccessWorkflowCleanupDuration" || workflowInfo.Rules[1].Minimum[0].Value != 1 {
+		t.Fatalf("unexpected workflow info success cleanup minimum: %#v", workflowInfo.Rules[1])
+	}
+	if workflowInfo.Rules[2].When == nil || workflowInfo.Rules[2].When.Field != "Action" || workflowInfo.Rules[2].When.Equals != "None" || !reflect.DeepEqual(workflowInfo.Rules[2].Forbid, []string{"Action"}) {
+		t.Fatalf("unexpected workflow info action rule: %#v", workflowInfo.Rules[2])
+	}
+
+	blueprint := rules.Methods["workload.blueprints.create"]
+	if len(blueprint.Rules) != 3 {
+		t.Fatalf("unexpected blueprint rules: %#v", blueprint.Rules)
+	}
+	if blueprint.Rules[0].Kind != "required" || blueprint.Rules[0].Require[0].Field != "Label" {
+		t.Fatalf("unexpected blueprint label rule: %#v", blueprint.Rules[0])
+	}
+	if blueprint.Rules[1].Kind != "required" || blueprint.Rules[1].Require[0].Field != "ServiceItems" || blueprint.Rules[1].Require[0].MinCount != 1 {
+		t.Fatalf("unexpected blueprint service item rule: %#v", blueprint.Rules[1])
+	}
+	if blueprint.Rules[2].Kind != "pattern" || blueprint.Rules[2].Pattern[0].Field != "Name" || blueprint.Rules[2].Pattern[0].Value != "^[a-zA-Z0-9][a-zA-Z0-9_]{0,31}$" {
+		t.Fatalf("unexpected blueprint name rule: %#v", blueprint.Rules[2])
+	}
+
+	workloadDefinition := rules.Methods["workload.workloadDefinitions.create"]
+	if len(workloadDefinition.Rules) != 2 {
+		t.Fatalf("unexpected workload definition rules: %#v", workloadDefinition.Rules)
+	}
+	if workloadDefinition.Rules[0].Kind != "required" || workloadDefinition.Rules[0].Require[0].Field != "Blueprints" || workloadDefinition.Rules[0].Require[0].MinCount != 1 {
+		t.Fatalf("unexpected workload definition blueprint rule: %#v", workloadDefinition.Rules[0])
+	}
+	if workloadDefinition.Rules[1].Kind != "pattern" || workloadDefinition.Rules[1].Pattern[0].Field != "Name" {
+		t.Fatalf("unexpected workload definition name rule: %#v", workloadDefinition.Rules[1])
 	}
 
 	localCreds := rules.Methods["hyperflex.localCredentialPolicy.create"]
@@ -786,6 +1053,31 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 			SHA256:           "abc123",
 			RetrievalDate:    "2026-04-08",
 		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/fcpool/Reservations": {
+				"post": {
+					OperationID: "CreateFcpoolReservation",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Properties: map[string]*NormalizedSchema{
+										"AllocationType": {Type: "string"},
+										"Pool":           {Relationship: true, RelationshipTarget: "fcpool.Pool"},
+										"Organization":   {Relationship: true, RelationshipTarget: "organization.Organization"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"fcpool.Pool":               {Type: "object"},
+			"fcpool.Reservation":        {Type: "object"},
+			"organization.Organization": {Type: "object"},
+		},
 	}
 
 	catalog := SDKCatalog{
@@ -859,14 +1151,18 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 	} {
 		resource := catalog.Methods[sdkMethod].Resource
 		poolTarget := strings.TrimSuffix(resource, ".Reservation") + ".Pool"
+		rules := []SemanticRule{
+			NewOneOfRule("AllocationType", "Pool"),
+			NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: poolTarget}),
+			NewConditionalForbidRule("AllocationType", "static", "Pool"),
+		}
+		if sdkMethod == "fcpool.reservation.create" {
+			rules = append([]SemanticRule{NewRequiredRule("Organization", "organization.Organization")}, rules...)
+		}
 		templates = append(templates, RuleTemplate{
 			SDKMethod: sdkMethod,
 			Resource:  resource,
-			Rules: []SemanticRule{
-				NewOneOfRule("AllocationType", "Pool"),
-				NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: poolTarget}),
-				NewConditionalForbidRule("AllocationType", "static", "Pool"),
-			},
+			Rules:     rules,
 		})
 	}
 
@@ -883,17 +1179,26 @@ func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
 		"fcpool.reservation.create",
 	} {
 		got := rules.Methods[sdkMethod].Rules
-		if len(got) != 3 {
+		offset := 0
+		if sdkMethod == "fcpool.reservation.create" {
+			if len(got) != 4 {
+				t.Fatalf("%s rules = %#v, want four rules", sdkMethod, got)
+			}
+			if got[0].Kind != "required" || len(got[0].Require) != 1 || got[0].Require[0].Field != "Organization" || got[0].Require[0].Target != "organization.Organization" {
+				t.Fatalf("unexpected reservation organization rule for %s: %#v", sdkMethod, got[0])
+			}
+			offset = 1
+		} else if len(got) != 3 {
 			t.Fatalf("%s rules = %#v, want three rules", sdkMethod, got)
 		}
-		if got[0].Kind != "one_of" || len(got[0].RequireAny) != 2 || got[0].RequireAny[0].Field != "AllocationType" || got[0].RequireAny[1].Field != "Pool" {
-			t.Fatalf("unexpected reservation one-of rule for %s: %#v", sdkMethod, got[0])
+		if got[offset].Kind != "one_of" || len(got[offset].RequireAny) != 2 || got[offset].RequireAny[0].Field != "AllocationType" || got[offset].RequireAny[1].Field != "Pool" {
+			t.Fatalf("unexpected reservation one-of rule for %s: %#v", sdkMethod, got[offset])
 		}
-		if got[1].When == nil || got[1].When.Field != "AllocationType" || got[1].When.Equals != "dynamic" || len(got[1].Require) != 1 || got[1].Require[0].Field != "Pool" {
-			t.Fatalf("unexpected reservation dynamic rule for %s: %#v", sdkMethod, got[1])
+		if got[offset+1].When == nil || got[offset+1].When.Field != "AllocationType" || got[offset+1].When.Equals != "dynamic" || len(got[offset+1].Require) != 1 || got[offset+1].Require[0].Field != "Pool" {
+			t.Fatalf("unexpected reservation dynamic rule for %s: %#v", sdkMethod, got[offset+1])
 		}
-		if got[2].When == nil || got[2].When.Field != "AllocationType" || got[2].When.Equals != "static" || !reflect.DeepEqual(got[2].Forbid, []string{"Pool"}) {
-			t.Fatalf("unexpected reservation static forbid rule for %s: %#v", sdkMethod, got[2])
+		if got[offset+2].When == nil || got[offset+2].When.Field != "AllocationType" || got[offset+2].When.Equals != "static" || !reflect.DeepEqual(got[offset+2].Forbid, []string{"Pool"}) {
+			t.Fatalf("unexpected reservation static forbid rule for %s: %#v", sdkMethod, got[offset+2])
 		}
 	}
 }
