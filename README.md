@@ -2,7 +2,7 @@
 
 This is a local-only MCP server for Cisco Intersight which exposes the entire API.
 
-Developer workflow is documented in [DEVELOPMENT.md](/Users/mimaurer/Documents/GitHub/intersight-mcp/DEVELOPMENT.md).
+Developer workflow is documented in [DEVELOPMENT.md](./intersight-mcp/DEVELOPMENT.md).
 
 ## Setup
 
