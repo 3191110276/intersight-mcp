@@ -10,10 +10,12 @@ import (
 	"log/slog"
 	"regexp"
 	"runtime/debug"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/mimaurer/intersight-mcp/implementations"
 	"github.com/mimaurer/intersight-mcp/internal/config"
 )
 
@@ -29,6 +31,16 @@ type Logger struct {
 	slog              *slog.Logger
 	debug             bool
 	includeUnsafeCode bool
+	redactors         []codeRedactor
+}
+
+type LoggerOptions struct {
+	Redactions []implementations.LogRedaction
+}
+
+type codeRedactor struct {
+	pattern *regexp.Regexp
+	replace string
 }
 
 type ExecutionRecord struct {
@@ -53,7 +65,7 @@ type APICallRecord struct {
 	DurationMS   int64  `json:"durationMs"`
 }
 
-func NewLogger(w io.Writer, level config.LogLevel, includeUnsafeCode bool) *Logger {
+func NewLogger(w io.Writer, level config.LogLevel, includeUnsafeCode bool, options LoggerOptions) *Logger {
 	slogLevel := slog.LevelInfo
 	if level == config.LogLevelDebug {
 		slogLevel = slog.LevelDebug
@@ -64,6 +76,7 @@ func NewLogger(w io.Writer, level config.LogLevel, includeUnsafeCode bool) *Logg
 		})),
 		debug:             level == config.LogLevelDebug,
 		includeUnsafeCode: includeUnsafeCode,
+		redactors:         buildCodeRedactors(options.Redactions),
 	}
 }
 
@@ -147,7 +160,7 @@ func (l *Logger) LogExecution(ctx context.Context, record ExecutionRecord) {
 	}
 	if l.debug {
 		if l.includeUnsafeCode {
-			sanitizedCode := redactCodeForLogging(record.Code)
+			sanitizedCode := redactCodeForLogging(record.Code, l.redactors)
 			attrs = append(attrs,
 				"code", sanitizedCode,
 				"code_redacted", sanitizedCode != record.Code,
@@ -208,16 +221,13 @@ func hashCode(code string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-var codeRedactors = []struct {
-	pattern *regexp.Regexp
-	replace string
-}{
+var defaultCodeRedactors = []codeRedactor{
 	{
 		pattern: regexp.MustCompile(`(?i)\bBearer\s+[A-Za-z0-9\-._~+/]+=*`),
 		replace: "Bearer <BEARER_TOKEN>",
 	},
 	{
-		pattern: regexp.MustCompile(`(?i)(["']?(?:client_secret|clientSecret|INTERSIGHT_CLIENT_SECRET)["']?\s*[:=]\s*["'])([^"']*)(["'])`),
+		pattern: regexp.MustCompile(`(?i)(["']?(?:client_secret|clientSecret|[A-Z0-9_]*CLIENT_SECRET)["']?\s*[:=]\s*["'])([^"']*)(["'])`),
 		replace: `${1}<CLIENT_SECRET>${3}`,
 	},
 	{
@@ -229,18 +239,66 @@ var codeRedactors = []struct {
 		replace: `${1}<REDACTED_SECRET>${3}`,
 	},
 	{
-		pattern: regexp.MustCompile(`(?m)\b(INTERSIGHT_CLIENT_SECRET=)(\S+)`),
+		pattern: regexp.MustCompile(`(?m)\b([A-Z0-9_]*CLIENT_SECRET=)(\S+)`),
 		replace: `${1}<CLIENT_SECRET>`,
 	},
 	{
-		pattern: regexp.MustCompile(`(?m)\b(INTERSIGHT_CLIENT_ID=)(\S+)`),
+		pattern: regexp.MustCompile(`(?m)\b([A-Z0-9_]*CLIENT_ID=)(\S+)`),
 		replace: `${1}<CLIENT_ID>`,
 	},
 }
 
-func redactCodeForLogging(code string) string {
+func buildCodeRedactors(extra []implementations.LogRedaction) []codeRedactor {
+	redactors := append([]codeRedactor(nil), defaultCodeRedactors...)
+	if len(extra) == 0 {
+		return redactors
+	}
+
+	seen := map[string]struct{}{}
+	for _, redaction := range extra {
+		name := strings.TrimSpace(redaction.EnvVarName)
+		if name == "" {
+			continue
+		}
+		key := strings.ToUpper(name) + "\x00" + redaction.Placeholder
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+
+		placeholder := strings.TrimSpace(redaction.Placeholder)
+		if placeholder == "" {
+			placeholder = "<REDACTED>"
+		}
+		quotedName := regexp.QuoteMeta(name)
+		redactors = append(redactors,
+			codeRedactor{
+				pattern: regexp.MustCompile(`(?m)\b(` + quotedName + `=)(\S+)`),
+				replace: `${1}` + placeholder,
+			},
+			codeRedactor{
+				pattern: regexp.MustCompile(`(?i)(["']?` + quotedName + `["']?\s*[:=]\s*["'])([^"']*)(["'])`),
+				replace: `${1}` + placeholder + `${3}`,
+			},
+		)
+	}
+
+	slices.SortStableFunc(redactors[len(defaultCodeRedactors):], func(left, right codeRedactor) int {
+		switch {
+		case left.replace < right.replace:
+			return -1
+		case left.replace > right.replace:
+			return 1
+		default:
+			return strings.Compare(left.pattern.String(), right.pattern.String())
+		}
+	})
+	return redactors
+}
+
+func redactCodeForLogging(code string, redactors []codeRedactor) string {
 	redacted := code
-	for _, redactor := range codeRedactors {
+	for _, redactor := range redactors {
 		redacted = redactor.pattern.ReplaceAllString(redacted, redactor.replace)
 	}
 	return redacted

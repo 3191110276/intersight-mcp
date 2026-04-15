@@ -13,6 +13,7 @@ type searchRuntime struct {
 	schemas          map[string]contracts.NormalizedSchema
 	resourceKeys     []string
 	catalogPaths     []string
+	hasMetrics       bool
 	metricGroupKeys  []string
 	metricByNameKeys []string
 	schemaKeys       []string
@@ -40,8 +41,13 @@ func loadSearchRuntime(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*se
 func newSearchRuntime(catalog contracts.SearchCatalog, schemas map[string]contracts.NormalizedSchema) *searchRuntime {
 	resourceKeys := append([]string(nil), catalog.ResourceNames...)
 	catalogPaths := sortedMapKeys(catalog.Paths)
-	metricGroupKeys := sortedMapKeys(catalog.Metrics.Groups)
-	metricByNameKeys := sortedMapKeys(catalog.Metrics.ByName)
+	hasMetrics := catalog.Metrics != nil
+	metricGroupKeys := []string(nil)
+	metricByNameKeys := []string(nil)
+	if catalog.Metrics != nil {
+		metricGroupKeys = sortedMapKeys(catalog.Metrics.Groups)
+		metricByNameKeys = sortedMapKeys(catalog.Metrics.ByName)
+	}
 	schemaKeys := sortedMapKeys(schemas)
 
 	return &searchRuntime{
@@ -49,12 +55,14 @@ func newSearchRuntime(catalog contracts.SearchCatalog, schemas map[string]contra
 		schemas:          schemas,
 		resourceKeys:     resourceKeys,
 		catalogPaths:     catalogPaths,
+		hasMetrics:       hasMetrics,
 		metricGroupKeys:  metricGroupKeys,
 		metricByNameKeys: metricByNameKeys,
 		schemaKeys:       schemaKeys,
 		baseCatalog: map[string]any{
 			"metadata":      catalog.Metadata,
 			"resourceNames": resourceKeys,
+			"hasMetrics":    hasMetrics,
 		},
 	}
 }
@@ -91,23 +99,29 @@ func (r *searchRuntime) install(ctx *qjs.Context) error {
 		})
 	}
 
-	registerLookup("__intersight_search_resource_get__", func(key string) (any, bool) {
+	registerLookup("__search_resource_get__", func(key string) (any, bool) {
 		value, ok := r.catalog.Resources[key]
 		return value, ok
 	})
-	registerLookup("__intersight_search_catalog_path_get__", func(key string) (any, bool) {
+	registerLookup("__search_catalog_path_get__", func(key string) (any, bool) {
 		value, ok := r.catalog.Paths[key]
 		return value, ok
 	})
-	registerLookup("__intersight_search_metric_group_get__", func(key string) (any, bool) {
+	registerLookup("__search_metric_group_get__", func(key string) (any, bool) {
+		if r.catalog.Metrics == nil {
+			return nil, false
+		}
 		value, ok := r.catalog.Metrics.Groups[key]
 		return value, ok
 	})
-	registerLookup("__intersight_search_metric_by_name_get__", func(key string) (any, bool) {
+	registerLookup("__search_metric_by_name_get__", func(key string) (any, bool) {
+		if r.catalog.Metrics == nil {
+			return nil, false
+		}
 		value, ok := r.catalog.Metrics.ByName[key]
 		return value, ok
 	})
-	registerLookup("__intersight_search_schema_get__", func(key string) (any, bool) {
+	registerLookup("__search_schema_get__", func(key string) (any, bool) {
 		value, ok := r.schemas[key]
 		return value, ok
 	})
@@ -153,26 +167,29 @@ func (r *searchRuntime) install(ctx *qjs.Context) error {
     });
   }
 
-  const catalogBase = __search_catalog_base || {};
+	  const catalogBase = __search_catalog_base || {};
 	  const catalog = {
 	    metadata: catalogBase.metadata,
 	    resourceNames: catalogBase.resourceNames || [],
-	    metrics: {
-	      groups: createLookupProxy(__search_metric_group_keys, key => __intersight_search_metric_group_get__(key)),
-      byName: createLookupProxy(__search_metric_by_name_keys, key => __intersight_search_metric_by_name_get__(key))
-	    },
-	    resources: createLookupProxy(__search_resource_keys, key => __intersight_search_resource_get__(key)),
-	    paths: createLookupProxy(__search_catalog_paths, key => __intersight_search_catalog_path_get__(key)),
+	    resources: createLookupProxy(__search_resource_keys, key => __search_resource_get__(key)),
+	    paths: createLookupProxy(__search_catalog_paths, key => __search_catalog_path_get__(key)),
 	    schema(name) {
 	      if (typeof name !== 'string') {
 	        return undefined;
 	      }
-	      return __intersight_search_schema_get__(name);
+	      return __search_schema_get__(name);
 	    }
 	  };
 
+	  if (catalogBase.hasMetrics) {
+	    catalog.metrics = {
+	      groups: createLookupProxy(__search_metric_group_keys, key => __search_metric_group_get__(key)),
+	      byName: createLookupProxy(__search_metric_by_name_keys, key => __search_metric_by_name_get__(key))
+	    };
+	    Object.freeze(catalog.metrics);
+	  }
+
 	  Object.freeze(catalog.resourceNames);
-	  Object.freeze(catalog.metrics);
 	  Object.freeze(catalog);
 
 	  return { catalog };

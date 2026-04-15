@@ -6,15 +6,16 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mimaurer/intersight-mcp/generated"
+	targetintersight "github.com/mimaurer/intersight-mcp/implementations/intersight"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 )
 
 func TestLoadArtifactBundleClonesInputsAndPreparesSharedState(t *testing.T) {
-	spec := append([]byte(nil), generated.ResolvedSpecBytes()...)
-	catalog := append([]byte(nil), generated.SDKCatalogBytes()...)
-	rules := append([]byte(nil), generated.RulesBytes()...)
-	search := append([]byte(nil), generated.SearchCatalogBytes()...)
+	artifacts := targetintersight.Artifacts()
+	spec := append([]byte(nil), artifacts.ResolvedSpec...)
+	catalog := append([]byte(nil), artifacts.SDKCatalog...)
+	rules := append([]byte(nil), artifacts.Rules...)
+	search := append([]byte(nil), artifacts.SearchCatalog...)
 
 	bundle, err := LoadArtifactBundle(spec, catalog, rules, search)
 	if err != nil {
@@ -50,10 +51,11 @@ func TestLoadArtifactBundleClonesInputsAndPreparesSharedState(t *testing.T) {
 }
 
 func TestLoadArtifactBundleRejectsInvalidSearchJSON(t *testing.T) {
+	artifacts := targetintersight.Artifacts()
 	_, err := LoadArtifactBundle(
-		generated.ResolvedSpecBytes(),
-		generated.SDKCatalogBytes(),
-		generated.RulesBytes(),
+		artifacts.ResolvedSpec,
+		artifacts.SDKCatalog,
+		artifacts.Rules,
 		[]byte("not-json"),
 	)
 	if err == nil {

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mimaurer/intersight-mcp/implementations"
 	"github.com/mimaurer/intersight-mcp/internal/config"
 )
 
@@ -16,7 +17,7 @@ func TestLoggerInfoLevel(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	logger := NewLogger(&buf, config.LogLevelInfo, false)
+	logger := NewLogger(&buf, config.LogLevelInfo, false, LoggerOptions{})
 	ctx := WithExecutionID(WithSessionID(context.Background(), "session-1"), "exec-1")
 	logger.LogExecution(ctx, ExecutionRecord{
 		Tool:            "search",
@@ -53,7 +54,7 @@ func TestLoggerDebugLevelOmitsCodeUnlessEnabled(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	logger := NewLogger(&buf, config.LogLevelDebug, false)
+	logger := NewLogger(&buf, config.LogLevelDebug, false, LoggerOptions{})
 	logger.LogExecution(context.Background(), ExecutionRecord{
 		Tool:            "query",
 		Code:            "return await api.call('GET', '/api/v1/x')",
@@ -92,7 +93,7 @@ func TestLoggerDebugLevelIncludesRedactedCodeWhenEnabled(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	logger := NewLogger(&buf, config.LogLevelDebug, true)
+	logger := NewLogger(&buf, config.LogLevelDebug, true, LoggerOptions{})
 	logger.LogExecution(context.Background(), ExecutionRecord{
 		Tool:          "query",
 		Code:          `return { token: "secret-token", Authorization: "Bearer abc.def.ghi", client_secret: "super-secret" }`,
@@ -146,7 +147,7 @@ func TestStdioErrorLoggerRoutesToStructuredLogs(t *testing.T) {
 	t.Parallel()
 
 	var buf bytes.Buffer
-	logger := NewLogger(&buf, config.LogLevelDebug, false)
+	logger := NewLogger(&buf, config.LogLevelDebug, false, LoggerOptions{})
 
 	if _, err := io.WriteString(logger.StdioErrorLogger().Writer(), "Error reading input: boom\n"); err != nil {
 		t.Fatalf("WriteString() error = %v", err)
@@ -164,5 +165,39 @@ func TestStdioErrorLoggerRoutesToStructuredLogs(t *testing.T) {
 	}
 	if payload["message"] != "Error reading input: boom" {
 		t.Fatalf("message = %#v, want %q", payload["message"], "Error reading input: boom")
+	}
+}
+
+func TestLoggerDebugLevelIncludesProviderConfiguredEnvRedactions(t *testing.T) {
+	t.Parallel()
+
+	var buf bytes.Buffer
+	logger := NewLogger(&buf, config.LogLevelDebug, true, LoggerOptions{
+		Redactions: []implementations.LogRedaction{
+			{EnvVarName: "ACME_ACCESS_KEY", Placeholder: "<ACCESS_KEY>"},
+		},
+	})
+	logger.LogExecution(context.Background(), ExecutionRecord{
+		Tool:          "query",
+		Code:          `return { env: "ACME_ACCESS_KEY=top-secret", ACME_ACCESS_KEY: "top-secret" }`,
+		Duration:      10 * time.Millisecond,
+		Success:       true,
+		APICallCount:  0,
+		ChangeSummary: "",
+	})
+
+	var payload map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &payload); err != nil {
+		t.Fatalf("unmarshal log entry: %v", err)
+	}
+	code, ok := payload["code"].(string)
+	if !ok {
+		t.Fatalf("expected debug log to include redacted code when enabled: %#v", payload)
+	}
+	if strings.Contains(code, "top-secret") {
+		t.Fatalf("expected provider-configured secret value to be redacted: %q", code)
+	}
+	if !strings.Contains(code, "<ACCESS_KEY>") {
+		t.Fatalf("expected provider-configured redaction marker in code: %q", code)
 	}
 }

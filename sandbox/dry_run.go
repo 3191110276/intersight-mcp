@@ -47,33 +47,6 @@ type dryRunPredictedRequest struct {
 	Body   any               `json:"body,omitempty"`
 }
 
-type deleteDependencyRule struct {
-	Endpoint    string
-	RelationKey string
-	Label       string
-}
-
-var deleteDependencyRules = map[string][]deleteDependencyRule{
-	"/api/v1/vnic/LanConnectivityPolicies": {
-		{Endpoint: "/api/v1/vnic/EthIfs", RelationKey: "LanConnectivityPolicy", Label: "attached Ethernet interfaces"},
-	},
-	"/api/v1/macpool/Pools": {
-		{Endpoint: "/api/v1/vnic/EthIfs", RelationKey: "MacPool", Label: "Ethernet interfaces using this MAC pool"},
-	},
-	"/api/v1/fabric/EthNetworkGroupPolicies": {
-		{Endpoint: "/api/v1/vnic/EthIfs", RelationKey: "FabricEthNetworkGroupPolicy", Label: "Ethernet interfaces using this Ethernet Network Group Policy"},
-	},
-	"/api/v1/vnic/EthNetworkPolicies": {
-		{Endpoint: "/api/v1/vnic/EthIfs", RelationKey: "EthNetworkPolicy", Label: "Ethernet interfaces using this Ethernet Network Policy"},
-	},
-	"/api/v1/vnic/EthQosPolicies": {
-		{Endpoint: "/api/v1/vnic/EthIfs", RelationKey: "EthQosPolicy", Label: "Ethernet interfaces using this Ethernet QoS Policy"},
-	},
-	"/api/v1/vnic/EthAdapterPolicies": {
-		{Endpoint: "/api/v1/vnic/EthIfs", RelationKey: "EthAdapterPolicy", Label: "Ethernet interfaces using this Ethernet Adapter Policy"},
-	},
-}
-
 type moRefCandidate struct {
 	Field      string
 	ObjectType string
@@ -187,7 +160,7 @@ func (b *apiBridge) executeDryRun(execCtx context.Context, method, requestPath s
 			continue
 		}
 
-		refPath, ok := objectTypeToPath(ref.ObjectType)
+		refPath, ok := b.relationshipPath(ref.ObjectType)
 		if !ok {
 			addCheck("reference:"+ref.Field, "warn", "Unable to resolve an API path for this MoRef object type.")
 			result.Warnings = append(result.Warnings, fmt.Sprintf("Could not resolve object type %q for field %q.", ref.ObjectType, ref.Field))
@@ -249,7 +222,7 @@ func (b *apiBridge) checkDelete(execCtx context.Context, requestPath string, res
 	})
 
 	basePath, moid := splitCollectionPath(requestPath)
-	rules := deleteDependencyRules[basePath]
+	rules := b.deleteDependencyRules()[basePath]
 	if len(rules) == 0 {
 		result.Checks = append(result.Checks, dryRunCheck{
 			Name:    "dependencies",
@@ -282,7 +255,7 @@ func (b *apiBridge) checkDelete(execCtx context.Context, requestPath string, res
 	}
 
 	if result.Valid {
-		result.Warnings = append(result.Warnings, "No direct dependents were found. Intersight may still reject the delete for reasons this preflight cannot detect.")
+		result.Warnings = append(result.Warnings, "No direct dependents were found. The API may still reject the delete for reasons this preflight cannot detect.")
 	}
 	return nil
 }
@@ -299,7 +272,7 @@ func (b *apiBridge) resourceExists(execCtx context.Context, requestPath string) 
 	return false, err
 }
 
-func (b *apiBridge) findDirectDependents(execCtx context.Context, rule deleteDependencyRule, targetMoid string) ([]string, error) {
+func (b *apiBridge) findDirectDependents(execCtx context.Context, rule DeleteDependencyRule, targetMoid string) ([]string, error) {
 	var names []string
 	skip := 0
 	for {
@@ -416,11 +389,8 @@ func splitCollectionPath(requestPath string) (string, string) {
 	if clean == "." || clean == "/" {
 		return "", ""
 	}
-	if !strings.HasPrefix(clean, "/api/v1/") {
-		return clean, ""
-	}
 	parts := strings.Split(strings.TrimPrefix(clean, "/"), "/")
-	if len(parts) < 4 {
+	if len(parts) < 2 {
 		return clean, ""
 	}
 	return "/" + strings.Join(parts[:len(parts)-1], "/"), parts[len(parts)-1]
@@ -438,25 +408,6 @@ func referencesTarget(value any, targetMoid string) bool {
 		}
 	}
 	return false
-}
-
-func objectTypeToPath(objectType string) (string, bool) {
-	parts := strings.Split(strings.TrimSpace(objectType), ".")
-	if len(parts) != 2 {
-		return "", false
-	}
-	return "/api/v1/" + parts[0] + "/" + pluralizeType(parts[1]), true
-}
-
-func pluralizeType(name string) string {
-	switch {
-	case strings.HasSuffix(name, "y") && len(name) > 1 && !strings.ContainsRune("aeiouAEIOU", rune(name[len(name)-2])):
-		return name[:len(name)-1] + "ies"
-	case strings.HasSuffix(name, "s"):
-		return name + "es"
-	default:
-		return name + "s"
-	}
 }
 
 func cloneStringMap(in map[string]string) map[string]string {
@@ -487,4 +438,18 @@ func (b *apiBridge) requestSchema(method, requestPath string) *dryRunSchema {
 		return nil
 	}
 	return b.spec.requestSchema(method, requestPath)
+}
+
+func (b *apiBridge) relationshipPath(objectType string) (string, bool) {
+	if b.spec == nil || b.spec.ext.RelationshipPathResolver == nil {
+		return "", false
+	}
+	return b.spec.ext.RelationshipPathResolver(objectType)
+}
+
+func (b *apiBridge) deleteDependencyRules() map[string][]DeleteDependencyRule {
+	if b.spec == nil {
+		return nil
+	}
+	return b.spec.ext.DeleteDependencyRules
 }

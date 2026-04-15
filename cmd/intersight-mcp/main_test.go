@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,10 +12,67 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mimaurer/intersight-mcp/implementations"
+	targetintersight "github.com/mimaurer/intersight-mcp/implementations/intersight"
+	"github.com/mimaurer/intersight-mcp/internal/bootstrap"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
+	"github.com/mimaurer/intersight-mcp/internal/providerext"
 	"github.com/mimaurer/intersight-mcp/internal/testutil"
-	"github.com/mimaurer/intersight-mcp/intersight"
 )
+
+type testTarget struct {
+	artifacts  implementations.Artifacts
+	connection implementations.ConnectionConfig
+}
+
+func (t testTarget) Name() string { return "test" }
+
+func (t testTarget) RuntimeMetadata() implementations.RuntimeMetadata {
+	return implementations.RuntimeMetadata{
+		ProviderName:    "Test Provider",
+		ServerName:      "test-mcp",
+		ConfigPrefix:    "INTERSIGHT",
+		DefaultEndpoint: "https://intersight.com",
+		AuthErrorHint:   "Check INTERSIGHT_CLIENT_ID and INTERSIGHT_CLIENT_SECRET.",
+	}
+}
+
+func (t testTarget) Artifacts() implementations.Artifacts { return t.artifacts }
+
+func (t testTarget) GenerationConfig() implementations.GenerationConfig {
+	return implementations.GenerationConfig{}
+}
+
+func (t testTarget) SandboxExtensions() providerext.Extensions {
+	return providerext.Extensions{}
+}
+
+func (t testTarget) LoadConnectionConfig(args []string, environ []string) (implementations.ConnectionConfig, error) {
+	if t.connection != nil {
+		return t.connection, nil
+	}
+	return targetintersight.LoadConnectionConfig(args, environ)
+}
+
+func validTarget() implementations.Target {
+	return testTarget{artifacts: validArtifacts()}
+}
+
+func testApp(target implementations.Target) bootstrap.App {
+	return bootstrap.App{
+		Target:  target,
+		Version: "test",
+	}
+}
+
+func validArtifacts() implementations.Artifacts {
+	return implementations.Artifacts{
+		ResolvedSpec:  validTestSpec,
+		SDKCatalog:    validTestCatalog,
+		Rules:         validTestRules,
+		SearchCatalog: validTestSearchCatalog,
+	}
+}
 
 func TestServeStartsWithoutCredentialsForOfflineSearch(t *testing.T) {
 	t.Parallel()
@@ -24,8 +80,8 @@ func TestServeStartsWithoutCredentialsForOfflineSearch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	if err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, nil, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
-		t.Fatalf("serveWithIO() error = %v", err)
+	if err := testApp(validTarget()).ServeWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, nil); err != nil {
+		t.Fatalf("ServeWithIO() error = %v", err)
 	}
 }
 
@@ -44,8 +100,8 @@ func TestServeReadOnlyOmitsMutateTool(t *testing.T) {
 		_ = stdinWriter.Close()
 	}()
 
-	if err := serveWithIO(ctx, []string{"--read-only"}, stdinReader, &stdout, &bytes.Buffer{}, nil, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog); err != nil {
-		t.Fatalf("serveWithIO() error = %v", err)
+	if err := testApp(validTarget()).ServeWithIO(ctx, []string{"--read-only"}, stdinReader, &stdout, &bytes.Buffer{}, nil); err != nil {
+		t.Fatalf("ServeWithIO() error = %v", err)
 	}
 
 	lines := splitLines(stdout.String())
@@ -73,12 +129,12 @@ func TestServeWarnsWhenUnsafeCodeLoggingEnabled(t *testing.T) {
 	defer cancel()
 
 	var stderr bytes.Buffer
-	err := serveWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &stderr, []string{
+	err := testApp(validTarget()).ServeWithIO(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &stderr, []string{
 		"INTERSIGHT_LOG_LEVEL=debug",
 		"INTERSIGHT_UNSAFE_LOG_FULL_CODE=true",
-	}, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+	})
 	if err != nil {
-		t.Fatalf("serveWithIO() error = %v", err)
+		t.Fatalf("ServeWithIO() error = %v", err)
 	}
 	if !strings.Contains(stderr.String(), "unsafe full-code debug logging is enabled") {
 		t.Fatalf("expected unsafe logging warning, got: %s", stderr.String())
@@ -88,9 +144,9 @@ func TestServeWarnsWhenUnsafeCodeLoggingEnabled(t *testing.T) {
 func TestNewHTTPClientDisablesAmbientProxyByDefault(t *testing.T) {
 	t.Parallel()
 
-	client, err := newHTTPClient(time.Second, "")
+	client, err := bootstrap.NewHTTPClient(time.Second, "")
 	if err != nil {
-		t.Fatalf("newHTTPClient() error = %v", err)
+		t.Fatalf("NewHTTPClient() error = %v", err)
 	}
 	transport, ok := client.Transport.(*http.Transport)
 	if !ok {
@@ -113,9 +169,9 @@ func TestNewHTTPClientDisablesAmbientProxyByDefault(t *testing.T) {
 func TestNewHTTPClientUsesExplicitProxy(t *testing.T) {
 	t.Parallel()
 
-	client, err := newHTTPClient(time.Second, "http://proxy.example.com:8080")
+	client, err := bootstrap.NewHTTPClient(time.Second, "http://proxy.example.com:8080")
 	if err != nil {
-		t.Fatalf("newHTTPClient() error = %v", err)
+		t.Fatalf("NewHTTPClient() error = %v", err)
 	}
 	transport, ok := client.Transport.(*http.Transport)
 	if !ok {
@@ -138,7 +194,7 @@ func TestNewHTTPClientUsesExplicitProxy(t *testing.T) {
 func TestNewHTTPClientFailsOnInvalidProxy(t *testing.T) {
 	t.Parallel()
 
-	_, err := newHTTPClient(time.Second, "://bad-proxy")
+	_, err := bootstrap.NewHTTPClient(time.Second, "://bad-proxy")
 	if err == nil {
 		t.Fatal("expected error")
 	}
@@ -154,9 +210,9 @@ func TestServeFailsOnInvalidConfig(t *testing.T) {
 		"INTERSIGHT_CLIENT_ID=id",
 		"INTERSIGHT_CLIENT_SECRET=secret",
 	}
-	err := serveWithIO(context.Background(), []string{"--endpoint", "not-a-url/path"}, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+	err := testApp(validTarget()).ServeWithIO(context.Background(), []string{"--endpoint", "not-a-url/path"}, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env)
 	if err == nil || !strings.Contains(err.Error(), "invalid endpoint") {
-		t.Fatalf("serveWithIO() error = %v, want invalid endpoint failure", err)
+		t.Fatalf("ServeWithIO() error = %v, want invalid endpoint failure", err)
 	}
 }
 
@@ -167,9 +223,9 @@ func TestServeFailsOnInvalidProxyConfig(t *testing.T) {
 		"INTERSIGHT_CLIENT_ID=id",
 		"INTERSIGHT_CLIENT_SECRET=secret",
 	}
-	err := serveWithIO(context.Background(), []string{"--proxy", "://bad-proxy"}, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+	err := testApp(validTarget()).ServeWithIO(context.Background(), []string{"--proxy", "://bad-proxy"}, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env)
 	if err == nil || !strings.Contains(err.Error(), "invalid proxy") {
-		t.Fatalf("serveWithIO() error = %v, want invalid proxy failure", err)
+		t.Fatalf("ServeWithIO() error = %v, want invalid proxy failure", err)
 	}
 }
 
@@ -196,9 +252,14 @@ func TestServeFailsOnMalformedEmbeddedArtifacts(t *testing.T) {
 		"INTERSIGHT_CLIENT_ID=id",
 		"INTERSIGHT_CLIENT_SECRET=secret",
 	}
-	err := serveWithIO(context.Background(), nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, []byte(`{`), []byte(`{}`), []byte(`{}`), []byte(`{}`))
+	err := testApp(testTarget{artifacts: implementations.Artifacts{
+		ResolvedSpec:  []byte(`{`),
+		SDKCatalog:    []byte(`{}`),
+		Rules:         []byte(`{}`),
+		SearchCatalog: []byte(`{}`),
+	}}).ServeWithIO(context.Background(), nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env)
 	if err == nil || !strings.Contains(err.Error(), "embedded") {
-		t.Fatalf("serveWithIO() error = %v, want embedded artifact failure", err)
+		t.Fatalf("ServeWithIO() error = %v, want embedded artifact failure", err)
 	}
 }
 
@@ -226,8 +287,8 @@ func TestServeStartsWhenAuthBootstrapFails(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	if err := serveWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client()); err != nil {
-		t.Fatalf("serveWithIO() error = %v", err)
+	if err := testApp(validTarget()).ServeWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, api.Client()); err != nil {
+		t.Fatalf("ServeWithIO() error = %v", err)
 	}
 }
 
@@ -254,11 +315,11 @@ func TestServeStartsWithoutBlockingOnAuthBootstrap(t *testing.T) {
 	defer cancel()
 
 	start := time.Now()
-	if err := serveWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client()); err != nil {
-		t.Fatalf("serveWithIO() error = %v", err)
+	if err := testApp(validTarget()).ServeWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, api.Client()); err != nil {
+		t.Fatalf("ServeWithIO() error = %v", err)
 	}
 	if elapsed := time.Since(start); elapsed > 200*time.Millisecond {
-		t.Fatalf("serveWithIO() took %v, want startup to avoid blocking on auth bootstrap", elapsed)
+		t.Fatalf("ServeWithIO() took %v, want startup to avoid blocking on auth bootstrap", elapsed)
 	}
 }
 
@@ -311,7 +372,7 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 	lineCh := make(chan string, 4)
 
 	go func() {
-		errCh <- serveWithIOAndHTTPClient(context.Background(), nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client())
+		errCh <- testApp(validTarget()).ServeWithIOAndHTTPClient(context.Background(), nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, api.Client())
 		_ = stdoutWriter.Close()
 	}()
 	go func() {
@@ -324,7 +385,7 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 
 	writeJSONLine(t, stdinWriter, initializeRequest())
 	allowAuth.Store(true)
-	writeJSONLine(t, stdinWriter, toolCallRequest(2, "query", `return await sdk.compute.rackUnit.list();`))
+	writeJSONLine(t, stdinWriter, toolCallRequest(2, "query", `return await sdk.compute.rackUnits.list();`))
 
 	lines := make([]string, 0, 2)
 	for len(lines) < 2 {
@@ -343,10 +404,10 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 	select {
 	case err := <-errCh:
 		if err != nil {
-			t.Fatalf("serveWithIO() error = %v", err)
+			t.Fatalf("ServeWithIO() error = %v", err)
 		}
 	case <-time.After(3 * time.Second):
-		t.Fatal("timed out waiting for serveWithIO to return")
+		t.Fatal("timed out waiting for ServeWithIO to return")
 	}
 
 	responses := indexResponsesByID(t, lines)
@@ -368,317 +429,6 @@ func TestServeRetriesAuthBootstrapAfterStartupFailure(t *testing.T) {
 	}
 }
 
-func TestRetryingBootstrapClientUsesRequestContextForBootstrap(t *testing.T) {
-	t.Parallel()
-
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/iam/token":
-			<-r.Context().Done()
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer api.Close()
-
-	client := &retryingBootstrapClient{
-		ctx:        context.Background(),
-		timeout:    time.Second,
-		httpClient: api.Client(),
-		baseURL:    api.URL + "/api/v1",
-		oauthCfg: intersight.OAuthConfig{
-			TokenURL:     api.URL + "/iam/token",
-			ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
-			ClientID:     "id",
-			ClientSecret: "secret",
-			HTTPClient:   api.Client(),
-		},
-	}
-
-	requestCtx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-	defer cancel()
-
-	start := time.Now()
-	_, err := client.ensureClient(requestCtx)
-	if err == nil {
-		t.Fatalf("expected bootstrap error")
-	}
-
-	var timeoutErr contracts.TimeoutError
-	if !errors.As(err, &timeoutErr) {
-		t.Fatalf("expected TimeoutError, got %T", err)
-	}
-	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
-		t.Fatalf("ensureClient() took %v, want request-bounded timeout", elapsed)
-	}
-}
-
-func TestBootstrapOAuthManagerTimesOutStalledStartupAuth(t *testing.T) {
-	t.Parallel()
-
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/iam/token":
-			<-r.Context().Done()
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer api.Close()
-
-	start := time.Now()
-	_, err := bootstrapOAuthManager(context.Background(), context.Background(), 50*time.Millisecond, intersight.OAuthConfig{
-		TokenURL:     api.URL + "/iam/token",
-		ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
-		ClientID:     "id",
-		ClientSecret: "secret",
-		HTTPClient:   api.Client(),
-	})
-	if err == nil {
-		t.Fatalf("expected startup auth timeout")
-	}
-
-	var timeoutErr contracts.TimeoutError
-	if !errors.As(err, &timeoutErr) {
-		t.Fatalf("expected TimeoutError, got %T", err)
-	}
-	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
-		t.Fatalf("bootstrapOAuthManager() took %v, want bounded timeout", elapsed)
-	}
-}
-
-func TestBootstrapOAuthManagerKeepsProactiveRefreshAlive(t *testing.T) {
-	t.Parallel()
-
-	clock := testutil.NewManualClock(time.Unix(0, 0))
-	var tokenCalls atomic.Int32
-
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/iam/token":
-			token := "bootstrap-token"
-			if tokenCalls.Add(1) > 1 {
-				token = "refreshed-token"
-			}
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"access_token":"` + token + `","expires_in":8}`))
-		case "/api/v1/iam/UserPreferences":
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = w.Write([]byte(`{"Results":[]}`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer api.Close()
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	manager, err := bootstrapOAuthManager(ctx, ctx, time.Second, intersight.OAuthConfig{
-		TokenURL:     api.URL + "/iam/token",
-		ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
-		ClientID:     "id",
-		ClientSecret: "secret",
-		HTTPClient:   api.Client(),
-		Clock:        clock,
-	})
-	if err != nil {
-		t.Fatalf("bootstrapOAuthManager() error = %v", err)
-	}
-
-	clock.Advance(4 * time.Second)
-
-	deadline := time.Now().Add(time.Second)
-	for tokenCalls.Load() < 2 && time.Now().Before(deadline) {
-		time.Sleep(10 * time.Millisecond)
-	}
-	if got := tokenCalls.Load(); got < 2 {
-		t.Fatalf("expected proactive refresh after bootstrap, got %d token requests", got)
-	}
-
-	token, err := manager.Token(ctx)
-	if err != nil {
-		t.Fatalf("Token() error = %v", err)
-	}
-	if token != "refreshed-token" {
-		t.Fatalf("unexpected token after proactive refresh: %q", token)
-	}
-}
-
-func TestRetryingBootstrapClientHonorsRequestContextDuringBootstrap(t *testing.T) {
-	t.Parallel()
-
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/iam/token":
-			<-r.Context().Done()
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer api.Close()
-
-	serverCtx, serverCancel := context.WithCancel(context.Background())
-	defer serverCancel()
-
-	client := &retryingBootstrapClient{
-		ctx:        serverCtx,
-		timeout:    time.Second,
-		httpClient: api.Client(),
-		baseURL:    api.URL + "/api/v1",
-		oauthCfg: intersight.OAuthConfig{
-			TokenURL:     api.URL + "/iam/token",
-			ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
-			ClientID:     "id",
-			ClientSecret: "secret",
-			HTTPClient:   api.Client(),
-		},
-	}
-
-	requestCtx, requestCancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-	defer requestCancel()
-
-	start := time.Now()
-	_, err := client.Do(requestCtx, contracts.NewHTTPOperationDescriptor(http.MethodGet, "/api/v1/compute/RackUnits"))
-	if err == nil {
-		t.Fatal("expected bootstrap retry failure")
-	}
-
-	var timeoutErr contracts.TimeoutError
-	if !errors.As(err, &timeoutErr) {
-		t.Fatalf("expected TimeoutError, got %T", err)
-	}
-	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
-		t.Fatalf("bootstrap retry took %v, want request-bound cancellation", elapsed)
-	}
-}
-
-func TestRetryingBootstrapClientWaitersCanTimeOutIndependently(t *testing.T) {
-	t.Parallel()
-
-	api := testutil.NewTCP4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/iam/token":
-			<-r.Context().Done()
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer api.Close()
-
-	serverCtx, serverCancel := context.WithCancel(context.Background())
-	defer serverCancel()
-
-	client := &retryingBootstrapClient{
-		ctx:        serverCtx,
-		timeout:    time.Second,
-		httpClient: api.Client(),
-		baseURL:    api.URL + "/api/v1",
-		oauthCfg: intersight.OAuthConfig{
-			TokenURL:     api.URL + "/iam/token",
-			ValidateURL:  api.URL + "/api/v1/iam/UserPreferences",
-			ClientID:     "id",
-			ClientSecret: "secret",
-			HTTPClient:   api.Client(),
-		},
-	}
-
-	firstCtx, firstCancel := context.WithTimeout(context.Background(), 750*time.Millisecond)
-	defer firstCancel()
-
-	firstErrCh := make(chan error, 1)
-	go func() {
-		_, err := client.Do(firstCtx, contracts.NewHTTPOperationDescriptor(http.MethodGet, "/api/v1/compute/RackUnits"))
-		firstErrCh <- err
-	}()
-
-	time.Sleep(25 * time.Millisecond)
-
-	secondCtx, secondCancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
-	defer secondCancel()
-
-	start := time.Now()
-	_, err := client.Do(secondCtx, contracts.NewHTTPOperationDescriptor(http.MethodGet, "/api/v1/compute/RackUnits"))
-	if err == nil {
-		t.Fatal("expected second bootstrap retry failure")
-	}
-
-	var timeoutErr contracts.TimeoutError
-	if !errors.As(err, &timeoutErr) {
-		t.Fatalf("expected TimeoutError for waiting caller, got %T", err)
-	}
-	if elapsed := time.Since(start); elapsed > 250*time.Millisecond {
-		t.Fatalf("waiting caller took %v, want independent timeout", elapsed)
-	}
-
-	serverCancel()
-
-	select {
-	case err := <-firstErrCh:
-		if err == nil {
-			t.Fatal("expected first bootstrap retry failure")
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for first bootstrap attempt to finish")
-	}
-}
-
-func TestRetryingBootstrapClientBacksOffAfterFailure(t *testing.T) {
-	t.Parallel()
-
-	var tokenCalls atomic.Int32
-	client := &retryingBootstrapClient{
-		ctx:            context.Background(),
-		timeout:        time.Second,
-		httpClient:     &http.Client{},
-		baseURL:        "https://example.com/api/v1",
-		initialBackoff: 100 * time.Millisecond,
-		maxBackoff:     time.Second,
-		now:            time.Now,
-		oauthCfg: intersight.OAuthConfig{
-			TokenURL:     "https://example.com/iam/token",
-			ValidateURL:  "https://example.com/api/v1/iam/UserPreferences",
-			ClientID:     "id",
-			ClientSecret: "secret",
-			HTTPClient: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
-				tokenCalls.Add(1)
-				return &http.Response{
-					StatusCode: http.StatusUnauthorized,
-					Header:     make(http.Header),
-					Body:       io.NopCloser(strings.NewReader(`{"message":"bad credentials"}`)),
-					Request:    req,
-				}, nil
-			})},
-		},
-	}
-
-	_, err := client.ensureClient(context.Background())
-	if err == nil {
-		t.Fatal("expected bootstrap error")
-	}
-	if got := tokenCalls.Load(); got != 1 {
-		t.Fatalf("token calls after first attempt = %d, want 1", got)
-	}
-
-	_, err = client.ensureClient(context.Background())
-	if err == nil {
-		t.Fatal("expected cached bootstrap error during backoff")
-	}
-	if got := tokenCalls.Load(); got != 1 {
-		t.Fatalf("token calls during backoff = %d, want 1", got)
-	}
-
-	time.Sleep(125 * time.Millisecond)
-
-	_, err = client.ensureClient(context.Background())
-	if err == nil {
-		t.Fatal("expected bootstrap error after backoff retry")
-	}
-	if got := tokenCalls.Load(); got != 2 {
-		t.Fatalf("token calls after backoff expiry = %d, want 2", got)
-	}
-}
-
 func TestServeWithoutCredentialsQueryReturnsAuthError(t *testing.T) {
 	t.Parallel()
 
@@ -689,7 +439,7 @@ func TestServeWithoutCredentialsQueryReturnsAuthError(t *testing.T) {
 	lineCh := make(chan string, 4)
 
 	go func() {
-		errCh <- serveWithIO(context.Background(), nil, stdinReader, stdoutWriter, &bytes.Buffer{}, nil, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog)
+		errCh <- testApp(validTarget()).ServeWithIO(context.Background(), nil, stdinReader, stdoutWriter, &bytes.Buffer{}, nil)
 		_ = stdoutWriter.Close()
 	}()
 	go func() {
@@ -701,7 +451,7 @@ func TestServeWithoutCredentialsQueryReturnsAuthError(t *testing.T) {
 	}()
 
 	writeJSONLine(t, stdinWriter, initializeRequest())
-	writeJSONLine(t, stdinWriter, toolCallRequest(2, "query", `return await sdk.compute.rackUnit.list();`))
+	writeJSONLine(t, stdinWriter, toolCallRequest(2, "query", `return await sdk.compute.rackUnits.list();`))
 
 	lines := make([]string, 0, 2)
 	for len(lines) < 2 {
@@ -720,10 +470,10 @@ func TestServeWithoutCredentialsQueryReturnsAuthError(t *testing.T) {
 	select {
 	case err := <-errCh:
 		if err != nil {
-			t.Fatalf("serveWithIO() error = %v", err)
+			t.Fatalf("ServeWithIO() error = %v", err)
 		}
 	case <-time.After(3 * time.Second):
-		t.Fatal("timed out waiting for serveWithIO to return")
+		t.Fatal("timed out waiting for ServeWithIO to return")
 	}
 
 	responses := indexResponsesByID(t, lines)
@@ -770,8 +520,8 @@ var validTestCatalog = []byte(`{
     "retrieval_date": "2026-04-08"
   },
   "methods": {
-    "compute.rackUnit.list": {
-      "sdkMethod": "compute.rackUnit.list",
+    "compute.rackUnits.list": {
+      "sdkMethod": "compute.rackUnits.list",
       "resource": "compute.RackUnit",
       "descriptor": {
         "kind": "http-operation",
@@ -809,18 +559,18 @@ var validTestSearchCatalog = []byte(`{
     "retrieval_date": "2026-04-08"
   },
   "resources": {
-    "compute.rackUnit": {
+    "compute.rackUnits": {
       "schema": "compute.RackUnit",
       "path": "/api/v1/compute/RackUnits",
       "operations": ["list"]
     }
   },
-  "resourceNames": ["compute.rackUnit"],
+  "resourceNames": ["compute.rackUnits"],
   "paths": {
-    "/api/v1/compute/RackUnits": ["compute.rackUnit"],
-    "/api/v1/compute/rackunits": ["compute.rackUnit"],
-    "/compute/RackUnits": ["compute.rackUnit"],
-    "/compute/rackunits": ["compute.rackUnit"]
+    "/api/v1/compute/RackUnits": ["compute.rackUnits"],
+    "/api/v1/compute/rackunits": ["compute.rackUnits"],
+    "/compute/RackUnits": ["compute.rackUnits"],
+    "/compute/rackunits": ["compute.rackUnits"]
   }
 }`)
 
@@ -849,7 +599,7 @@ func TestServeWithIOGracefulOnClosedInput(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
-	if err := serveWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, validTestSpec, validTestCatalog, validTestRules, validTestSearchCatalog, api.Client()); err != nil {
-		t.Fatalf("serveWithIO() error = %v", err)
+	if err := testApp(validTarget()).ServeWithIOAndHTTPClient(ctx, nil, bytes.NewBuffer(nil), &bytes.Buffer{}, &bytes.Buffer{}, env, api.Client()); err != nil {
+		t.Fatalf("ServeWithIO() error = %v", err)
 	}
 }

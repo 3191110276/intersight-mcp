@@ -19,10 +19,6 @@ const (
 	ToolQuery  = "query"
 	ToolMutate = "mutate"
 
-	searchTitle = "Intersight Spec Search"
-	queryTitle  = "Intersight Query"
-	mutateTitle = "Intersight Mutate"
-
 	metricsAppResourceURI      = "ui://metrics/frame.html"
 	metricsAppResourceMimeType = "text/html+skybridge"
 )
@@ -83,6 +79,16 @@ type ContentMode struct {
 	MirrorStructuredContent bool
 }
 
+type ToolMetadata struct {
+	SearchTitle       string
+	SearchDescription string
+	QueryTitle        string
+	QueryDescription  string
+	MutateTitle       string
+	MutateDescription string
+	AuthErrorHint     string
+}
+
 type Limiter struct {
 	slots chan struct{}
 }
@@ -139,18 +145,18 @@ func OutputSchema() json.RawMessage {
 	return append(json.RawMessage(nil), outputSchemaJSON...)
 }
 
-func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, exposeMetricsApps bool, readOnly bool, contentMode ContentMode) []mcpserver.ServerTool {
+func ServerTools(searchExec, queryExec, mutateExec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, exposeMetricsApps bool, readOnly bool, contentMode ContentMode, metadata ToolMetadata) []mcpserver.ServerTool {
 	tools := []mcpserver.ServerTool{
-		NewSearchTool(searchExec, limiter, maxCodeSize, maxOutputBytes, contentMode),
-		NewQueryTool(queryExec, limiter, maxCodeSize, maxOutputBytes, exposeMetricsApps, contentMode),
+		NewSearchTool(searchExec, limiter, maxCodeSize, maxOutputBytes, contentMode, metadata),
+		NewQueryTool(queryExec, limiter, maxCodeSize, maxOutputBytes, exposeMetricsApps, contentMode, metadata),
 	}
 	if !readOnly {
-		tools = append(tools, NewMutateTool(mutateExec, limiter, maxCodeSize, maxOutputBytes, contentMode))
+		tools = append(tools, NewMutateTool(mutateExec, limiter, maxCodeSize, maxOutputBytes, contentMode, metadata))
 	}
 	return tools
 }
 
-func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, readOnly, destructive, _ bool, contentMode ContentMode) mcpserver.ServerTool {
+func newServerTool(name, title, description string, mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxCodeSize int, maxOutputBytes int64, readOnly, destructive, _ bool, contentMode ContentMode, authErrorHint string) mcpserver.ServerTool {
 	inputSchema := InputSchema(maxCodeSize)
 	if mode == sandbox.ModeQuery {
 		inputSchema = QueryInputSchema(maxCodeSize)
@@ -174,7 +180,7 @@ func newServerTool(name, title, description string, mode sandbox.Mode, exec sand
 
 	return mcpserver.ServerTool{
 		Tool:    tool,
-		Handler: NewToolHandler(mode, exec, limiter, maxOutputBytes, contentMode),
+		Handler: NewToolHandler(mode, exec, limiter, maxOutputBytes, contentMode, authErrorHint),
 	}
 }
 
@@ -195,7 +201,7 @@ func buildInputSchema(maxCodeSize int, mutate, includeCompact bool) json.RawMess
 	if includeCompact {
 		properties["compact"] = map[string]any{
 			"type":        "boolean",
-			"description": "Return compacted API objects by default. Set false to keep full raw API fields.",
+			"description": "Return compacted API objects by default. Omit for normal use. Set false only as a follow-up when the default compacted response was insufficient and you need full raw API fields.",
 		}
 	}
 	if mutate {
@@ -221,10 +227,15 @@ func buildInputSchema(maxCodeSize int, mutate, includeCompact bool) json.RawMess
 	return data
 }
 
-func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, contentMode ContentMode) mcpserver.ToolHandlerFunc {
+func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, maxOutputBytes int64, contentMode ContentMode, authErrorHint ...string) mcpserver.ToolHandlerFunc {
+	hint := ""
+	if len(authErrorHint) > 0 {
+		hint = authErrorHint[0]
+	}
+
 	return func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		if exec == nil {
-			return toolErrorResult(contracts.InternalError{Message: "tool executor is not configured"}, nil, contentMode), nil
+			return toolErrorResult(contracts.InternalError{Message: "tool executor is not configured"}, nil, contentMode, hint), nil
 		}
 
 		var (
@@ -235,10 +246,10 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 		if mode == sandbox.ModeMutate {
 			var input mutateInput
 			if err := request.BindArguments(&input); err != nil {
-				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil, contentMode), nil
+				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil, contentMode, hint), nil
 			}
 			if strings.TrimSpace(input.ChangeSummary) == "" {
-				return toolErrorResult(contracts.ValidationError{Message: `required argument "changeSummary" not found`}, nil, contentMode), nil
+				return toolErrorResult(contracts.ValidationError{Message: `required argument "changeSummary" not found`}, nil, contentMode, hint), nil
 			}
 			code = input.Code
 			changeSummary = input.ChangeSummary
@@ -248,7 +259,7 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 		} else {
 			var input codeInput
 			if err := request.BindArguments(&input); err != nil {
-				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil, contentMode), nil
+				return toolErrorResult(contracts.ValidationError{Message: err.Error()}, nil, contentMode, hint), nil
 			}
 			code = input.Code
 			if input.Compact != nil {
@@ -256,14 +267,14 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 			}
 		}
 		if strings.TrimSpace(code) == "" {
-			return toolErrorResult(contracts.ValidationError{Message: `required argument "code" not found`}, nil, contentMode), nil
+			return toolErrorResult(contracts.ValidationError{Message: `required argument "code" not found`}, nil, contentMode, hint), nil
 		}
 
 		if limiter != nil {
 			if !limiter.Acquire() {
 				return toolErrorResult(contracts.LimitError{
 					Message: fmt.Sprintf("Concurrent execution limit reached (%d)", limiter.Limit()),
-				}, nil, contentMode), nil
+				}, nil, contentMode, hint), nil
 			}
 			defer limiter.Release()
 		}
@@ -271,14 +282,14 @@ func NewToolHandler(mode sandbox.Mode, exec sandbox.Executor, limiter *Limiter, 
 		_ = changeSummary
 		result, err := exec.Execute(ctx, code, mode)
 		if err != nil {
-			return toolErrorResult(err, result.Logs, contentMode), nil
+			return toolErrorResult(err, result.Logs, contentMode, hint), nil
 		}
 		return toolSuccessResult(request.Params.Name, result, compact, contentMode), nil
 	}
 }
 
 func toolSuccessResult(tool string, result sandbox.Result, compact bool, contentMode ContentMode) *mcp.CallToolResult {
-	envelope := contracts.Success(compactToolResult(tool, result.Value, compact))
+	envelope := contracts.Success(compactToolResult(tool, result.Value, compact), result.Logs...)
 	content := []mcp.Content{mcp.NewTextContent(renderSuccessText(envelope, contentMode))}
 	return &mcp.CallToolResult{
 		Result:            mcp.Result{},
@@ -288,8 +299,12 @@ func toolSuccessResult(tool string, result sandbox.Result, compact bool, content
 	}
 }
 
-func toolErrorResult(err error, logs []string, contentMode ContentMode) *mcp.CallToolResult {
-	envelope := contracts.NormalizeError(err, logs)
+func toolErrorResult(err error, logs []string, contentMode ContentMode, authErrorHint ...string) *mcp.CallToolResult {
+	hint := ""
+	if len(authErrorHint) > 0 {
+		hint = authErrorHint[0]
+	}
+	envelope := contracts.NormalizeErrorWithOptions(err, logs, contracts.ErrorOptions{AuthErrorHint: hint})
 	return &mcp.CallToolResult{
 		Content:           []mcp.Content{mcp.NewTextContent(renderErrorText(envelope, contentMode))},
 		StructuredContent: envelope,
@@ -299,6 +314,9 @@ func toolErrorResult(err error, logs []string, contentMode ContentMode) *mcp.Cal
 
 func renderSuccessText(envelope contracts.SuccessEnvelope, contentMode ContentMode) string {
 	if !contentMode.MirrorStructuredContent {
+		if len(envelope.Logs) > 0 {
+			return fmt.Sprintf("Success. Full result is in structuredContent.\nLogs: %d line(s) in structuredContent.", len(envelope.Logs))
+		}
 		return "Success. Full result is in structuredContent."
 	}
 

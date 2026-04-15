@@ -4,8 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"math"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -21,14 +19,7 @@ const (
 	LogLevelDebug LogLevel = "debug"
 )
 
-type Config struct {
-	Endpoint            string
-	Origin              string
-	ProxyURL            string
-	OAuthTokenURL       string
-	APIBaseURL          string
-	ClientID            string
-	ClientSecret        string
+type RuntimeConfig struct {
 	ReadOnly            bool
 	LogLevel            LogLevel
 	UnsafeLogFullCode   bool
@@ -40,8 +31,8 @@ type Config struct {
 	WASMMemory          uint64
 }
 
-func Load(args []string, environ []string) (Config, error) {
-	cfg := Config{
+func LoadRuntime(args []string, environ []string, envPrefix string) (RuntimeConfig, error) {
+	cfg := RuntimeConfig{
 		LogLevel: LogLevelInfo,
 		Execution: limits.Execution{
 			GlobalTimeout:  limits.DefaultGlobalTimeout,
@@ -55,13 +46,11 @@ func Load(args []string, environ []string) (Config, error) {
 		WASMMemory:     limits.WASMMemoryBytes,
 	}
 
-	env := parseEnv(environ)
+	env := ParseEnv(environ)
 
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 
-	var endpointFlag string
-	var proxyFlag string
 	var timeoutFlag string
 	var maxAPICallsFlag int
 	var maxOutputFlag string
@@ -75,8 +64,6 @@ func Load(args []string, environ []string) (Config, error) {
 	var maxCodeSizeFlag string
 	var wasmMemoryFlag string
 
-	fs.StringVar(&endpointFlag, "endpoint", "", "base Intersight endpoint origin")
-	fs.StringVar(&proxyFlag, "proxy", "", "explicit proxy URL for outbound OAuth and API traffic")
 	fs.StringVar(&timeoutFlag, "timeout", "", "global execution timeout")
 	fs.IntVar(&maxAPICallsFlag, "max-api-calls", 0, "maximum API calls per execution")
 	fs.StringVar(&maxOutputFlag, "max-output", "", "maximum serialized output size")
@@ -90,8 +77,21 @@ func Load(args []string, environ []string) (Config, error) {
 	fs.StringVar(&maxCodeSizeFlag, "max-code-size", "", "maximum submitted code size")
 	fs.StringVar(&wasmMemoryFlag, "wasm-memory", "", "QuickJS WebAssembly memory limit")
 
-	if err := fs.Parse(args); err != nil {
-		return Config{}, err
+	if err := fs.Parse(FilterArgs(args, map[string]bool{
+		"timeout":               true,
+		"max-api-calls":         true,
+		"max-output":            true,
+		"max-concurrent":        true,
+		"log-level":             true,
+		"read-only":             false,
+		"unsafe-log-full-code":  false,
+		"legacy-content-mirror": false,
+		"search-timeout":        true,
+		"per-call-timeout":      true,
+		"max-code-size":         true,
+		"wasm-memory":           true,
+	})); err != nil {
+		return RuntimeConfig{}, err
 	}
 
 	setFlags := map[string]bool{}
@@ -99,120 +99,88 @@ func Load(args []string, environ []string) (Config, error) {
 		setFlags[f.Name] = true
 	})
 
-	cfg.ClientID = strings.TrimSpace(env["INTERSIGHT_CLIENT_ID"])
-	cfg.ClientSecret = strings.TrimSpace(env["INTERSIGHT_CLIENT_SECRET"])
-
-	endpointRaw := limits.DefaultEndpoint
-	if value := strings.TrimSpace(env["INTERSIGHT_ENDPOINT"]); value != "" {
-		endpointRaw = value
-	}
-	if setFlags["endpoint"] {
-		endpointRaw = strings.TrimSpace(endpointFlag)
-	}
-
-	parsedEndpoint, err := validateEndpoint(endpointRaw)
-	if err != nil {
-		return Config{}, err
-	}
-	cfg.Endpoint = parsedEndpoint.String()
-	cfg.Origin = parsedEndpoint.Scheme + "://" + parsedEndpoint.Host
-	cfg.OAuthTokenURL = cfg.Origin + "/iam/token"
-	cfg.APIBaseURL = cfg.Origin + "/api/v1"
-
-	proxyRaw := env["INTERSIGHT_PROXY_URL"]
-	if setFlags["proxy"] {
-		proxyRaw = proxyFlag
-	}
-	if strings.TrimSpace(proxyRaw) != "" {
-		parsedProxy, err := validateProxyURL(proxyRaw)
-		if err != nil {
-			return Config{}, err
-		}
-		cfg.ProxyURL = parsedProxy.String()
-	}
-
-	timeoutRaw := env["INTERSIGHT_TIMEOUT"]
+	timeoutRaw := env[envKey(envPrefix, "TIMEOUT")]
 	if setFlags["timeout"] {
 		timeoutRaw = timeoutFlag
 	}
 	if strings.TrimSpace(timeoutRaw) != "" {
 		timeout, err := time.ParseDuration(strings.TrimSpace(timeoutRaw))
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid timeout %q: %w", timeoutRaw, err)
+			return RuntimeConfig{}, fmt.Errorf("invalid timeout %q: %w", timeoutRaw, err)
 		}
 		if timeout <= 0 {
-			return Config{}, fmt.Errorf("invalid timeout %q: must be positive", timeoutRaw)
+			return RuntimeConfig{}, fmt.Errorf("invalid timeout %q: must be positive", timeoutRaw)
 		}
 		cfg.Execution.GlobalTimeout = timeout
 	}
 
-	searchTimeoutRaw := env["INTERSIGHT_SEARCH_TIMEOUT"]
+	searchTimeoutRaw := env[envKey(envPrefix, "SEARCH_TIMEOUT")]
 	if setFlags["search-timeout"] {
 		searchTimeoutRaw = searchTimeoutFlag
 	}
 	if strings.TrimSpace(searchTimeoutRaw) != "" {
 		timeout, err := time.ParseDuration(strings.TrimSpace(searchTimeoutRaw))
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid search-timeout %q: %w", searchTimeoutRaw, err)
+			return RuntimeConfig{}, fmt.Errorf("invalid search-timeout %q: %w", searchTimeoutRaw, err)
 		}
 		if timeout <= 0 {
-			return Config{}, fmt.Errorf("invalid search-timeout %q: must be positive", searchTimeoutRaw)
+			return RuntimeConfig{}, fmt.Errorf("invalid search-timeout %q: must be positive", searchTimeoutRaw)
 		}
 		cfg.SearchTimeout = timeout
 	}
 
-	perCallTimeoutRaw := env["INTERSIGHT_PER_CALL_TIMEOUT"]
+	perCallTimeoutRaw := env[envKey(envPrefix, "PER_CALL_TIMEOUT")]
 	if setFlags["per-call-timeout"] {
 		perCallTimeoutRaw = perCallTimeoutFlag
 	}
 	if strings.TrimSpace(perCallTimeoutRaw) != "" {
 		timeout, err := time.ParseDuration(strings.TrimSpace(perCallTimeoutRaw))
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid per-call-timeout %q: %w", perCallTimeoutRaw, err)
+			return RuntimeConfig{}, fmt.Errorf("invalid per-call-timeout %q: %w", perCallTimeoutRaw, err)
 		}
 		if timeout <= 0 {
-			return Config{}, fmt.Errorf("invalid per-call-timeout %q: must be positive", perCallTimeoutRaw)
+			return RuntimeConfig{}, fmt.Errorf("invalid per-call-timeout %q: must be positive", perCallTimeoutRaw)
 		}
 		cfg.PerCallTimeout = timeout
 	}
 
-	maxOutputRaw := env["INTERSIGHT_MAX_OUTPUT"]
+	maxOutputRaw := env[envKey(envPrefix, "MAX_OUTPUT")]
 	if setFlags["max-output"] {
 		maxOutputRaw = maxOutputFlag
 	}
 	if strings.TrimSpace(maxOutputRaw) != "" {
-		size, err := parseByteSize(maxOutputRaw)
+		size, err := ParseByteSize(maxOutputRaw)
 		if err != nil {
-			return Config{}, err
+			return RuntimeConfig{}, err
 		}
 		cfg.Execution.MaxOutputBytes = size
 	}
 
-	maxAPICallsRaw := env["INTERSIGHT_MAX_API_CALLS"]
+	maxAPICallsRaw := env[envKey(envPrefix, "MAX_API_CALLS")]
 	if setFlags["max-api-calls"] {
 		maxAPICallsRaw = strconv.Itoa(maxAPICallsFlag)
 	}
 	if strings.TrimSpace(maxAPICallsRaw) != "" {
-		value, err := parsePositiveInt("max-api-calls", maxAPICallsRaw)
+		value, err := ParsePositiveInt("max-api-calls", maxAPICallsRaw)
 		if err != nil {
-			return Config{}, err
+			return RuntimeConfig{}, err
 		}
 		cfg.Execution.MaxAPICalls = value
 	}
 
-	maxConcurrentRaw := env["INTERSIGHT_MAX_CONCURRENT"]
+	maxConcurrentRaw := env[envKey(envPrefix, "MAX_CONCURRENT")]
 	if setFlags["max-concurrent"] {
 		maxConcurrentRaw = strconv.Itoa(maxConcurrentFlag)
 	}
 	if strings.TrimSpace(maxConcurrentRaw) != "" {
-		value, err := parsePositiveInt("max-concurrent", maxConcurrentRaw)
+		value, err := ParsePositiveInt("max-concurrent", maxConcurrentRaw)
 		if err != nil {
-			return Config{}, err
+			return RuntimeConfig{}, err
 		}
 		cfg.Execution.MaxConcurrent = value
 	}
 
-	logLevelRaw := env["INTERSIGHT_LOG_LEVEL"]
+	logLevelRaw := env[envKey(envPrefix, "LOG_LEVEL")]
 	if setFlags["log-level"] {
 		logLevelRaw = logLevelFlag
 	}
@@ -223,7 +191,7 @@ func Load(args []string, environ []string) (Config, error) {
 		case LogLevelDebug:
 			cfg.LogLevel = LogLevelDebug
 		default:
-			return Config{}, fmt.Errorf("invalid log level %q: must be info or debug", logLevelRaw)
+			return RuntimeConfig{}, fmt.Errorf("invalid log level %q: must be info or debug", logLevelRaw)
 		}
 	}
 
@@ -231,50 +199,50 @@ func Load(args []string, environ []string) (Config, error) {
 		cfg.ReadOnly = readOnlyFlag
 	}
 
-	unsafeLogFullCodeRaw := env["INTERSIGHT_UNSAFE_LOG_FULL_CODE"]
+	unsafeLogFullCodeRaw := env[envKey(envPrefix, "UNSAFE_LOG_FULL_CODE")]
 	if setFlags["unsafe-log-full-code"] {
 		unsafeLogFullCodeRaw = strconv.FormatBool(unsafeLogFullCodeFlag)
 	}
 	if strings.TrimSpace(unsafeLogFullCodeRaw) != "" {
 		value, err := strconv.ParseBool(strings.TrimSpace(unsafeLogFullCodeRaw))
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid unsafe-log-full-code %q: must be true or false", unsafeLogFullCodeRaw)
+			return RuntimeConfig{}, fmt.Errorf("invalid unsafe-log-full-code %q: must be true or false", unsafeLogFullCodeRaw)
 		}
 		cfg.UnsafeLogFullCode = value
 	}
 
-	legacyContentMirrorRaw := env["INTERSIGHT_LEGACY_CONTENT_MIRROR"]
+	legacyContentMirrorRaw := env[envKey(envPrefix, "LEGACY_CONTENT_MIRROR")]
 	if setFlags["legacy-content-mirror"] {
 		legacyContentMirrorRaw = strconv.FormatBool(legacyContentMirrorFlag)
 	}
 	if strings.TrimSpace(legacyContentMirrorRaw) != "" {
 		value, err := strconv.ParseBool(strings.TrimSpace(legacyContentMirrorRaw))
 		if err != nil {
-			return Config{}, fmt.Errorf("invalid legacy-content-mirror %q: must be true or false", legacyContentMirrorRaw)
+			return RuntimeConfig{}, fmt.Errorf("invalid legacy-content-mirror %q: must be true or false", legacyContentMirrorRaw)
 		}
 		cfg.LegacyContentMirror = value
 	}
 
-	maxCodeSizeRaw := env["INTERSIGHT_MAX_CODE_SIZE"]
+	maxCodeSizeRaw := env[envKey(envPrefix, "MAX_CODE_SIZE")]
 	if setFlags["max-code-size"] {
 		maxCodeSizeRaw = maxCodeSizeFlag
 	}
 	if strings.TrimSpace(maxCodeSizeRaw) != "" {
-		size, err := parsePositiveByteSizeInt("max-code-size", maxCodeSizeRaw)
+		size, err := ParsePositiveByteSizeInt("max-code-size", maxCodeSizeRaw)
 		if err != nil {
-			return Config{}, err
+			return RuntimeConfig{}, err
 		}
 		cfg.MaxCodeSize = size
 	}
 
-	wasmMemoryRaw := env["INTERSIGHT_WASM_MEMORY"]
+	wasmMemoryRaw := env[envKey(envPrefix, "WASM_MEMORY")]
 	if setFlags["wasm-memory"] {
 		wasmMemoryRaw = wasmMemoryFlag
 	}
 	if strings.TrimSpace(wasmMemoryRaw) != "" {
-		size, err := parsePositiveByteSizeUint64("wasm-memory", wasmMemoryRaw)
+		size, err := ParsePositiveByteSizeUint64("wasm-memory", wasmMemoryRaw)
 		if err != nil {
-			return Config{}, err
+			return RuntimeConfig{}, err
 		}
 		cfg.WASMMemory = size
 	}
@@ -282,88 +250,23 @@ func Load(args []string, environ []string) (Config, error) {
 	return cfg, nil
 }
 
-func (c Config) DebugLoggingEnabled() bool {
+func (c RuntimeConfig) DebugLoggingEnabled() bool {
 	return c.LogLevel == LogLevelDebug
 }
 
-func (c Config) HasCredentials() bool {
-	return c.ClientID != "" && c.ClientSecret != ""
+func ParseEnv(environ []string) map[string]string {
+	parsed := make(map[string]string, len(environ))
+	for _, entry := range environ {
+		key, value, ok := strings.Cut(entry, "=")
+		if !ok {
+			continue
+		}
+		parsed[key] = value
+	}
+	return parsed
 }
 
-func validateEndpoint(raw string) (*url.URL, error) {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return nil, fmt.Errorf("invalid endpoint %q: host is required", raw)
-	}
-
-	candidate := raw
-	hasScheme := strings.Contains(candidate, "://")
-	if !hasScheme {
-		candidate = "https://" + candidate
-	}
-
-	parsed, err := url.Parse(candidate)
-	if err != nil {
-		return nil, fmt.Errorf("invalid endpoint %q: %w", raw, err)
-	}
-	if !parsed.IsAbs() {
-		return nil, fmt.Errorf("invalid endpoint %q: must be an absolute URL", raw)
-	}
-	if hasScheme && parsed.Scheme != "https" {
-		return nil, fmt.Errorf("invalid endpoint %q: scheme must be https when provided", raw)
-	}
-	if parsed.Host == "" {
-		return nil, fmt.Errorf("invalid endpoint %q: host is required", raw)
-	}
-	if parsed.User != nil {
-		return nil, fmt.Errorf("invalid endpoint %q: user info is not allowed", raw)
-	}
-	if parsed.RawQuery != "" {
-		return nil, fmt.Errorf("invalid endpoint %q: query is not allowed", raw)
-	}
-	if parsed.Fragment != "" {
-		return nil, fmt.Errorf("invalid endpoint %q: fragment is not allowed", raw)
-	}
-	if parsed.Path != "" && parsed.Path != "/" {
-		return nil, fmt.Errorf("invalid endpoint %q: path is not allowed; use the origin only", raw)
-	}
-	parsed.Scheme = "https"
-	parsed.Path = ""
-	parsed.RawPath = ""
-	return parsed, nil
-}
-
-func validateProxyURL(raw string) (*url.URL, error) {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
-		return nil, fmt.Errorf("invalid proxy %q: URL is required", raw)
-	}
-
-	parsed, err := url.Parse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("invalid proxy %q: %w", raw, err)
-	}
-	if !parsed.IsAbs() {
-		return nil, fmt.Errorf("invalid proxy %q: must be an absolute URL", raw)
-	}
-	if parsed.Host == "" {
-		return nil, fmt.Errorf("invalid proxy %q: host is required", raw)
-	}
-	switch strings.ToLower(parsed.Scheme) {
-	case "http", "https", "socks5":
-	default:
-		return nil, fmt.Errorf("invalid proxy %q: scheme must be http, https, or socks5", raw)
-	}
-	if parsed.RawQuery != "" {
-		return nil, fmt.Errorf("invalid proxy %q: query is not allowed", raw)
-	}
-	if parsed.Fragment != "" {
-		return nil, fmt.Errorf("invalid proxy %q: fragment is not allowed", raw)
-	}
-	return parsed, nil
-}
-
-func parsePositiveInt(name, raw string) (int, error) {
+func ParsePositiveInt(name, raw string) (int, error) {
 	value, err := strconv.Atoi(strings.TrimSpace(raw))
 	if err != nil {
 		return 0, fmt.Errorf("invalid %s %q: %w", name, raw, err)
@@ -374,7 +277,7 @@ func parsePositiveInt(name, raw string) (int, error) {
 	return value, nil
 }
 
-func parseByteSize(raw string) (int64, error) {
+func ParseByteSize(raw string) (int64, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return 0, errors.New("invalid max-output \"\": value is required")
@@ -415,33 +318,62 @@ func parseByteSize(raw string) (int64, error) {
 	return value, nil
 }
 
-func parsePositiveByteSizeInt(name, raw string) (int, error) {
-	size, err := parseByteSize(raw)
+func ParsePositiveByteSizeInt(name, raw string) (int, error) {
+	size, err := ParseByteSize(raw)
 	if err != nil {
 		return 0, fmt.Errorf("invalid %s %q: %w", name, raw, err)
 	}
-	if size > math.MaxInt {
+	const maxInt = int(^uint(0) >> 1)
+	if size > int64(maxInt) {
 		return 0, fmt.Errorf("invalid %s %q: exceeds platform integer size", name, raw)
 	}
 	return int(size), nil
 }
 
-func parsePositiveByteSizeUint64(name, raw string) (uint64, error) {
-	size, err := parseByteSize(raw)
+func ParsePositiveByteSizeUint64(name, raw string) (uint64, error) {
+	size, err := ParseByteSize(raw)
 	if err != nil {
 		return 0, fmt.Errorf("invalid %s %q: %w", name, raw, err)
 	}
 	return uint64(size), nil
 }
 
-func parseEnv(environ []string) map[string]string {
-	parsed := make(map[string]string, len(environ))
-	for _, entry := range environ {
-		key, value, ok := strings.Cut(entry, "=")
+func envKey(prefix, suffix string) string {
+	prefix = strings.TrimSpace(prefix)
+	suffix = strings.TrimSpace(suffix)
+	switch {
+	case prefix == "":
+		return suffix
+	case suffix == "":
+		return prefix
+	default:
+		return prefix + "_" + suffix
+	}
+}
+
+func FilterArgs(args []string, known map[string]bool) []string {
+	if len(args) == 0 {
+		return nil
+	}
+	filtered := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		arg := strings.TrimSpace(args[i])
+		if !strings.HasPrefix(arg, "-") {
+			continue
+		}
+		name := strings.TrimLeft(arg, "-")
+		if key, _, ok := strings.Cut(name, "="); ok {
+			name = key
+		}
+		expectsValue, ok := known[name]
 		if !ok {
 			continue
 		}
-		parsed[key] = value
+		filtered = append(filtered, args[i])
+		if expectsValue && !strings.Contains(args[i], "=") && i+1 < len(args) {
+			filtered = append(filtered, args[i+1])
+			i++
+		}
 	}
-	return parsed
+	return filtered
 }

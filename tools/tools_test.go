@@ -11,16 +11,31 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
-	"github.com/mimaurer/intersight-mcp/generated"
+	targetintersight "github.com/mimaurer/intersight-mcp/implementations/intersight"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 	"github.com/mimaurer/intersight-mcp/internal/limits"
 	"github.com/mimaurer/intersight-mcp/sandbox"
 )
 
+func intersightToolMetadata() ToolMetadata {
+	runtimeMeta := targetintersight.Target().RuntimeMetadata()
+	descriptions := runtimeMeta.ToolDescriptions
+	return ToolMetadata{
+		SearchTitle:       descriptions.SearchTitle,
+		SearchDescription: descriptions.SearchDescription,
+		QueryTitle:        descriptions.QueryTitle,
+		QueryDescription:  descriptions.QueryDescription,
+		MutateTitle:       descriptions.MutateTitle,
+		MutateDescription: descriptions.MutateDescription,
+		AuthErrorHint:     runtimeMeta.AuthErrorHint,
+	}
+}
+
 func TestServerToolsRegistration(t *testing.T) {
 	t.Parallel()
 
-	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), limits.MaxCodeSizeBytes, 0, false, false, ContentMode{})
+	metadata := intersightToolMetadata()
+	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), limits.MaxCodeSizeBytes, 0, false, false, ContentMode{}, metadata)
 	if len(tools) != 3 {
 		t.Fatalf("len(ServerTools()) = %d, want 3", len(tools))
 	}
@@ -30,21 +45,22 @@ func TestServerToolsRegistration(t *testing.T) {
 		byName[tool.Tool.Name] = tool.Tool
 	}
 
-	assertTool(t, byName[ToolSearch], searchTitle, true, false, limits.MaxCodeSizeBytes)
-	assertTool(t, byName[ToolQuery], queryTitle, true, false, limits.MaxCodeSizeBytes)
-	assertTool(t, byName[ToolMutate], mutateTitle, false, true, limits.MaxCodeSizeBytes)
-	assertDescription(t, byName[ToolSearch], searchDescription)
-	assertDescription(t, byName[ToolQuery], queryDescription)
-	assertDescription(t, byName[ToolMutate], mutateDescription)
-	assertPublicSDKOnly(t, searchDescription)
-	assertPublicSDKOnly(t, queryDescription)
-	assertPublicSDKOnly(t, mutateDescription)
+	assertTool(t, byName[ToolSearch], metadata.SearchTitle, true, false, limits.MaxCodeSizeBytes)
+	assertTool(t, byName[ToolQuery], metadata.QueryTitle, true, false, limits.MaxCodeSizeBytes)
+	assertTool(t, byName[ToolMutate], metadata.MutateTitle, false, true, limits.MaxCodeSizeBytes)
+	assertDescription(t, byName[ToolSearch], metadata.SearchDescription)
+	assertDescription(t, byName[ToolQuery], metadata.QueryDescription)
+	assertDescription(t, byName[ToolMutate], metadata.MutateDescription)
+	assertPublicSDKOnly(t, metadata.SearchDescription)
+	assertPublicSDKOnly(t, metadata.QueryDescription)
+	assertPublicSDKOnly(t, metadata.MutateDescription)
 }
 
 func TestServerToolsRegistrationReadOnlyOmitsMutate(t *testing.T) {
 	t.Parallel()
 
-	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), limits.MaxCodeSizeBytes, 0, false, true, ContentMode{})
+	metadata := intersightToolMetadata()
+	tools := ServerTools(stubExecutor{}, stubExecutor{}, stubExecutor{}, NewLimiter(3), limits.MaxCodeSizeBytes, 0, false, true, ContentMode{}, metadata)
 	if len(tools) != 2 {
 		t.Fatalf("len(ServerTools()) = %d, want 2", len(tools))
 	}
@@ -54,8 +70,8 @@ func TestServerToolsRegistrationReadOnlyOmitsMutate(t *testing.T) {
 		byName[tool.Tool.Name] = tool.Tool
 	}
 
-	assertTool(t, byName[ToolSearch], searchTitle, true, false, limits.MaxCodeSizeBytes)
-	assertTool(t, byName[ToolQuery], queryTitle, true, false, limits.MaxCodeSizeBytes)
+	assertTool(t, byName[ToolSearch], metadata.SearchTitle, true, false, limits.MaxCodeSizeBytes)
+	assertTool(t, byName[ToolQuery], metadata.QueryTitle, true, false, limits.MaxCodeSizeBytes)
 	if byName[ToolMutate].Name != "" {
 		t.Fatalf("mutate tool should be omitted in read-only mode")
 	}
@@ -97,7 +113,7 @@ func TestInputSchemasUseConfiguredMaxCodeSize(t *testing.T) {
     },
     "compact": {
       "type": "boolean",
-      "description": "Return compacted API objects by default. Set false to keep full raw API fields."
+      "description": "Return compacted API objects by default. Omit for normal use. Set false only as a follow-up when the default compacted response was insufficient and you need full raw API fields."
     }
   },
   "required": ["code"],
@@ -120,7 +136,7 @@ func TestInputSchemasUseConfiguredMaxCodeSize(t *testing.T) {
     },
     "compact": {
       "type": "boolean",
-      "description": "Return compacted API objects by default. Set false to keep full raw API fields."
+      "description": "Return compacted API objects by default. Omit for normal use. Set false only as a follow-up when the default compacted response was insufficient and you need full raw API fields."
     }
   },
   "required": ["changeSummary", "code"],
@@ -153,12 +169,15 @@ func TestSuccessMapping(t *testing.T) {
 	if !envelope.OK {
 		t.Fatalf("envelope.OK = false, want true")
 	}
+	if got := strings.Join(envelope.Logs, ","); got != "hello,world" {
+		t.Fatalf("envelope.Logs = %#v", envelope.Logs)
+	}
 
 	text, ok := result.Content[0].(mcp.TextContent)
 	if !ok {
 		t.Fatalf("content type = %T", result.Content[0])
 	}
-	if text.Text != "Success. Full result is in structuredContent." {
+	if text.Text != "Success. Full result is in structuredContent.\nLogs: 2 line(s) in structuredContent." {
 		t.Fatalf("unexpected success text: %q", text.Text)
 	}
 	if result.Meta != nil {
@@ -217,7 +236,7 @@ func TestQuerySuccessCanDisableCompaction(t *testing.T) {
 		Params: mcp.CallToolParams{
 			Name: ToolQuery,
 			Arguments: map[string]any{
-				"code":    `return await sdk.compute.rackUnit.list();`,
+				"code":    `return await sdk.compute.rackUnits.list();`,
 				"compact": false,
 			},
 		},
@@ -282,7 +301,7 @@ func TestQuerySuccessCompactsAPIObjectsRecursively(t *testing.T) {
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolQuery,
-			Arguments: map[string]any{"code": `return await sdk.compute.rackUnit.list();`},
+			Arguments: map[string]any{"code": `return await sdk.compute.rackUnits.list();`},
 		},
 	})
 	if err != nil {
@@ -359,7 +378,7 @@ func TestSearchSuccessDoesNotCompactPayload(t *testing.T) {
 func TestSearchToolUsesSharedLimiter(t *testing.T) {
 	t.Parallel()
 
-	tool := NewSearchTool(stubExecutor{}, NewLimiter(1), limits.MaxCodeSizeBytes, 0, ContentMode{})
+	tool := NewSearchTool(stubExecutor{}, NewLimiter(1), limits.MaxCodeSizeBytes, 0, ContentMode{}, intersightToolMetadata())
 	if tool.Tool.Name != ToolSearch {
 		t.Fatalf("tool name = %q, want %q", tool.Tool.Name, ToolSearch)
 	}
@@ -477,7 +496,7 @@ func TestErrorMapping(t *testing.T) {
 func TestQueryHTTPFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	t.Parallel()
 
-	exec, err := sandbox.NewQJSExecutorWithArtifacts(toolTestConfig(), stubAPICaller{
+	exec, err := sandbox.NewQJSExecutorWithArtifactsAndExtensions(toolTestConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			return nil, contracts.HTTPError{
 				Status:  http.StatusBadGateway,
@@ -485,13 +504,13 @@ func TestQueryHTTPFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 				Message: "Intersight returned HTTP 502",
 			}
 		},
-	}, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes())
+	}, targetintersight.Artifacts().ResolvedSpec, targetintersight.Artifacts().SDKCatalog, targetintersight.Artifacts().Rules, targetintersight.SandboxExtensions())
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
 	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0, ContentMode{})
 
-	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
+result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnits.list();`))
 	if err != nil {
 		t.Fatalf("handler() error = %v", err)
 	}
@@ -517,17 +536,17 @@ func TestQueryHTTPFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 func TestQueryNetworkFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	t.Parallel()
 
-	exec, err := sandbox.NewQJSExecutorWithArtifacts(toolTestConfig(), stubAPICaller{
+	exec, err := sandbox.NewQJSExecutorWithArtifactsAndExtensions(toolTestConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			return nil, contracts.NetworkError{Message: "dial failed"}
 		},
-	}, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes())
+	}, targetintersight.Artifacts().ResolvedSpec, targetintersight.Artifacts().SDKCatalog, targetintersight.Artifacts().Rules, targetintersight.SandboxExtensions())
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
 	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0, ContentMode{})
 
-	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
+result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnits.list();`))
 	if err != nil {
 		t.Fatalf("handler() error = %v", err)
 	}
@@ -550,17 +569,17 @@ func TestQueryNetworkFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 func TestQueryAuthFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 	t.Parallel()
 
-	exec, err := sandbox.NewQJSExecutorWithArtifacts(toolTestConfig(), stubAPICaller{
+	exec, err := sandbox.NewQJSExecutorWithArtifactsAndExtensions(toolTestConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			return nil, contracts.AuthError{Message: "token refresh failed"}
 		},
-	}, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes())
+	}, targetintersight.Artifacts().ResolvedSpec, targetintersight.Artifacts().SDKCatalog, targetintersight.Artifacts().Rules, targetintersight.SandboxExtensions())
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
 	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0, ContentMode{})
 
-	result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnit.list();`))
+result, err := handler(context.Background(), toolRequest(`return await sdk.compute.rackUnits.list();`))
 	if err != nil {
 		t.Fatalf("handler() error = %v", err)
 	}
@@ -583,7 +602,11 @@ func TestQueryAuthFailureNormalizesThroughMCPEnvelope(t *testing.T) {
 func TestQueryAPICallReturnsReferenceErrorEnvelope(t *testing.T) {
 	t.Parallel()
 
-	handler := NewToolHandler(sandbox.ModeQuery, sandbox.NewQJSExecutor(toolTestConfig(), stubAPICaller{}), nil, 0, ContentMode{})
+	exec, err := sandbox.NewQJSExecutorWithArtifactsAndExtensions(toolTestConfig(), stubAPICaller{}, targetintersight.Artifacts().ResolvedSpec, targetintersight.Artifacts().SDKCatalog, targetintersight.Artifacts().Rules, targetintersight.SandboxExtensions())
+	if err != nil {
+		t.Fatalf("NewQJSExecutorWithArtifactsAndExtensions() error = %v", err)
+	}
+	handler := NewToolHandler(sandbox.ModeQuery, exec, nil, 0, ContentMode{})
 
 	result, err := handler(context.Background(), toolRequest(`return await api.call('GET', '/api/v1/test');`))
 	if err != nil {
@@ -660,7 +683,7 @@ func TestMutateHandlerRequiresChangeSummary(t *testing.T) {
 	result, err := handler(context.Background(), mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      ToolMutate,
-			Arguments: map[string]any{"code": `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`},
+			Arguments: map[string]any{"code": `return await sdk.ntp.policies.delete({ path: { Moid: "x" } });`},
 		},
 	})
 	if err != nil {
@@ -685,7 +708,7 @@ func TestMutateHandlerRejectsBlankChangeSummary(t *testing.T) {
 	t.Parallel()
 
 	handler := NewToolHandler(sandbox.ModeMutate, stubExecutor{}, nil, 0, ContentMode{})
-	result, err := handler(context.Background(), mutateToolRequest("   ", `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`))
+result, err := handler(context.Background(), mutateToolRequest("   ", `return await sdk.ntp.policies.delete({ path: { Moid: "x" } });`))
 	if err != nil {
 		t.Fatalf("handler() error = %v", err)
 	}
@@ -747,7 +770,7 @@ func TestMutateHandlerPassesOnlyCodeToExecutor(t *testing.T) {
 		},
 	}, nil, 0, ContentMode{})
 
-	result, err := handler(context.Background(), mutateToolRequest("Delete the NTP policy", `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });`))
+result, err := handler(context.Background(), mutateToolRequest("Delete the NTP policy", `return await sdk.ntp.policies.delete({ path: { Moid: "x" } });`))
 	if err != nil {
 		t.Fatalf("handler() error = %v", err)
 	}
@@ -757,7 +780,7 @@ func TestMutateHandlerPassesOnlyCodeToExecutor(t *testing.T) {
 	if gotMode != sandbox.ModeMutate {
 		t.Fatalf("mode = %q, want %q", gotMode, sandbox.ModeMutate)
 	}
-	if gotCode != `return await sdk.ntp.policy.delete({ path: { Moid: "x" } });` {
+	if gotCode != `return await sdk.ntp.policies.delete({ path: { Moid: "x" } });` {
 		t.Fatalf("code = %q", gotCode)
 	}
 }
@@ -947,10 +970,11 @@ func TestToolDescriptionTokenBudget(t *testing.T) {
 
 	const maxApproxTokens = 2300
 
+	metadata := intersightToolMetadata()
 	descriptions := map[string]string{
-		ToolSearch: searchDescription,
-		ToolQuery:  queryDescription,
-		ToolMutate: mutateDescription,
+		ToolSearch: metadata.SearchDescription,
+		ToolQuery:  metadata.QueryDescription,
+		ToolMutate: metadata.MutateDescription,
 	}
 
 	total := 0
@@ -1005,9 +1029,10 @@ func approxFieldTokens(field string) int {
 func TestToolDescriptionTokenBudgetReport(t *testing.T) {
 	t.Parallel()
 
-	total := approximateTokenCount(searchDescription) +
-		approximateTokenCount(queryDescription) +
-		approximateTokenCount(mutateDescription)
+	metadata := intersightToolMetadata()
+	total := approximateTokenCount(metadata.SearchDescription) +
+		approximateTokenCount(metadata.QueryDescription) +
+		approximateTokenCount(metadata.MutateDescription)
 	if total <= 0 {
 		t.Fatal("expected positive token estimate")
 	}

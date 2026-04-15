@@ -10,6 +10,7 @@ import (
 	"slices"
 	"testing"
 
+	targetintersight "github.com/mimaurer/intersight-mcp/implementations/intersight"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 )
 
@@ -63,7 +64,12 @@ denylist:
 	if post.RequestBody == nil || post.RequestBody.Content["application/json"].Schema == nil {
 		t.Fatalf("expected normalized JSON request body")
 	}
-	if got := post.RequestBody.Content["application/json"].Schema.Required; len(got) != 1 || got[0] != "Name" {
+	requestSchemaName := post.RequestBody.Content["application/json"].Schema.Circular
+	requestSchema, ok := spec.Schemas[requestSchemaName]
+	if !ok {
+		t.Fatalf("expected synthesized request schema %q", requestSchemaName)
+	}
+	if got := requestSchema.Required; len(got) != 1 || got[0] != "Name" {
 		t.Fatalf("expected flattened request schema required fields, got %v", got)
 	}
 
@@ -104,9 +110,9 @@ denylist:
 	if err := json.Unmarshal(catalog, &sdkCatalog); err != nil {
 		t.Fatalf("unmarshal sdk catalog: %v", err)
 	}
-	entry, ok := sdkCatalog.Methods["compute.rackUnit.list"]
+	entry, ok := sdkCatalog.Methods["compute.rackUnits.list"]
 	if !ok {
-		t.Fatalf("expected compute.rackUnit.list in sdk catalog")
+		t.Fatalf("expected compute.rackUnits.list in sdk catalog")
 	}
 	if entry.Descriptor.OperationID != "GetComputeRackUnitList" {
 		t.Fatalf("unexpected descriptor operationId: %#v", entry.Descriptor)
@@ -114,9 +120,9 @@ denylist:
 	if got := entry.QueryParameters; len(got) != 2 || got[0] != "$filter" || got[1] != "$top" {
 		t.Fatalf("unexpected query parameters: %#v", got)
 	}
-	create, ok := sdkCatalog.Methods["compute.rackUnit.create"]
+	create, ok := sdkCatalog.Methods["compute.rackUnits.create"]
 	if !ok {
-		t.Fatalf("expected compute.rackUnit.create in sdk catalog")
+		t.Fatalf("expected compute.rackUnits.create in sdk catalog")
 	}
 	if !create.RequestBodyRequired {
 		t.Fatalf("expected create operation request body to be required")
@@ -163,7 +169,10 @@ denylist:
 		t.Fatalf("expected search fields AdminState.enum to be true")
 	}
 	if !slices.Contains(resource.Operations, "create") {
-		t.Fatalf("expected compute.rackUnit.create in search catalog resource: %#v", resource.Operations)
+		t.Fatalf("expected compute.rackUnits.create in search catalog resource: %#v", resource.Operations)
+	}
+	if searchCatalog.Metrics == nil {
+		t.Fatalf("expected metrics catalog in search catalog")
 	}
 	if _, ok := searchCatalog.Metrics.ByName["system.cpu.utilization_user"]; !ok {
 		t.Fatalf("expected fixture metric in search catalog")
@@ -233,7 +242,7 @@ func TestGeneratorManifestMismatchFails(t *testing.T) {
 		t.Fatalf("write metrics catalog: %v", err)
 	}
 
-	err := newGenerator(specPath, filterPath, metricsPath, outPath, &bytes.Buffer{}, &bytes.Buffer{}).Run()
+	err := newGenerator(specPath, manifestPath, filterPath, metricsPath, outPath, []string{"/api/v1/"}, nil, nil, &bytes.Buffer{}, &bytes.Buffer{}).Run()
 	if err == nil {
 		t.Fatalf("expected manifest mismatch error")
 	}
@@ -258,6 +267,34 @@ denylist:
 	}
 	if _, ok := spec.Paths["/api/v1/example/Parents"]; !ok {
 		t.Fatalf("expected YAML fixture route to be retained")
+	}
+}
+
+func TestGeneratorAllowsEmptyFilterPath(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	specPath := filepath.Join(dir, "third_party", "acme", "openapi", "raw", "openapi.json")
+	if err := os.MkdirAll(filepath.Dir(specPath), 0o755); err != nil {
+		t.Fatalf("mkdir spec dir: %v", err)
+	}
+	if err := os.WriteFile(specPath, []byte(baseFixtureSpec), 0o644); err != nil {
+		t.Fatalf("write spec: %v", err)
+	}
+
+	sum := sha256.Sum256([]byte(baseFixtureSpec))
+	manifest := `{"published_version":"1.0.0-fixture","source_url":"https://example.com/spec","sha256":"` + hex.EncodeToString(sum[:]) + `","retrieval_date":"2026-04-07"}`
+	manifestPath := filepath.Join(dir, "third_party", "acme", "openapi", "manifest.json")
+	if err := os.MkdirAll(filepath.Dir(manifestPath), 0o755); err != nil {
+		t.Fatalf("mkdir manifest dir: %v", err)
+	}
+	if err := os.WriteFile(manifestPath, []byte(manifest), 0o644); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	outPath := filepath.Join(dir, "generated", "spec_resolved.json")
+	if err := newGenerator(specPath, manifestPath, "", "", outPath, []string{"/api/v1/"}, nil, nil, &bytes.Buffer{}, &bytes.Buffer{}).Run(); err != nil {
+		t.Fatalf("Run() error = %v", err)
 	}
 }
 
@@ -360,14 +397,419 @@ denylist:
 	if err := json.Unmarshal(search, &searchCatalog); err != nil {
 		t.Fatalf("unmarshal search catalog: %v", err)
 	}
-	if !slices.Contains(searchCatalog.Resources["ntp.policy"].Operations, "create") {
-		t.Fatalf("expected ntp.policy.create in search catalog")
+	if !slices.Contains(searchCatalog.Resources["ntp.policies"].Operations, "create") {
+		t.Fatalf("expected ntp.policies.create in search catalog")
+	}
+}
+
+func TestGeneratorAllowsMissingMetricsCatalog(t *testing.T) {
+	t.Parallel()
+
+	_, _, _, search, _, _ := runFixtureGenerator(t, fixtureInputs{
+		spec: baseFixtureSpec,
+		filter: `
+denylist:
+  namespaces: []
+  pathPrefixes: []
+  operationIds: []
+`,
+		omitMetrics: true,
+	})
+
+	var searchCatalog contracts.SearchCatalog
+	if err := json.Unmarshal(search, &searchCatalog); err != nil {
+		t.Fatalf("unmarshal search catalog: %v", err)
+	}
+	if searchCatalog.Metrics != nil {
+		t.Fatalf("expected metrics to be omitted when catalog is missing, got %#v", searchCatalog.Metrics)
+	}
+}
+
+func TestGeneratorPrefixesPathsFromServerBaseURL(t *testing.T) {
+	t.Parallel()
+
+	out, _, _, _, _, _ := runFixtureGenerator(t, fixtureInputs{
+		spec: `{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Fixture",
+    "version": "1.0.0-fixture"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/{basePath}",
+      "variables": {
+        "basePath": {
+          "default": "api/v2"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/devices": {
+      "get": {
+        "operationId": "ListDevices",
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`,
+		filter: `
+denylist:
+  namespaces: []
+  pathPrefixes: []
+  operationIds: []
+`,
+	})
+
+	var spec normalizedSpec
+	if err := json.Unmarshal(out, &spec); err != nil {
+		t.Fatalf("unmarshal output: %v", err)
+	}
+	if _, ok := spec.Paths["/api/v2/devices"]; !ok {
+		t.Fatalf("expected server base path to be prefixed into normalized path")
+	}
+}
+
+func TestGeneratorAllowsNonAPIV1PathsWithoutFallbackPrefixes(t *testing.T) {
+	t.Parallel()
+
+	out, _, _, _, _, _ := runFixtureGenerator(t, fixtureInputs{
+		spec: `{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Fixture",
+    "version": "1.0.0-fixture"
+  },
+  "paths": {
+    "/devices": {
+      "get": {
+        "operationId": "ListDevices",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    }
+  }
+}`,
+		filter: `
+denylist:
+  namespaces: []
+  pathPrefixes: []
+  operationIds: []
+`,
+		fallbackPathPrefixes: []string{},
+	})
+
+	var spec normalizedSpec
+	if err := json.Unmarshal(out, &spec); err != nil {
+		t.Fatalf("unmarshal output: %v", err)
+	}
+	if _, ok := spec.Paths["/devices"]; !ok {
+		t.Fatalf("expected non-/api/v1 path to be retained when no fallback prefixes are configured")
+	}
+}
+
+func TestGeneratorNamespaceDenylistUsesFirstMeaningfulPathSegment(t *testing.T) {
+	t.Parallel()
+
+	out, _, _, _, _, _ := runFixtureGenerator(t, fixtureInputs{
+		spec: `{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Fixture",
+    "version": "1.0.0-fixture"
+  },
+  "paths": {
+    "/devices": {
+      "get": {
+        "operationId": "ListDevices",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    },
+    "/networks": {
+      "get": {
+        "operationId": "ListNetworks",
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    }
+  }
+}`,
+		filter: `
+denylist:
+  namespaces:
+    - name: devices
+      rationale: exclude device endpoints
+  pathPrefixes: []
+  operationIds: []
+`,
+		fallbackPathPrefixes: []string{},
+	})
+
+	var spec normalizedSpec
+	if err := json.Unmarshal(out, &spec); err != nil {
+		t.Fatalf("unmarshal output: %v", err)
+	}
+	if _, ok := spec.Paths["/devices"]; ok {
+		t.Fatalf("expected /devices path to be denied by namespace")
+	}
+	if _, ok := spec.Paths["/networks"]; !ok {
+		t.Fatalf("expected /networks path to remain")
+	}
+}
+
+func TestGeneratorAllowsSpecsWithoutComponentSchemas(t *testing.T) {
+	t.Parallel()
+
+	out, catalog, _, search, _, _ := runFixtureGenerator(t, fixtureInputs{
+		spec: `{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Fixture",
+    "version": "1.0.0-fixture"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/{basePath}",
+      "variables": {
+        "basePath": {
+          "default": "api/v1"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/devices/{serial}": {
+      "get": {
+        "operationId": "GetDevice",
+        "parameters": [
+          {
+            "name": "serial",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "serial": { "type": "string" },
+                    "name": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}`,
+		filter: `
+denylist:
+  namespaces: []
+  pathPrefixes: []
+  operationIds: []
+`,
+	})
+
+	var spec normalizedSpec
+	if err := json.Unmarshal(out, &spec); err != nil {
+		t.Fatalf("unmarshal output: %v", err)
+	}
+	if _, ok := spec.Paths["/api/v1/devices/{serial}"]; !ok {
+		t.Fatalf("expected inline-only path to be retained")
+	}
+	if _, ok := spec.Schemas["inline.GetDevice.response.200"]; !ok {
+		t.Fatalf("expected synthesized inline response schema, got %#v", spec.Schemas)
+	}
+	if got := spec.Paths["/api/v1/devices/{serial}"]["get"].Responses["200"].Content["application/json"].Schema.Circular; got != "inline.GetDevice.response.200" {
+		t.Fatalf("expected response to reference synthesized schema, got %q", got)
+	}
+
+	var sdkCatalog contracts.SDKCatalog
+	if err := json.Unmarshal(catalog, &sdkCatalog); err != nil {
+		t.Fatalf("unmarshal sdk catalog: %v", err)
+	}
+	entry, ok := sdkCatalog.Methods["devices.devices.get"]
+	if !ok {
+		t.Fatalf("expected sdk method derived from inline-only operation")
+	}
+	if entry.Descriptor.PathTemplate != "/api/v1/devices/{serial}" {
+		t.Fatalf("unexpected normalized path template: %#v", entry.Descriptor)
+	}
+
+	var searchCatalog contracts.SearchCatalog
+	if err := json.Unmarshal(search, &searchCatalog); err != nil {
+		t.Fatalf("unmarshal search catalog: %v", err)
+	}
+	resource, ok := searchCatalog.Resources["devices.devices"]
+	if !ok {
+		t.Fatalf("expected search resource for inline-only operation")
+	}
+	if resource.Schema != "inline.GetDevice.response.200" {
+		t.Fatalf("expected inline response schema to back search resource, got %q", resource.Schema)
+	}
+}
+
+func TestGeneratorSynthesizesInlineRequestAndParameterSchemas(t *testing.T) {
+	t.Parallel()
+
+	out, _, _, _, _, _ := runFixtureGenerator(t, fixtureInputs{
+		spec: `{
+  "openapi": "3.0.2",
+  "info": {
+    "title": "Fixture",
+    "version": "1.0.0-fixture"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/api/v1"
+    }
+  ],
+  "paths": {
+    "/devices/{serial}": {
+      "patch": {
+        "operationId": "UpdateDevice",
+        "parameters": [
+          {
+            "name": "serial",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" }
+              }
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "ok"
+          }
+        }
+      }
+    }
+  }
+}`,
+		filter: `
+denylist:
+  namespaces: []
+  pathPrefixes: []
+  operationIds: []
+`,
+	})
+
+	var spec normalizedSpec
+	if err := json.Unmarshal(out, &spec); err != nil {
+		t.Fatalf("unmarshal output: %v", err)
+	}
+	if _, ok := spec.Schemas["inline.UpdateDevice.request"]; !ok {
+		t.Fatalf("expected synthesized inline request schema")
+	}
+	if _, ok := spec.Schemas["inline.UpdateDevice.parameter.query.filter"]; !ok {
+		t.Fatalf("expected synthesized inline parameter schema")
+	}
+	op := spec.Paths["/api/v1/devices/{serial}"]["patch"]
+	if got := op.RequestBody.Content["application/json"].Schema.Circular; got != "inline.UpdateDevice.request" {
+		t.Fatalf("request schema circular = %q", got)
+	}
+	if got := op.Parameters[1].Schema.Circular; got != "inline.UpdateDevice.parameter.query.filter" {
+		t.Fatalf("parameter schema circular = %q", got)
+	}
+}
+
+func TestGeneratorWithoutProviderHookLeavesRelationshipSchemasGeneric(t *testing.T) {
+	t.Parallel()
+
+	out, _, _, _, _, _ := runFixtureGenerator(t, fixtureInputs{
+		spec: baseFixtureSpec,
+		filter: `
+denylist:
+  namespaces: []
+  pathPrefixes: []
+  operationIds: []
+`,
+		disableSchemaHook: true,
+	})
+
+	var spec normalizedSpec
+	if err := json.Unmarshal(out, &spec); err != nil {
+		t.Fatalf("unmarshal output: %v", err)
+	}
+
+	org := spec.Schemas["compute.RackUnit"].Properties["Organization"]
+	if org.Relationship {
+		t.Fatalf("expected generic generator to avoid provider-specific relationship metadata: %#v", org)
+	}
+	if org.ExpandTarget != "" {
+		t.Fatalf("expected generic generator to avoid provider-specific expand targets: %#v", org)
+	}
+	if org.Circular != "organization.OrganizationRelationship" {
+		t.Fatalf("expected unresolved ref without provider hook, got %#v", org)
 	}
 }
 
 type fixtureInputs struct {
-	spec   string
-	filter string
+	spec                 string
+	filter               string
+	omitMetrics          bool
+	disableSchemaHook    bool
+	fallbackPathPrefixes []string
 }
 
 func runFixtureGenerator(t *testing.T, in fixtureInputs) ([]byte, []byte, []byte, []byte, []byte, []byte) {
@@ -397,17 +839,28 @@ func runFixtureGenerator(t *testing.T, in fixtureInputs) ([]byte, []byte, []byte
 		t.Fatalf("write filter: %v", err)
 	}
 
-	metricsPath := filepath.Join(dir, "third_party", "intersight", "metrics", "search_metrics.json")
-	if err := os.MkdirAll(filepath.Dir(metricsPath), 0o755); err != nil {
-		t.Fatalf("mkdir metrics dir: %v", err)
-	}
-	if err := os.WriteFile(metricsPath, []byte(fixtureMetricsCatalog), 0o644); err != nil {
-		t.Fatalf("write metrics catalog: %v", err)
+	metricsPath := ""
+	if !in.omitMetrics {
+		metricsPath = filepath.Join(dir, "third_party", "intersight", "metrics", "search_metrics.json")
+		if err := os.MkdirAll(filepath.Dir(metricsPath), 0o755); err != nil {
+			t.Fatalf("mkdir metrics dir: %v", err)
+		}
+		if err := os.WriteFile(metricsPath, []byte(fixtureMetricsCatalog), 0o644); err != nil {
+			t.Fatalf("write metrics catalog: %v", err)
+		}
 	}
 
 	outPath := filepath.Join(dir, "generated", "spec_resolved.json")
+	schemaHook := targetintersight.SchemaNormalizationHook()
+	if in.disableSchemaHook {
+		schemaHook = nil
+	}
+	fallbackPathPrefixes := in.fallbackPathPrefixes
+	if fallbackPathPrefixes == nil {
+		fallbackPathPrefixes = []string{"/api/v1/"}
+	}
 	var stdout, stderr bytes.Buffer
-	if err := newGenerator(specPath, filterPath, metricsPath, outPath, &stdout, &stderr).Run(); err != nil {
+	if err := newGenerator(specPath, manifestPath, filterPath, metricsPath, outPath, fallbackPathPrefixes, nil, schemaHook, &stdout, &stderr).Run(); err != nil {
 		t.Fatalf("run generator: %v", err)
 	}
 

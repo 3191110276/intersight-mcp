@@ -9,14 +9,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mimaurer/intersight-mcp/generated"
+	targetintersight "github.com/mimaurer/intersight-mcp/implementations/intersight"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 )
+
+func newTestQJSExecutorWithArtifacts(cfg Config, client APICaller, specJSON, catalogJSON, rulesJSON []byte) (Executor, error) {
+	return NewQJSExecutorWithArtifactsAndExtensions(cfg, client, specJSON, catalogJSON, rulesJSON, targetintersight.SandboxExtensions())
+}
 
 func TestSearchWrongGlobalReferenceError(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewSearchExecutor(testConfig(), generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	artifacts := targetintersight.Artifacts()
+	exec, err := NewSearchExecutor(testConfig(), artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog)
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
@@ -36,8 +41,12 @@ func TestSearchWrongGlobalReferenceError(t *testing.T) {
 func TestQueryWrongGlobalReferenceError(t *testing.T) {
 	t.Parallel()
 
-	exec := NewQJSExecutor(testConfig(), stubAPICaller{})
-	_, err := exec.Execute(context.Background(), `return spec.paths;`, ModeQuery)
+	artifacts := targetintersight.Artifacts()
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules)
+	if err != nil {
+		t.Fatalf("newTestQJSExecutorWithArtifacts() error = %v", err)
+	}
+	_, err = exec.Execute(context.Background(), `return spec.paths;`, ModeQuery)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
@@ -51,7 +60,8 @@ func TestQueryWrongGlobalReferenceError(t *testing.T) {
 func TestNewQJSExecutorSupportsSDKQueries(t *testing.T) {
 	t.Parallel()
 
-	exec := NewQJSExecutor(testConfig(), stubAPICaller{
+	artifacts := targetintersight.Artifacts()
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			if operation.Method != http.MethodGet {
 				t.Fatalf("operation.Method = %q, want %q", operation.Method, http.MethodGet)
@@ -61,9 +71,12 @@ func TestNewQJSExecutorSupportsSDKQueries(t *testing.T) {
 			}
 			return map[string]any{"Results": []any{map[string]any{"Moid": "rack-1"}}}, nil
 		},
-	})
+	}, artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules)
+	if err != nil {
+		t.Fatalf("newTestQJSExecutorWithArtifacts() error = %v", err)
+	}
 
-	result, err := exec.Execute(context.Background(), `return await sdk.compute.rackUnit.list();`, ModeQuery)
+result, err := exec.Execute(context.Background(), `return await sdk.compute.rackUnits.list();`, ModeQuery)
 	if err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
@@ -81,14 +94,15 @@ func TestNewQJSExecutorSupportsSDKQueries(t *testing.T) {
 func TestSearchDiscoveryGlobalsAvailable(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewSearchExecutor(testConfig(), generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	artifacts := targetintersight.Artifacts()
+	exec, err := NewSearchExecutor(testConfig(), artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog)
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
 	defer exec.Close()
 
 	result, err := exec.Execute(context.Background(), `
-const resource = catalog.resources["compute.rackUnit"];
+const resource = catalog.resources["compute.rackUnits"];
 return {
   catalogResources: Object.keys(catalog.resources || {}).length,
   catalogNames: Object.keys(catalog.resourceNames || {}).length,
@@ -121,11 +135,12 @@ return {
 }
 
 func TestExecutorsFromBundleProvideExpectedGlobals(t *testing.T) {
-	bundle, err := LoadArtifactBundle(
-		generated.ResolvedSpecBytes(),
-		generated.SDKCatalogBytes(),
-		generated.RulesBytes(),
-		generated.SearchCatalogBytes(),
+	bundle, err := LoadArtifactBundleWithExtensions(
+		targetintersight.Artifacts().ResolvedSpec,
+		targetintersight.Artifacts().SDKCatalog,
+		targetintersight.Artifacts().Rules,
+		targetintersight.Artifacts().SearchCatalog,
+		targetintersight.SandboxExtensions(),
 	)
 	if err != nil {
 		t.Fatalf("LoadArtifactBundle() error = %v", err)
@@ -160,7 +175,7 @@ return {
 	}
 
 	queryResult, err := queryExec.Execute(context.Background(), `
-return await sdk.ntp.policy.create({
+return await sdk.ntp.policies.create({
   body: {
     Name: "ntp-policy-01",
     Enabled: true,
@@ -185,7 +200,8 @@ return await sdk.ntp.policy.create({
 func TestSearchMetricsCatalogAvailable(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewSearchExecutor(testConfig(), generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	artifacts := targetintersight.Artifacts()
+	exec, err := NewSearchExecutor(testConfig(), artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog)
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
@@ -241,7 +257,8 @@ const resource = catalog.resources["example.widget"];
 return {
   schemaName: resource?.schema ?? null,
   schema: resource ? catalog.schema(resource.schema) : null,
-  missing: catalog.schema("missing.Schema")
+  missing: catalog.schema("missing.Schema"),
+  hasMetrics: typeof catalog.metrics !== "undefined"
 };
 `, ModeSearch)
 	if err != nil {
@@ -265,12 +282,16 @@ return {
 	if _, ok := value["missing"]; ok && value["missing"] != nil {
 		t.Fatalf("missing schema = %#v, want nil/undefined", value["missing"])
 	}
+	if value["hasMetrics"] != false {
+		t.Fatalf("expected metrics to be omitted for catalogs without metrics: %#v", value)
+	}
 }
 
 func TestConsoleLogCapture(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewSearchExecutor(testConfig(), generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	artifacts := targetintersight.Artifacts()
+	exec, err := NewSearchExecutor(testConfig(), artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog)
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
@@ -298,7 +319,8 @@ func TestConsoleLogsCountTowardOutputLimit(t *testing.T) {
 	cfg := testConfig()
 	cfg.MaxOutputBytes = 64
 
-	exec, err := NewSearchExecutor(cfg, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	artifacts := targetintersight.Artifacts()
+	exec, err := NewSearchExecutor(cfg, artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog)
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
@@ -340,8 +362,11 @@ func TestConsoleLogsAreTruncatedToOutputLimit(t *testing.T) {
 func TestQueryAPICallIsReferenceError(t *testing.T) {
 	t.Parallel()
 
-	exec := NewQJSExecutor(testConfig(), stubAPICaller{})
-	_, err := exec.Execute(context.Background(), `return await api.call('POST', '/api/v1/test');`, ModeQuery)
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	if err != nil {
+		t.Fatalf("newTestQJSExecutorWithArtifacts() error = %v", err)
+	}
+	_, err = exec.Execute(context.Background(), `return await api.call('POST', '/api/v1/test');`, ModeQuery)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
@@ -358,8 +383,11 @@ func TestQueryAPICallIsReferenceError(t *testing.T) {
 func TestQueryAPICallOptionsNoLongerMatter(t *testing.T) {
 	t.Parallel()
 
-	exec := NewQJSExecutor(testConfig(), stubAPICaller{})
-	_, err := exec.Execute(context.Background(), `return await api.call('POST', '/api/v1/test', { dryRun: 'yes' });`, ModeQuery)
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	if err != nil {
+		t.Fatalf("newTestQJSExecutorWithArtifacts() error = %v", err)
+	}
+	_, err = exec.Execute(context.Background(), `return await api.call('POST', '/api/v1/test', { dryRun: 'yes' });`, ModeQuery)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
@@ -762,7 +790,7 @@ func TestQuerySDKReadCompilesOperationDescriptor(t *testing.T) {
 	t.Parallel()
 
 	var captured contracts.OperationDescriptor
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			captured = operation
 			return map[string]any{"ok": true}, nil
@@ -817,7 +845,7 @@ func TestQuerySDKReturnsOfflineValidationReportForWriteOperation(t *testing.T) {
 	t.Parallel()
 
 	calls := 0
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			calls++
 			return nil, nil
@@ -864,7 +892,7 @@ func TestQueryCustomTelemetryQueryPostsDruidBody(t *testing.T) {
 	t.Parallel()
 
 	var captured contracts.OperationDescriptor
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			captured = operation
 			return map[string]any{"rows": 3}, nil
@@ -941,7 +969,7 @@ return await sdk.telemetry.query({
 func TestQueryCustomTelemetryQueryRequiresQueryModeAndBody(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -981,7 +1009,7 @@ return await sdk.telemetry.query({
 func TestQueryCustomTelemetryQueryRejectsExplicitImageRenderMode(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1011,7 +1039,7 @@ return await sdk.telemetry.query({
 func TestQueryCustomTelemetryQueryRejectsUnknownRenderMode(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1044,7 +1072,7 @@ func TestQueryCustomTelemetryQueryRejectsAppRenderModeEvenWhenEnabledInternally(
 	cfg := testConfig()
 	cfg.EnableMetricsApps = true
 
-	exec, err := NewQJSExecutorWithArtifacts(cfg, stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(cfg, stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1074,7 +1102,7 @@ return await sdk.telemetry.query({
 func TestQueryCustomTelemetryQueryRequiresGroupByFields(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1119,7 +1147,7 @@ return await sdk.telemetry.query({
 func TestQuerySDKReturnsSchemaFailureReportForWriteOperation(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1160,7 +1188,7 @@ func TestValidateSDKReturnsOfflineValidationReport(t *testing.T) {
 	t.Parallel()
 
 	calls := 0
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			calls++
 			return nil, nil
@@ -1206,7 +1234,7 @@ return await sdk.example.widget.create({
 func TestValidateSDKReturnsSchemaFailureReport(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1251,7 +1279,7 @@ return await sdk.example.widget.create({
 func TestValidateSDKReturnsRulesFailureReport(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1296,7 +1324,7 @@ return await sdk.example.widget.create({
 func TestValidateSDKReturnsMixedFailureReport(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1339,7 +1367,7 @@ return await sdk.example.widget.create({
 func TestValidateSDKReturnsSDKContractFailureReport(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1381,7 +1409,7 @@ return await sdk.example.widget.create({
 func TestValidateSDKRejectsReadOperation(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1458,9 +1486,12 @@ func assertLayer(t *testing.T, layers []map[string]any, name string, ran, passed
 func TestValidateRejectsAPICall(t *testing.T) {
 	t.Parallel()
 
-	exec := NewQJSExecutor(testConfig(), stubAPICaller{})
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	if err != nil {
+		t.Fatalf("newTestQJSExecutorWithArtifacts() error = %v", err)
+	}
 
-	_, err := exec.Execute(context.Background(), `return await api.call('GET', '/api/v1/test');`, ModeValidate)
+	_, err = exec.Execute(context.Background(), `return await api.call('GET', '/api/v1/test');`, ModeValidate)
 	if err == nil {
 		t.Fatalf("expected error")
 	}
@@ -1478,7 +1509,7 @@ func TestMutateSDKNormalizesRelationshipPayload(t *testing.T) {
 	t.Parallel()
 
 	var captured contracts.OperationDescriptor
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			captured = operation
 			return operation.Body, nil
@@ -1532,15 +1563,15 @@ return await sdk.example.widget.create({
 	}
 }
 
-func TestMutateSDKRejectsSemanticRuleViolation(t *testing.T) {
+func TestMutateSDKLogsSemanticRuleViolationAndContinues(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSemanticRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
 
-	_, err = exec.Execute(context.Background(), `
+	result, err := exec.Execute(context.Background(), `
 return await sdk.example.widget.create({
   body: {
     Name: 'widget-a',
@@ -1548,23 +1579,24 @@ return await sdk.example.widget.create({
   }
 });
 `, ModeMutate)
-	if err == nil {
-		t.Fatalf("expected error")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
 	}
-
-	var validationErr contracts.ValidationError
-	if !errors.As(err, &validationErr) {
-		t.Fatalf("expected ValidationError, got %T", err)
+	if len(result.Logs) < 2 {
+		t.Fatalf("logs = %#v, want warning lines", result.Logs)
 	}
-	if !strings.Contains(validationErr.Error(), "local validation") {
-		t.Fatalf("unexpected error: %v", validationErr)
+	if !strings.Contains(result.Logs[0], "mutate continued") {
+		t.Fatalf("unexpected warning summary: %#v", result.Logs)
+	}
+	if !strings.Contains(result.Logs[1], `"sdkMethod":"example.widget.create"`) {
+		t.Fatalf("unexpected warning payload: %#v", result.Logs)
 	}
 }
 
 func TestMutateSDKRejectsPathBodyMoidMismatch(t *testing.T) {
 	t.Parallel()
 
-	exec, err := NewQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{}, []byte(testSDKSpec), []byte(testSDKCatalog), []byte(testSDKRules))
 	if err != nil {
 		t.Fatalf("NewQJSExecutorWithArtifacts() error = %v", err)
 	}
@@ -1592,6 +1624,125 @@ return await sdk.example.widget.update({
 	}
 }
 
+func TestMutateServerProfileRejectsTargetPlatformMismatchInPolicyBucket(t *testing.T) {
+	t.Parallel()
+
+	artifacts := targetintersight.Artifacts()
+	var operations []contracts.OperationDescriptor
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
+		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
+			operations = append(operations, operation)
+			switch {
+			case operation.Method == http.MethodGet && operation.Path == "/api/v1/firmware/Policies/fw-1":
+				return map[string]any{
+					"Moid":           "fw-1",
+					"ObjectType":     "firmware.Policy",
+					"TargetPlatform": "UnifiedEdgeServer",
+				}, nil
+			default:
+				t.Fatalf("unexpected operation: %s %s", operation.Method, operation.Path)
+				return nil, nil
+			}
+		},
+	}, artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules)
+	if err != nil {
+		t.Fatalf("newTestQJSExecutorWithArtifacts() error = %v", err)
+	}
+
+	_, err = exec.Execute(context.Background(), `
+return await sdk.server.profiles.create({
+  body: {
+    Name: 'profile-a',
+    Type: 'instance',
+    TargetPlatform: 'Standalone',
+    Organization: { Moid: 'org-1' },
+    PolicyBucket: [
+      { Moid: 'fw-1', ObjectType: 'firmware.Policy' }
+    ]
+  }
+});
+`, ModeMutate)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	var validationErr contracts.ValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
+	if !strings.Contains(validationErr.Error(), "local validation") {
+		t.Fatalf("unexpected error: %v", validationErr)
+	}
+	if len(operations) != 1 || operations[0].Method != http.MethodGet {
+		t.Fatalf("operations = %#v, want single preflight GET", operations)
+	}
+}
+
+func TestMutateServerProfileRejectsPersistedPolicyBucketMismatch(t *testing.T) {
+	t.Parallel()
+
+	artifacts := targetintersight.Artifacts()
+	var operations []contracts.OperationDescriptor
+	exec, err := newTestQJSExecutorWithArtifacts(testConfig(), stubAPICaller{
+		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
+			operations = append(operations, operation)
+			switch {
+			case operation.Method == http.MethodGet && operation.Path == "/api/v1/firmware/Policies/fw-1":
+				return map[string]any{
+					"Moid":           "fw-1",
+					"ObjectType":     "firmware.Policy",
+					"TargetPlatform": "Standalone",
+				}, nil
+			case operation.Method == http.MethodPost && operation.Path == "/api/v1/server/Profiles":
+				return map[string]any{
+					"Moid":       "profile-1",
+					"ObjectType": "server.Profile",
+				}, nil
+			case operation.Method == http.MethodGet && operation.Path == "/api/v1/server/Profiles/profile-1":
+				return map[string]any{
+					"Moid":         "profile-1",
+					"ObjectType":   "server.Profile",
+					"PolicyBucket": []any{},
+				}, nil
+			default:
+				t.Fatalf("unexpected operation: %s %s", operation.Method, operation.Path)
+				return nil, nil
+			}
+		},
+	}, artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules)
+	if err != nil {
+		t.Fatalf("newTestQJSExecutorWithArtifacts() error = %v", err)
+	}
+
+	_, err = exec.Execute(context.Background(), `
+return await sdk.server.profiles.create({
+  body: {
+    Name: 'profile-a',
+    Type: 'instance',
+    TargetPlatform: 'Standalone',
+    Organization: { Moid: 'org-1' },
+    PolicyBucket: [
+      { Moid: 'fw-1', ObjectType: 'firmware.Policy' }
+    ]
+  }
+});
+`, ModeMutate)
+	if err == nil {
+		t.Fatalf("expected error")
+	}
+
+	var validationErr contracts.ValidationError
+	if !errors.As(err, &validationErr) {
+		t.Fatalf("expected ValidationError, got %T", err)
+	}
+	if !strings.Contains(validationErr.Error(), "local validation") {
+		t.Fatalf("unexpected error: %v", validationErr)
+	}
+	if len(operations) != 3 {
+		t.Fatalf("operations = %#v, want preflight GET + POST + verification GET", operations)
+	}
+}
+
 func TestPerCallTimeout(t *testing.T) {
 	t.Parallel()
 
@@ -1599,7 +1750,7 @@ func TestPerCallTimeout(t *testing.T) {
 	cfg.PerCallTimeout = 2 * time.Second
 	cfg.GlobalTimeout = 5 * time.Second
 
-	exec, err := NewQJSExecutorWithArtifacts(cfg, stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(cfg, stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			return nil, contracts.TimeoutError{Message: "Intersight request failed", Err: ctx.Err()}
 		},
@@ -1642,7 +1793,7 @@ func TestPerCallTimeoutUncaughtNormalizesToTimeoutError(t *testing.T) {
 	cfg.PerCallTimeout = 2 * time.Second
 	cfg.GlobalTimeout = 5 * time.Second
 
-	exec, err := NewQJSExecutorWithArtifacts(cfg, stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(cfg, stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			return nil, contracts.TimeoutError{Message: "Intersight request failed", Err: ctx.Err()}
 		},
@@ -1668,7 +1819,8 @@ func TestGlobalTimeout(t *testing.T) {
 	cfg := testConfig()
 	cfg.SearchTimeout = 40 * time.Millisecond
 
-	exec, err := NewSearchExecutor(cfg, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	artifacts := targetintersight.Artifacts()
+	exec, err := NewSearchExecutor(cfg, artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog)
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
@@ -1691,7 +1843,8 @@ func TestSearchTimeoutCoversSetupBeforeUserCode(t *testing.T) {
 	cfg := testConfig()
 	cfg.SearchTimeout = 40 * time.Millisecond
 
-	exec, err := NewSearchExecutor(cfg, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	artifacts := targetintersight.Artifacts()
+	exec, err := NewSearchExecutor(cfg, artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog)
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
@@ -1723,7 +1876,8 @@ func TestOutputTooLarge(t *testing.T) {
 	cfg := testConfig()
 	cfg.MaxOutputBytes = 32
 
-	exec, err := NewSearchExecutor(cfg, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes())
+	artifacts := targetintersight.Artifacts()
+	exec, err := NewSearchExecutor(cfg, artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog)
 	if err != nil {
 		t.Fatalf("NewSearchExecutor() error = %v", err)
 	}
@@ -1768,7 +1922,7 @@ func TestAPICallLimit(t *testing.T) {
 	cfg := testConfig()
 	cfg.MaxAPICalls = 1
 
-	exec, err := NewQJSExecutorWithArtifacts(cfg, stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(cfg, stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			return map[string]any{"ok": true}, nil
 		},
@@ -1811,7 +1965,7 @@ func TestAPICallLimitUncaughtNormalizesToLimitError(t *testing.T) {
 	cfg := testConfig()
 	cfg.MaxAPICalls = 1
 
-	exec, err := NewQJSExecutorWithArtifacts(cfg, stubAPICaller{
+	exec, err := newTestQJSExecutorWithArtifacts(cfg, stubAPICaller{
 		do: func(ctx context.Context, operation contracts.OperationDescriptor) (any, error) {
 			return map[string]any{"ok": true}, nil
 		},

@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	defaultServerName    = "intersight-mcp"
+	defaultServerName    = "openapi-mcp"
 	defaultServerVersion = "0.0.0"
 )
 
@@ -31,6 +31,7 @@ type RuntimeConfig struct {
 	MaxOutputBytes    int64
 	ReadOnly          bool
 	ExposeMetricsApps bool
+	ToolMetadata      tools.ToolMetadata
 	ContentMode       tools.ContentMode
 	Logger            *internalpkg.Logger
 
@@ -77,7 +78,7 @@ func NewRuntime(cfg RuntimeConfig) (*Runtime, error) {
 		// resource surface and tool response metadata wiring.
 		mcpserver.WithResourceCapabilities(false, false),
 	)
-	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent), cfg.MaxCodeSize, cfg.MaxOutputBytes, cfg.ExposeMetricsApps, cfg.ReadOnly, cfg.ContentMode)
+	serverTools := tools.ServerTools(cfg.SearchExecutor, cfg.QueryExecutor, cfg.MutateExecutor, tools.NewLimiter(cfg.MaxConcurrent), cfg.MaxCodeSize, cfg.MaxOutputBytes, cfg.ExposeMetricsApps, cfg.ReadOnly, cfg.ContentMode, cfg.ToolMetadata)
 	for i := range serverTools {
 		serverTools[i].Handler = wrapToolHandler(serverTools[i].Tool.Name, serverTools[i].Handler, cfg.Logger)
 	}

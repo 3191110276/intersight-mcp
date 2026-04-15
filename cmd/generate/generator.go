@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -14,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mimaurer/intersight-mcp/implementations"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 	"github.com/pb33f/libopenapi"
 	highbase "github.com/pb33f/libopenapi/datamodel/high/base"
@@ -25,22 +27,30 @@ import (
 const resolvedSpecSoftLimit = 30 * 1024 * 1024
 
 type generator struct {
-	inPath      string
-	filterPath  string
-	metricsPath string
-	outPath     string
-	stdout      io.Writer
-	stderr      io.Writer
+	inPath               string
+	manifestPath         string
+	filterPath           string
+	metricsPath          string
+	outPath              string
+	fallbackPathPrefixes []string
+	ruleTemplates        []contracts.RuleTemplate
+	schemaHook           implementations.SchemaNormalizationHook
+	stdout               io.Writer
+	stderr               io.Writer
 }
 
-func newGenerator(inPath, filterPath, metricsPath, outPath string, stdout, stderr io.Writer) *generator {
+func newGenerator(inPath, manifestPath, filterPath, metricsPath, outPath string, fallbackPathPrefixes []string, ruleTemplates []contracts.RuleTemplate, schemaHook implementations.SchemaNormalizationHook, stdout, stderr io.Writer) *generator {
 	return &generator{
-		inPath:      inPath,
-		filterPath:  filterPath,
-		metricsPath: metricsPath,
-		outPath:     outPath,
-		stdout:      stdout,
-		stderr:      stderr,
+		inPath:               inPath,
+		manifestPath:         manifestPath,
+		filterPath:           filterPath,
+		metricsPath:          metricsPath,
+		outPath:              outPath,
+		fallbackPathPrefixes: append([]string(nil), fallbackPathPrefixes...),
+		ruleTemplates:        append([]contracts.RuleTemplate(nil), ruleTemplates...),
+		schemaHook:           schemaHook,
+		stdout:               stdout,
+		stderr:               stderr,
 	}
 }
 
@@ -81,7 +91,10 @@ type normalizationContext struct {
 	rootName        string
 	stack           []string
 	collapseRootRef bool
+	schemaHook      implementations.SchemaNormalizationHook
 }
+
+type inlineSchemaRegistry map[string]normalizedSchema
 
 type generationSummary struct {
 	PublishedVersion    string                `json:"publishedVersion"`
@@ -111,9 +124,8 @@ func (g *generator) Run() error {
 		return fmt.Errorf("read input spec: %w", err)
 	}
 
-	manifestPath := filepath.Join(filepath.Dir(filepath.Dir(g.inPath)), "manifest.json")
 	g.logStep("validating manifest")
-	mf, err := loadManifest(manifestPath)
+	mf, err := loadManifest(g.manifestPath)
 	if err != nil {
 		return err
 	}
@@ -127,10 +139,13 @@ func (g *generator) Run() error {
 		return err
 	}
 
-	g.logStep("loading metrics catalog")
-	metricsCatalog, err := loadMetricsCatalog(g.metricsPath)
-	if err != nil {
-		return err
+	metricsCatalog := contracts.SearchMetricsCatalog{}
+	if strings.TrimSpace(g.metricsPath) != "" {
+		g.logStep("loading metrics catalog")
+		metricsCatalog, err = loadMetricsCatalog(g.metricsPath)
+		if err != nil {
+			return err
+		}
 	}
 
 	g.logStep("building OpenAPI model")
@@ -146,7 +161,7 @@ func (g *generator) Run() error {
 	}
 
 	g.logStep("normalizing retained routes and schemas")
-	spec, keptOps, droppedOps, reachableSchemas, err := normalizeDocument(model.Model, policy)
+	spec, keptOps, droppedOps, reachableSchemas, err := normalizeDocument(model.Model, policy, g.fallbackPathPrefixes, g.schemaHook)
 	if err != nil {
 		return err
 	}
@@ -167,11 +182,11 @@ func (g *generator) Run() error {
 	}
 
 	g.logStep("building rule metadata")
-	rules, err := contracts.BuildRuleCatalog(spec, catalog)
+	rules, err := contracts.BuildRuleCatalog(spec, catalog, g.ruleTemplates)
 	if err != nil {
 		return err
 	}
-	if err := contracts.ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules); err != nil {
+	if err := contracts.ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules, g.ruleTemplates); err != nil {
 		return err
 	}
 
@@ -291,6 +306,9 @@ func validateManifest(raw []byte, mf manifest) error {
 
 func loadFilterPolicy(path string) (filterPolicy, error) {
 	var policy filterPolicy
+	if strings.TrimSpace(path) == "" {
+		return policy, nil
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return policy, fmt.Errorf("read filter policy: %w", err)
@@ -316,17 +334,19 @@ func loadFilterPolicy(path string) (filterPolicy, error) {
 	return policy, nil
 }
 
-func normalizeDocument(doc v3.Document, policy filterPolicy) (normalizedSpec, int, int, map[string]struct{}, error) {
+func normalizeDocument(doc v3.Document, policy filterPolicy, fallbackPathPrefixes []string, schemaHook implementations.SchemaNormalizationHook) (normalizedSpec, int, int, map[string]struct{}, error) {
 	result := normalizedSpec{
 		Paths:   make(map[string]map[string]normalizedOperation),
 		Schemas: make(map[string]normalizedSchema),
 		Tags:    normalizeTags(doc.Tags),
 	}
 
-	components := doc.Components
-	if components == nil || components.Schemas == nil {
-		return result, 0, 0, nil, fmt.Errorf("OpenAPI document missing components.schemas")
+	basePaths := normalizeServerBasePaths(doc.Servers)
+	var componentSchemas *openapiorderedmap.Map[string, *highbase.SchemaProxy]
+	if doc.Components != nil {
+		componentSchemas = doc.Components.Schemas
 	}
+	inlineSchemas := inlineSchemaRegistry{}
 
 	keptOps := 0
 	droppedOps := 0
@@ -338,14 +358,15 @@ func normalizeDocument(doc v3.Document, policy filterPolicy) (normalizedSpec, in
 
 	pathCount := 0
 	for path, pathItem := range doc.Paths.PathItems.FromOldest() {
-		if !strings.HasPrefix(path, "/api/v1/") {
+		effectivePath, ok := normalizeOperationPath(path, basePaths, fallbackPathPrefixes)
+		if !ok {
 			continue
 		}
 		pathCount++
 
 		methods := make(map[string]normalizedOperation)
 		for method, op := range pathItem.GetOperations().FromOldest() {
-			if shouldDropOperation(path, op, policy) {
+			if shouldDropOperation(effectivePath, op, policy) {
 				droppedOps++
 				continue
 			}
@@ -361,19 +382,21 @@ func normalizeDocument(doc v3.Document, policy filterPolicy) (normalizedSpec, in
 				Summary:     op.Summary,
 				OperationID: op.OperationId,
 				Tags:        cloneStrings(op.Tags),
-				Parameters:  normalizeParameters(combinedParams),
-				RequestBody: normalizeRequestBody(op.RequestBody),
-				Responses:   normalizeResponses(op.Responses),
+				Parameters:  normalizeParameters(combinedParams, schemaHook, inlineSchemas, op.OperationId),
+				RequestBody: normalizeRequestBody(op.RequestBody, schemaHook, inlineSchemas, op.OperationId),
+				Responses:   normalizeResponses(op.Responses, schemaHook, inlineSchemas, op.OperationId),
 			}
 			keptOps++
 		}
 
 		if len(methods) > 0 {
-			result.Paths[path] = methods
+			result.Paths[effectivePath] = methods
 		}
 	}
 
-	reachableSchemas = expandReachableSchemas(components.Schemas, reachableSchemas)
+	if componentSchemas != nil {
+		reachableSchemas = expandReachableSchemas(componentSchemas, reachableSchemas)
+	}
 
 	schemaNames := make([]string, 0, len(reachableSchemas))
 	for name := range reachableSchemas {
@@ -381,17 +404,114 @@ func normalizeDocument(doc v3.Document, policy filterPolicy) (normalizedSpec, in
 	}
 	slices.Sort(schemaNames)
 	for _, name := range schemaNames {
-		proxy := components.Schemas.GetOrZero(name)
+		if componentSchemas == nil {
+			continue
+		}
+		proxy := componentSchemas.GetOrZero(name)
 		if proxy == nil {
 			continue
 		}
-		schema := normalizeSchemaProxy(proxy, normalizationContext{rootName: name})
+		schema := normalizeSchemaProxy(proxy, normalizationContext{rootName: name, schemaHook: schemaHook})
 		if schema != nil {
 			result.Schemas[name] = *schema
 		}
 	}
+	for name, schema := range inlineSchemas {
+		result.Schemas[name] = schema
+	}
 
 	return result, keptOps, droppedOps, reachableSchemas, nil
+}
+
+func normalizeServerBasePaths(servers []*v3.Server) []string {
+	if len(servers) == 0 {
+		return nil
+	}
+
+	seen := map[string]struct{}{}
+	paths := make([]string, 0, len(servers))
+	for _, server := range servers {
+		basePath, ok := resolveServerBasePath(server)
+		if !ok {
+			continue
+		}
+		if _, exists := seen[basePath]; exists {
+			continue
+		}
+		seen[basePath] = struct{}{}
+		paths = append(paths, basePath)
+	}
+	slices.Sort(paths)
+	return paths
+}
+
+func resolveServerBasePath(server *v3.Server) (string, bool) {
+	if server == nil {
+		return "", false
+	}
+
+	rawURL := strings.TrimSpace(server.URL)
+	if rawURL == "" {
+		return "", false
+	}
+	if server.Variables != nil {
+		for name, variable := range server.Variables.FromOldest() {
+			placeholder := "{" + name + "}"
+			if !strings.Contains(rawURL, placeholder) {
+				continue
+			}
+			defaultValue := ""
+			if variable != nil {
+				defaultValue = variable.Default
+			}
+			rawURL = strings.ReplaceAll(rawURL, placeholder, defaultValue)
+		}
+	}
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return "", false
+	}
+	path := strings.TrimSpace(parsed.EscapedPath())
+	if path == "" || path == "/" {
+		return "", true
+	}
+	return strings.TrimRight(path, "/"), true
+}
+
+func normalizeOperationPath(path string, basePaths []string, fallbackPathPrefixes []string) (string, bool) {
+	path = strings.TrimSpace(path)
+	if path == "" || !strings.HasPrefix(path, "/") {
+		return "", false
+	}
+	if len(basePaths) == 0 {
+		if len(fallbackPathPrefixes) == 0 {
+			return path, true
+		}
+		for _, prefix := range fallbackPathPrefixes {
+			prefix = strings.TrimSpace(prefix)
+			if prefix == "" {
+				continue
+			}
+			if strings.HasPrefix(path, prefix) {
+				return path, true
+			}
+		}
+		return "", false
+	}
+	for _, basePath := range basePaths {
+		switch {
+		case basePath == "":
+			return path, true
+		case path == basePath || strings.HasPrefix(path, basePath+"/"):
+			return path, true
+		}
+	}
+	basePath := basePaths[0]
+	if basePath == "" {
+		return path, true
+	}
+	return strings.TrimRight(basePath, "/") + path, true
 }
 
 func normalizeTags(tags []*highbase.Tag) []normalizedTag {
@@ -429,14 +549,56 @@ func shouldDropOperation(path string, op *v3.Operation, policy filterPolicy) boo
 }
 
 func namespaceForPath(path string) string {
-	trimmed := strings.TrimPrefix(path, "/api/v1/")
-	if trimmed == path || trimmed == "" {
+	segments := pathNamespaceSegments(path)
+	if len(segments) == 0 {
 		return ""
 	}
-	if idx := strings.IndexByte(trimmed, '/'); idx >= 0 {
-		return trimmed[:idx]
+	return segments[0]
+}
+
+func pathNamespaceSegments(path string) []string {
+	segments := strings.Split(strings.Trim(strings.TrimSpace(path), "/"), "/")
+	if len(segments) == 0 {
+		return nil
 	}
-	return trimmed
+
+	out := make([]string, 0, len(segments))
+	for _, segment := range segments {
+		segment = strings.TrimSpace(segment)
+		if segment == "" {
+			continue
+		}
+		out = append(out, segment)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+
+	if len(out) >= 2 && strings.EqualFold(out[0], "api") && isVersionSegment(out[1]) {
+		out = out[2:]
+	} else if isVersionSegment(out[0]) {
+		out = out[1:]
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func isVersionSegment(segment string) bool {
+	segment = strings.TrimSpace(segment)
+	if len(segment) < 2 {
+		return false
+	}
+	if segment[0] != 'v' && segment[0] != 'V' {
+		return false
+	}
+	for i := 1; i < len(segment); i++ {
+		if segment[i] < '0' || segment[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func combineParameters(pathParams, opParams []*v3.Parameter) []*v3.Parameter {
@@ -466,7 +628,7 @@ func parameterKey(param *v3.Parameter) string {
 	return param.In + "\x00" + param.Name
 }
 
-func normalizeParameters(params []*v3.Parameter) []normalizedParameter {
+func normalizeParameters(params []*v3.Parameter, schemaHook implementations.SchemaNormalizationHook, inlineSchemas inlineSchemaRegistry, operationID string) []normalizedParameter {
 	out := make([]normalizedParameter, 0, len(params))
 	for _, param := range params {
 		if param == nil {
@@ -479,9 +641,9 @@ func normalizeParameters(params []*v3.Parameter) []normalizedParameter {
 
 		var schema *normalizedSchema
 		if param.Schema != nil {
-			schema = normalizeOperationSchemaProxy(param.Schema)
+			schema = normalizeOperationSchemaProxy(param.Schema, schemaHook, inlineSchemas, inlineSchemaName(operationID, "parameter", param.In, param.Name))
 		} else if media := jsonMediaType(param.Content); media != nil && media.Schema != nil {
-			schema = normalizeOperationSchemaProxy(media.Schema)
+			schema = normalizeOperationSchemaProxy(media.Schema, schemaHook, inlineSchemas, inlineSchemaName(operationID, "parameter", param.In, param.Name))
 		}
 
 		out = append(out, normalizedParameter{
@@ -494,7 +656,7 @@ func normalizeParameters(params []*v3.Parameter) []normalizedParameter {
 	return out
 }
 
-func normalizeRequestBody(body *v3.RequestBody) *normalizedRequestBody {
+func normalizeRequestBody(body *v3.RequestBody, schemaHook implementations.SchemaNormalizationHook, inlineSchemas inlineSchemaRegistry, operationID string) *normalizedRequestBody {
 	if body == nil {
 		return nil
 	}
@@ -510,33 +672,33 @@ func normalizeRequestBody(body *v3.RequestBody) *normalizedRequestBody {
 	return &normalizedRequestBody{
 		Required: required,
 		Content: map[string]normalizedMediaContent{
-			"application/json": {Schema: normalizeOperationSchemaProxy(media.Schema)},
+			"application/json": {Schema: normalizeOperationSchemaProxy(media.Schema, schemaHook, inlineSchemas, inlineSchemaName(operationID, "request"))},
 		},
 	}
 }
 
-func normalizeResponses(responses *v3.Responses) map[string]normalizedResponse {
+func normalizeResponses(responses *v3.Responses, schemaHook implementations.SchemaNormalizationHook, inlineSchemas inlineSchemaRegistry, operationID string) map[string]normalizedResponse {
 	if responses == nil {
 		return nil
 	}
 	out := make(map[string]normalizedResponse)
 	for code, resp := range responses.Codes.FromOldest() {
-		out[code] = normalizeResponse(resp)
+		out[code] = normalizeResponse(resp, schemaHook, inlineSchemas, inlineSchemaName(operationID, "response", code))
 	}
 	if responses.Default != nil {
-		out["default"] = normalizeResponse(responses.Default)
+		out["default"] = normalizeResponse(responses.Default, schemaHook, inlineSchemas, inlineSchemaName(operationID, "response", "default"))
 	}
 	return out
 }
 
-func normalizeResponse(resp *v3.Response) normalizedResponse {
+func normalizeResponse(resp *v3.Response, schemaHook implementations.SchemaNormalizationHook, inlineSchemas inlineSchemaRegistry, inlineName string) normalizedResponse {
 	if resp == nil {
 		return normalizedResponse{}
 	}
 	out := normalizedResponse{Description: resp.Description}
 	if media := jsonMediaType(resp.Content); media != nil && media.Schema != nil {
 		out.Content = map[string]normalizedMediaContent{
-			"application/json": {Schema: normalizeOperationSchemaProxy(media.Schema)},
+			"application/json": {Schema: normalizeOperationSchemaProxy(media.Schema, schemaHook, inlineSchemas, inlineName)},
 		}
 	}
 	return out
@@ -589,10 +751,8 @@ func normalizeSchemaProxy(proxy *highbase.SchemaProxy, ctx normalizationContext)
 
 	mergeNormalizedSchema(result, normalizeSchemaBody(schema, nextCtx))
 
-	if result.Circular == "" {
-		if expandTarget := deriveExpandTarget(proxy, schema); expandTarget != "" {
-			applyRelationshipSchema(result, expandTarget)
-		}
+	if result.Circular == "" && ctx.schemaHook != nil {
+		ctx.schemaHook(proxy, schema, result)
 	}
 
 	if len(result.Required) > 0 {
@@ -611,8 +771,34 @@ func normalizeSchemaProxy(proxy *highbase.SchemaProxy, ctx normalizationContext)
 	return result
 }
 
-func normalizeOperationSchemaProxy(proxy *highbase.SchemaProxy) *normalizedSchema {
-	return normalizeSchemaProxy(proxy, normalizationContext{collapseRootRef: true})
+func normalizeOperationSchemaProxy(proxy *highbase.SchemaProxy, schemaHook implementations.SchemaNormalizationHook, inlineSchemas inlineSchemaRegistry, inlineName string) *normalizedSchema {
+	if proxy == nil {
+		return nil
+	}
+	if refName := refToSchemaName(proxy.GetReference()); refName != "" {
+		return &normalizedSchema{Circular: refName}
+	}
+	schema := normalizeSchemaProxy(proxy, normalizationContext{collapseRootRef: true, schemaHook: schemaHook})
+	if schema == nil {
+		return nil
+	}
+	if inlineSchemas == nil || strings.TrimSpace(inlineName) == "" {
+		return schema
+	}
+	inlineSchemas[inlineName] = *schema
+	return &normalizedSchema{Circular: inlineName}
+}
+
+func inlineSchemaName(operationID string, parts ...string) string {
+	segments := []string{"inline", strings.TrimSpace(operationID)}
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		segments = append(segments, part)
+	}
+	return strings.Join(segments, ".")
 }
 
 func normalizeSchemaBody(schema *highbase.Schema, ctx normalizationContext) *normalizedSchema {
@@ -694,12 +880,11 @@ func normalizeNestedSchemaProxy(proxy *highbase.SchemaProxy, ctx normalizationCo
 		if schema.ReadOnly != nil {
 			out.ReadOnly = *schema.ReadOnly
 		}
-		if expandTarget := deriveExpandTarget(proxy, schema); expandTarget != "" {
-			if out.Type == "" {
-				out.Type = "object"
+		if ctx.schemaHook != nil {
+			ctx.schemaHook(proxy, schema, out)
+			if out.Type != "" || out.Format != "" || out.ExpandTarget != "" || out.Relationship || len(out.Properties) > 0 || len(out.OneOf) > 0 || len(out.AnyOf) > 0 || len(out.Enum) > 0 {
+				return out
 			}
-			applyRelationshipSchema(out, expandTarget)
-			return out
 		}
 		if out.Type == "" && out.Format == "" {
 			out.Circular = refName
@@ -802,58 +987,6 @@ func mergeNormalizedSchema(dst, src *normalizedSchema) {
 	}
 	if len(dst.AnyOf) == 0 && len(src.AnyOf) > 0 {
 		dst.AnyOf = src.AnyOf
-	}
-}
-
-func applyRelationshipSchema(dst *normalizedSchema, target string) {
-	if dst == nil {
-		return
-	}
-	dst.Type = "object"
-	dst.ExpandTarget = target
-	dst.Relationship = true
-	dst.RelationshipTarget = target
-	dst.RelationshipWriteForms = []string{"moidRef", "typedMoRef"}
-	dst.Properties = map[string]*normalizedSchema{
-		"Moid": {
-			Type: "string",
-		},
-		"ObjectType": {
-			Type: "string",
-			Enum: []any{target},
-		},
-		"ClassId": {
-			Type: "string",
-			Enum: []any{"mo.MoRef"},
-		},
-	}
-	dst.OneOf = []*normalizedSchema{
-		{
-			Type: "object",
-			Properties: map[string]*normalizedSchema{
-				"Moid": {
-					Type: "string",
-				},
-			},
-			Required: []string{"Moid"},
-		},
-		{
-			Type: "object",
-			Properties: map[string]*normalizedSchema{
-				"Moid": {
-					Type: "string",
-				},
-				"ObjectType": {
-					Type: "string",
-					Enum: []any{target},
-				},
-				"ClassId": {
-					Type: "string",
-					Enum: []any{"mo.MoRef"},
-				},
-			},
-			Required: []string{"Moid", "ObjectType", "ClassId"},
-		},
 	}
 }
 
@@ -982,83 +1115,6 @@ func expandReachableSchemas(components interface {
 	return reachable
 }
 
-func deriveExpandTarget(proxy *highbase.SchemaProxy, schema *highbase.Schema) string {
-	if schema == nil || len(schema.AllOf) == 0 {
-		return ""
-	}
-	if !hasProperty(schema, "Moid") || !hasProperty(schema, "ObjectType") {
-		return ""
-	}
-
-	target := ""
-	foundMoRef := false
-	for _, item := range schema.AllOf {
-		refName := refToSchemaName(item.GetReference())
-		if refName == "" {
-			continue
-		}
-		if refName == "mo.MoRef" || schemaInheritsFromRef(item, "mo.MoRef", map[string]struct{}{}) {
-			foundMoRef = true
-			continue
-		}
-		if target != "" {
-			return ""
-		}
-		target = refName
-	}
-	if !foundMoRef || target == "" {
-		return ""
-	}
-	if proxy != nil && refToSchemaName(proxy.GetReference()) == target {
-		return ""
-	}
-	return target
-}
-
-func hasProperty(schema *highbase.Schema, name string) bool {
-	if schema == nil {
-		return false
-	}
-	if schema.Properties != nil && schema.Properties.GetOrZero(name) != nil {
-		return true
-	}
-	for _, item := range schema.AllOf {
-		if hasProperty(item.Schema(), name) {
-			return true
-		}
-	}
-	return false
-}
-
-func schemaInheritsFromRef(proxy *highbase.SchemaProxy, target string, seen map[string]struct{}) bool {
-	if proxy == nil {
-		return false
-	}
-	refName := refToSchemaName(proxy.GetReference())
-	if refName == target {
-		return true
-	}
-	key := refName
-	if key == "" {
-		key = fmt.Sprintf("%p", proxy)
-	}
-	if _, ok := seen[key]; ok {
-		return false
-	}
-	seen[key] = struct{}{}
-
-	schema := proxy.Schema()
-	if schema == nil {
-		return false
-	}
-	for _, item := range schema.AllOf {
-		if schemaInheritsFromRef(item, target, seen) {
-			return true
-		}
-	}
-	return false
-}
-
 func refToSchemaName(ref string) string {
 	const prefix = "#/components/schemas/"
 	if strings.HasPrefix(ref, prefix) {
@@ -1177,7 +1233,7 @@ func emitSummary(stdout, stderr io.Writer, summary generationSummary) error {
 	}
 	if stderr != nil {
 		var buf bytes.Buffer
-		fmt.Fprintf(&buf, "Generated Intersight spec %s\n", summary.PublishedVersion)
+		fmt.Fprintf(&buf, "Generated normalized spec %s\n", summary.PublishedVersion)
 		fmt.Fprintf(&buf, "  operations: kept=%d dropped=%d\n", summary.KeptOperations, summary.DroppedOperations)
 		fmt.Fprintf(&buf, "  schemas: kept=%d dropped=%d\n", summary.KeptSchemas, summary.DroppedSchemas)
 		fmt.Fprintf(&buf, "  denylist entries: %d\n", len(summary.ActiveDenylist))

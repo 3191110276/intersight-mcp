@@ -1,6 +1,8 @@
 package contracts
 
 import (
+	"reflect"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -231,6 +233,197 @@ func TestBuildSearchCatalogIndexesSharedPathsAsSortedResourceKeys(t *testing.T) 
 	}
 	if strings.Join(search.ResourceNames, ",") != "example.gadget,example.widget" {
 		t.Fatalf("resourceNames = %#v", search.ResourceNames)
+	}
+}
+
+func TestBuildSearchCatalogAddsSchemaDerivedAliases(t *testing.T) {
+	t.Parallel()
+
+	meta := ArtifactSourceMetadata{
+		PublishedVersion: "1.0.0-test",
+		SourceURL:        "https://example.com/spec",
+		SHA256:           "abc123",
+		RetrievalDate:    "2026-04-08",
+	}
+	spec := NormalizedSpec{
+		Metadata: meta,
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/bios/Policies": {
+				"post": {OperationID: "CreateBiosPolicy"},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"bios.Policy": {
+				Type: "object",
+				Properties: map[string]*NormalizedSchema{
+					"Name": {Type: "string"},
+				},
+			},
+		},
+	}
+	catalog := SDKCatalog{
+		Metadata: meta,
+		Methods: map[string]SDKMethod{
+			"bios.policies.create": {
+				SDKMethod:           "bios.policies.create",
+				Resource:            "bios.Policy",
+				RequestBodyRequired: true,
+				RequestBodyFields:   []string{"Name"},
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateBiosPolicy",
+					Method:       "POST",
+					PathTemplate: "/api/v1/bios/Policies",
+				},
+			},
+		},
+	}
+	rules := RuleCatalog{Metadata: meta, Methods: map[string]MethodRules{}}
+
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
+	if err != nil {
+		t.Fatalf("BuildSearchCatalog() error = %v", err)
+	}
+
+	canonical, ok := search.Resources["bios.policies"]
+	if !ok {
+		t.Fatalf("expected canonical resource key")
+	}
+	alias, ok := search.Resources["bios.policy"]
+	if !ok {
+		t.Fatalf("expected schema-derived alias")
+	}
+	if !reflect.DeepEqual(canonical, alias) {
+		t.Fatalf("alias resource = %#v, want %#v", alias, canonical)
+	}
+	if !slices.Contains(search.ResourceNames, "bios.policy") {
+		t.Fatalf("resourceNames = %#v, want bios.policy alias", search.ResourceNames)
+	}
+}
+
+func TestBuildSearchCatalogIndexesVersionAliasesWithoutHardCodingAPIV1(t *testing.T) {
+	t.Parallel()
+
+	meta := ArtifactSourceMetadata{
+		PublishedVersion: "1.0.0-test",
+		SourceURL:        "https://example.com/spec",
+		SHA256:           "abc123",
+		RetrievalDate:    "2026-04-08",
+	}
+	spec := NormalizedSpec{
+		Metadata: meta,
+		Paths: map[string]map[string]NormalizedOperation{
+			"/v2/example/Widgets": {
+				"get": {OperationID: "ListExampleWidgets"},
+			},
+			"/api/v3/example/Gadgets": {
+				"get": {OperationID: "ListExampleGadgets"},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"example.Widget": {Type: "object"},
+			"example.Gadget": {Type: "object"},
+		},
+	}
+	catalog := SDKCatalog{
+		Metadata: meta,
+		Methods: map[string]SDKMethod{
+			"example.widget.list": {
+				SDKMethod: "example.widget.list",
+				Resource:  "example.Widget",
+				Descriptor: OperationDescriptor{
+					OperationID:  "ListExampleWidgets",
+					Method:       "GET",
+					PathTemplate: "/v2/example/Widgets",
+				},
+			},
+			"example.gadget.list": {
+				SDKMethod: "example.gadget.list",
+				Resource:  "example.Gadget",
+				Descriptor: OperationDescriptor{
+					OperationID:  "ListExampleGadgets",
+					Method:       "GET",
+					PathTemplate: "/api/v3/example/Gadgets",
+				},
+			},
+		},
+	}
+	rules := RuleCatalog{Metadata: meta, Methods: map[string]MethodRules{}}
+
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
+	if err != nil {
+		t.Fatalf("BuildSearchCatalog() error = %v", err)
+	}
+
+	assertSearchPathIndex(t, search.Paths, "/v2/example/Widgets", "example.widget")
+	assertSearchPathIndex(t, search.Paths, "/example/Widgets", "example.widget")
+	assertSearchPathIndex(t, search.Paths, "/api/v3/example/Gadgets", "example.gadget")
+	assertSearchPathIndex(t, search.Paths, "/example/Gadgets", "example.gadget")
+}
+
+func TestBuildSearchCatalogPrefersInlineResponseSchemaOverParameterSchemas(t *testing.T) {
+	t.Parallel()
+
+	meta := ArtifactSourceMetadata{
+		PublishedVersion: "1.0.0-test",
+		SourceURL:        "https://example.com/spec",
+		SHA256:           "abc123",
+		RetrievalDate:    "2026-04-08",
+	}
+	spec := NormalizedSpec{
+		Metadata: meta,
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/devices/{serial}": {
+				"get": {
+					OperationID: "GetDevice",
+					Responses: map[string]NormalizedResponse{
+						"200": {
+							Content: map[string]NormalizedMediaContent{
+								"application/json": {
+									Schema: &NormalizedSchema{Circular: "inline.GetDevice.response.200"},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"inline.GetDevice.response.200": {
+				Type: "object",
+				Properties: map[string]*NormalizedSchema{
+					"serial": {Type: "string"},
+				},
+			},
+			"inline.GetDevice.parameter.path.serial": {Type: "string"},
+		},
+	}
+	catalog := SDKCatalog{
+		Metadata: meta,
+		Methods: map[string]SDKMethod{
+			"device.device.get": {
+				SDKMethod: "device.device.get",
+				Descriptor: OperationDescriptor{
+					OperationID:  "GetDevice",
+					Method:       "GET",
+					PathTemplate: "/api/v1/devices/{serial}",
+				},
+				RelatedSchemas: []string{
+					"inline.GetDevice.parameter.path.serial",
+					"inline.GetDevice.response.200",
+				},
+			},
+		},
+	}
+	rules := RuleCatalog{Metadata: meta, Methods: map[string]MethodRules{}}
+
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
+	if err != nil {
+		t.Fatalf("BuildSearchCatalog() error = %v", err)
+	}
+
+	resource := search.Resources["device.device"]
+	if resource.Schema != "inline.GetDevice.response.200" {
+		t.Fatalf("schema = %q, want inline.GetDevice.response.200", resource.Schema)
 	}
 }
 
@@ -530,6 +723,98 @@ func TestBuildSearchCatalogDedupesHoistedRulesAcrossWriteAliases(t *testing.T) {
 	}
 	if len(resource.CreateFields) != 0 {
 		t.Fatalf("createFields = %#v, want none without a create operation", resource.CreateFields)
+	}
+}
+
+func TestBuildSearchCatalogKeepsWritableBaseMoRelationships(t *testing.T) {
+	t.Parallel()
+
+	meta := ArtifactSourceMetadata{
+		PublishedVersion: "1.0.0-test",
+		SourceURL:        "https://example.com/spec",
+		SHA256:           "abc123",
+		RetrievalDate:    "2026-04-08",
+	}
+	spec := NormalizedSpec{
+		Metadata: meta,
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/example/Widgets": {
+				"post": {
+					OperationID: "CreateExampleWidget",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Name": {
+											Type: "string",
+										},
+										"Entity": {
+											Circular: "mo.BaseMo.Relationship",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"example.Widget": {
+				Type: "object",
+				Properties: map[string]*NormalizedSchema{
+					"Name": {
+						Type: "string",
+					},
+					"Entity": {
+						Circular: "mo.BaseMo.Relationship",
+					},
+				},
+			},
+			"mo.BaseMo.Relationship": {
+				Relationship: true,
+				Properties: map[string]*NormalizedSchema{
+					"Moid": {
+						Type: "string",
+					},
+				},
+			},
+		},
+	}
+	catalog := SDKCatalog{
+		Metadata: meta,
+		Methods: map[string]SDKMethod{
+			"example.widget.create": {
+				SDKMethod:           "example.widget.create",
+				Resource:            "example.Widget",
+				RequestBodyRequired: true,
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateExampleWidget",
+					Method:       "POST",
+					PathTemplate: "/api/v1/example/Widgets",
+				},
+			},
+		},
+	}
+	rules := RuleCatalog{Metadata: meta, Methods: map[string]MethodRules{}}
+
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
+	if err != nil {
+		t.Fatalf("BuildSearchCatalog() error = %v", err)
+	}
+
+	resource := search.Resources["example.widget"]
+	entity, ok := resource.CreateFields["Entity"]
+	if !ok {
+		t.Fatalf("createFields = %#v, want writable Entity relationship retained", resource.CreateFields)
+	}
+	if entity.Ref != "mo.BaseMo.Relationship" {
+		t.Fatalf("createFields[Entity] = %#v, want mo.BaseMo.Relationship ref", entity)
+	}
+	if entity.Example == nil {
+		t.Fatalf("createFields[Entity] = %#v, want relationship example", entity)
 	}
 }
 

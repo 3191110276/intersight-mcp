@@ -3,7 +3,7 @@ package server
 import (
 	"testing"
 
-	"github.com/mimaurer/intersight-mcp/generated"
+	targetintersight "github.com/mimaurer/intersight-mcp/implementations/intersight"
 )
 
 func TestValidateEmbeddedSpecSuccess(t *testing.T) {
@@ -15,19 +15,19 @@ func TestValidateEmbeddedSpecSuccess(t *testing.T) {
     "source_url": "https://example.com/spec",
     "sha256": "abc123",
     "retrieval_date": "2026-04-08"
-  },
-  "paths": {
-    "/api/v1/compute/RackUnits": {
-      "get": {
-        "operationId": "GetComputeRackUnitList"
-      }
-    }
-  },
-  "schemas": {
-    "compute.RackUnit": {
-      "type": "object"
-    }
-  },
+	  },
+	  "paths": {
+	    "/devices": {
+	      "get": {
+	        "operationId": "ListDevices"
+	      }
+	    }
+	  },
+	  "schemas": {
+	    "inventory.Device": {
+	      "type": "object"
+	    }
+	  },
   "tags": []
 }`))
 	if err != nil {
@@ -44,23 +44,23 @@ func TestValidateEmbeddedSpecStructuralFailures(t *testing.T) {
 	}{
 		{
 			name: "empty paths",
-			data: `{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{},"schemas":{"compute.RackUnit":{}}}`,
+			data: `{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{},"schemas":{"inventory.Device":{}}}`,
 		},
 		{
 			name: "no operations",
-			data: `{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/api/v1/x":{}},"schemas":{"compute.RackUnit":{}}}`,
+			data: `{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/devices":{}},"schemas":{"inventory.Device":{}}}`,
 		},
 		{
 			name: "no valid operations",
-			data: `{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/api/v1/x":{"notAMethod":{}}},"schemas":{"compute.RackUnit":{}}}`,
+			data: `{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/devices":{"notAMethod":{}}},"schemas":{"inventory.Device":{}}}`,
 		},
 		{
 			name: "missing schemas",
-			data: `{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/api/v1/x":{"get":{"operationId":"GetX"}}},"schemas":{}}`,
+			data: `{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{},"schemas":{}}`,
 		},
 		{
 			name: "missing metadata",
-			data: `{"paths":{"/api/v1/x":{"get":{"operationId":"GetX"}}},"schemas":{"compute.RackUnit":{}}}`,
+			data: `{"paths":{"/devices":{"get":{"operationId":"ListDevices"}}},"schemas":{"inventory.Device":{}}}`,
 		},
 	}
 
@@ -74,16 +74,17 @@ func TestValidateEmbeddedSpecStructuralFailures(t *testing.T) {
 	}
 }
 
-func TestValidateEmbeddedSpecSemanticFailures(t *testing.T) {
+func TestValidateEmbeddedSpecAcceptsNonIntersightShapes(t *testing.T) {
 	t.Parallel()
 
 	tests := []string{
-		`{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/not-api":{"get":{"operationId":"GetX"}}},"schemas":{"compute.RackUnit":{}}}`,
-		`{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/api/v1/x":{"get":{"operationId":"GetX"}}},"schemas":{"other.Schema":{}}}`,
+		`{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/v2/resources":{"get":{"operationId":"ListResources"}}},"schemas":{"service.Resource":{}}}`,
+		`{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/not-api":{"get":{"operationId":"GetX"}}},"schemas":{"other.Schema":{}}}`,
+		`{"metadata":{"published_version":"1","source_url":"x","sha256":"y","retrieval_date":"2026-04-08"},"paths":{"/devices":{"get":{"operationId":"ListDevices"}}},"schemas":{}}`,
 	}
 	for _, data := range tests {
-		if err := ValidateEmbeddedSpec([]byte(data)); err == nil {
-			t.Fatalf("expected semantic validation failure for %s", data)
+		if err := ValidateEmbeddedSpec([]byte(data)); err != nil {
+			t.Fatalf("expected generic embedded spec validation to succeed for %s: %v", data, err)
 		}
 	}
 }
@@ -120,9 +121,8 @@ func TestValidateEmbeddedArtifacts(t *testing.T) {
     "retrieval_date": "2026-04-08"
   },
   "methods": {
-    "compute.rackUnit.list": {
-      "sdkMethod": "compute.rackUnit.list",
-      "resource": "compute.RackUnit",
+    "compute.rackUnits.list": {
+      "sdkMethod": "compute.rackUnits.list",
       "descriptor": {
         "kind": "http-operation",
         "operationId": "GetComputeRackUnitList",
@@ -157,18 +157,17 @@ func TestValidateEmbeddedArtifacts(t *testing.T) {
     "retrieval_date": "2026-04-08"
   },
   "resources": {
-    "compute.rackUnit": {
-      "schema": "compute.RackUnit",
+    "compute.rackUnits": {
       "path": "/api/v1/compute/RackUnits",
       "operations": ["list"]
     }
   },
-  "resourceNames": ["compute.rackUnit"],
+  "resourceNames": ["compute.rackUnits"],
   "paths": {
-    "/api/v1/compute/RackUnits": ["compute.rackUnit"],
-    "/api/v1/compute/rackunits": ["compute.rackUnit"],
-    "/compute/RackUnits": ["compute.rackUnit"],
-    "/compute/rackunits": ["compute.rackUnit"]
+    "/api/v1/compute/RackUnits": ["compute.rackUnits"],
+    "/api/v1/compute/rackunits": ["compute.rackUnits"],
+    "/compute/RackUnits": ["compute.rackUnits"],
+    "/compute/rackunits": ["compute.rackUnits"]
   }
 }`)
 
@@ -209,8 +208,8 @@ func TestValidateEmbeddedArtifactsRejectsMismatchedCatalog(t *testing.T) {
     "retrieval_date": "2026-04-08"
   },
   "methods": {
-    "compute.rackUnit.list": {
-      "sdkMethod": "compute.rackUnit.list",
+    "compute.rackUnits.list": {
+      "sdkMethod": "compute.rackUnits.list",
       "resource": "compute.RackUnit",
       "descriptor": {
         "kind": "http-operation",
@@ -246,7 +245,7 @@ func TestValidateEmbeddedArtifactsRejectsMismatchedCatalog(t *testing.T) {
     "retrieval_date": "2026-04-08"
   },
   "resources": {
-    "compute.rackUnit": {
+    "compute.rackUnits": {
       "schema": "compute.RackUnit",
       "operations": {
         "list": {
@@ -258,12 +257,12 @@ func TestValidateEmbeddedArtifactsRejectsMismatchedCatalog(t *testing.T) {
       }
     }
   },
-  "resourceNames": ["compute.rackUnit"],
+  "resourceNames": ["compute.rackUnits"],
   "paths": {
-    "/api/v1/compute/RackUnits": ["compute.rackUnit"],
-    "/api/v1/compute/rackunits": ["compute.rackUnit"],
-    "/compute/RackUnits": ["compute.rackUnit"],
-    "/compute/rackunits": ["compute.rackUnit"]
+    "/api/v1/compute/RackUnits": ["compute.rackUnits"],
+    "/api/v1/compute/rackunits": ["compute.rackUnits"],
+    "/compute/RackUnits": ["compute.rackUnits"],
+    "/compute/rackunits": ["compute.rackUnits"]
   }
 }`)
 
@@ -273,7 +272,8 @@ func TestValidateEmbeddedArtifactsRejectsMismatchedCatalog(t *testing.T) {
 }
 
 func TestValidateCommittedEmbeddedArtifacts(t *testing.T) {
-	if err := ValidateEmbeddedArtifacts(generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes()); err != nil {
+	artifacts := targetintersight.Artifacts()
+	if err := ValidateEmbeddedArtifactsWithRuleTemplates(artifacts.ResolvedSpec, artifacts.SDKCatalog, artifacts.Rules, artifacts.SearchCatalog, targetintersight.RuleTemplates()); err != nil {
 		t.Fatalf("ValidateEmbeddedArtifacts(committed generated artifacts) error = %v", err)
 	}
 }

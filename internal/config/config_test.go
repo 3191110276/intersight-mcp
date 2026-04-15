@@ -9,29 +9,14 @@ import (
 	"github.com/mimaurer/intersight-mcp/internal/limits"
 )
 
-func TestLoadConfigDefaults(t *testing.T) {
+func TestLoadRuntimeDefaults(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := Load(nil, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-	})
+	cfg, err := LoadRuntime(nil, nil, "INTERSIGHT")
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("LoadRuntime() error = %v", err)
 	}
 
-	if cfg.Endpoint != limits.DefaultEndpoint {
-		t.Fatalf("unexpected endpoint: %q", cfg.Endpoint)
-	}
-	if cfg.OAuthTokenURL != "https://intersight.com/iam/token" {
-		t.Fatalf("unexpected oauth token URL: %q", cfg.OAuthTokenURL)
-	}
-	if cfg.ProxyURL != "" {
-		t.Fatalf("unexpected proxy URL: %q", cfg.ProxyURL)
-	}
-	if cfg.APIBaseURL != "https://intersight.com/api/v1" {
-		t.Fatalf("unexpected API base URL: %q", cfg.APIBaseURL)
-	}
 	if cfg.Execution.GlobalTimeout != 40*time.Second {
 		t.Fatalf("unexpected timeout: %v", cfg.Execution.GlobalTimeout)
 	}
@@ -58,13 +43,11 @@ func TestLoadConfigDefaults(t *testing.T) {
 	}
 }
 
-func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
+func TestLoadRuntimePrecedenceCLIOverEnv(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := Load(
+	cfg, err := LoadRuntime(
 		[]string{
-			"--endpoint", "https://flag.example.com",
-			"--proxy", "http://proxy.flag.example.com:8080",
 			"--timeout", "55s",
 			"--max-output", "1MB",
 			"--max-api-calls", "12",
@@ -79,10 +62,6 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"--legacy-content-mirror",
 		},
 		[]string{
-			"INTERSIGHT_CLIENT_ID=id",
-			"INTERSIGHT_CLIENT_SECRET=secret",
-			"INTERSIGHT_ENDPOINT=https://env.example.com",
-			"INTERSIGHT_PROXY_URL=http://proxy.env.example.com:8080",
 			"INTERSIGHT_TIMEOUT=15s",
 			"INTERSIGHT_MAX_OUTPUT=2048",
 			"INTERSIGHT_MAX_API_CALLS=9",
@@ -93,20 +72,12 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 			"INTERSIGHT_WASM_MEMORY=32MB",
 			"INTERSIGHT_LOG_LEVEL=info",
 		},
+		"INTERSIGHT",
 	)
 	if err != nil {
-		t.Fatalf("Load() error = %v", err)
+		t.Fatalf("LoadRuntime() error = %v", err)
 	}
 
-	if cfg.Endpoint != "https://flag.example.com" {
-		t.Fatalf("unexpected endpoint: %q", cfg.Endpoint)
-	}
-	if cfg.Origin != "https://flag.example.com" {
-		t.Fatalf("unexpected origin: %q", cfg.Origin)
-	}
-	if cfg.ProxyURL != "http://proxy.flag.example.com:8080" {
-		t.Fatalf("unexpected proxy URL: %q", cfg.ProxyURL)
-	}
 	if cfg.Execution.GlobalTimeout != 55*time.Second {
 		t.Fatalf("unexpected timeout: %v", cfg.Execution.GlobalTimeout)
 	}
@@ -145,80 +116,10 @@ func TestLoadConfigPrecedenceCLIOverEnv(t *testing.T) {
 	}
 }
 
-func TestLoadConfigInvalidEndpoint(t *testing.T) {
+func TestLoadRuntimeInvalidMaxOutput(t *testing.T) {
 	t.Parallel()
 
-	_, err := Load(nil, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-		"INTERSIGHT_ENDPOINT=https://example.com/path?x=1",
-	})
-	if err == nil {
-		t.Fatalf("expected invalid endpoint error")
-	}
-	if !strings.Contains(err.Error(), "invalid endpoint") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func TestLoadConfigInvalidProxy(t *testing.T) {
-	t.Parallel()
-
-	_, err := Load([]string{"--proxy", "mailto://proxy"}, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-	})
-	if err == nil {
-		t.Fatalf("expected invalid proxy error")
-	}
-	if !strings.Contains(err.Error(), "invalid proxy") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func TestLoadConfigRejectsHTTPEndpoint(t *testing.T) {
-	t.Parallel()
-
-	_, err := Load(nil, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-		"INTERSIGHT_ENDPOINT=http://example.com",
-	})
-	if err == nil {
-		t.Fatalf("expected invalid endpoint error")
-	}
-	if !strings.Contains(err.Error(), "scheme must be https") {
-		t.Fatalf("unexpected error: %v", err)
-	}
-}
-
-func TestLoadConfigNormalizesEndpointToHTTPS(t *testing.T) {
-	t.Parallel()
-
-	cfg, err := Load(nil, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-		"INTERSIGHT_ENDPOINT=example.com:8443",
-	})
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-
-	if cfg.Endpoint != "https://example.com:8443" {
-		t.Fatalf("unexpected endpoint: %q", cfg.Endpoint)
-	}
-	if cfg.Origin != "https://example.com:8443" {
-		t.Fatalf("unexpected origin: %q", cfg.Origin)
-	}
-}
-
-func TestLoadConfigInvalidMaxOutput(t *testing.T) {
-	t.Parallel()
-
-	_, err := Load([]string{"--max-output", "abc"}, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-	})
+	_, err := LoadRuntime([]string{"--max-output", "abc"}, nil, "INTERSIGHT")
 	if err == nil {
 		t.Fatalf("expected invalid max-output error")
 	}
@@ -227,13 +128,10 @@ func TestLoadConfigInvalidMaxOutput(t *testing.T) {
 	}
 }
 
-func TestLoadConfigInvalidPositiveInts(t *testing.T) {
+func TestLoadRuntimeInvalidPositiveInts(t *testing.T) {
 	t.Parallel()
 
-	_, err := Load([]string{"--max-api-calls", "0"}, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-	})
+	_, err := LoadRuntime([]string{"--max-api-calls", "0"}, nil, "INTERSIGHT")
 	if err == nil {
 		t.Fatalf("expected invalid max-api-calls error")
 	}
@@ -242,13 +140,10 @@ func TestLoadConfigInvalidPositiveInts(t *testing.T) {
 	}
 }
 
-func TestLoadConfigInvalidDurationKnobs(t *testing.T) {
+func TestLoadRuntimeInvalidDurationKnobs(t *testing.T) {
 	t.Parallel()
 
-	_, err := Load([]string{"--search-timeout", "0s"}, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-	})
+	_, err := LoadRuntime([]string{"--search-timeout", "0s"}, nil, "INTERSIGHT")
 	if err == nil {
 		t.Fatalf("expected invalid search-timeout error")
 	}
@@ -256,10 +151,7 @@ func TestLoadConfigInvalidDurationKnobs(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	_, err = Load([]string{"--per-call-timeout", "nope"}, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-	})
+	_, err = LoadRuntime([]string{"--per-call-timeout", "nope"}, nil, "INTERSIGHT")
 	if err == nil {
 		t.Fatalf("expected invalid per-call-timeout error")
 	}
@@ -268,13 +160,10 @@ func TestLoadConfigInvalidDurationKnobs(t *testing.T) {
 	}
 }
 
-func TestLoadConfigInvalidSizeKnobs(t *testing.T) {
+func TestLoadRuntimeInvalidSizeKnobs(t *testing.T) {
 	t.Parallel()
 
-	_, err := Load([]string{"--max-code-size", "abc"}, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-	})
+	_, err := LoadRuntime([]string{"--max-code-size", "abc"}, nil, "INTERSIGHT")
 	if err == nil {
 		t.Fatalf("expected invalid max-code-size error")
 	}
@@ -282,10 +171,7 @@ func TestLoadConfigInvalidSizeKnobs(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	_, err = Load([]string{"--wasm-memory", "0"}, []string{
-		"INTERSIGHT_CLIENT_ID=id",
-		"INTERSIGHT_CLIENT_SECRET=secret",
-	})
+	_, err = LoadRuntime([]string{"--wasm-memory", "0"}, nil, "INTERSIGHT")
 	if err == nil {
 		t.Fatalf("expected invalid wasm-memory error")
 	}
@@ -294,25 +180,10 @@ func TestLoadConfigInvalidSizeKnobs(t *testing.T) {
 	}
 }
 
-func TestLoadConfigMissingCredentialsAllowedForOfflineStartup(t *testing.T) {
+func TestLoadRuntimeInvalidUnsafeLogFullCode(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := Load(nil, nil)
-	if err == nil {
-		if cfg.HasCredentials() {
-			t.Fatalf("expected credentials to be absent")
-		}
-		return
-	}
-	t.Fatalf("Load() error = %v", err)
-}
-
-func TestLoadConfigInvalidUnsafeLogFullCode(t *testing.T) {
-	t.Parallel()
-
-	_, err := Load(nil, []string{
-		"INTERSIGHT_UNSAFE_LOG_FULL_CODE=maybe",
-	})
+	_, err := LoadRuntime(nil, []string{"INTERSIGHT_UNSAFE_LOG_FULL_CODE=maybe"}, "INTERSIGHT")
 	if err == nil {
 		t.Fatalf("expected invalid unsafe-log-full-code error")
 	}
@@ -321,12 +192,10 @@ func TestLoadConfigInvalidUnsafeLogFullCode(t *testing.T) {
 	}
 }
 
-func TestLoadConfigInvalidLegacyContentMirror(t *testing.T) {
+func TestLoadRuntimeInvalidLegacyContentMirror(t *testing.T) {
 	t.Parallel()
 
-	_, err := Load(nil, []string{
-		"INTERSIGHT_LEGACY_CONTENT_MIRROR=maybe",
-	})
+	_, err := LoadRuntime(nil, []string{"INTERSIGHT_LEGACY_CONTENT_MIRROR=maybe"}, "INTERSIGHT")
 	if err == nil {
 		t.Fatalf("expected invalid legacy-content-mirror error")
 	}

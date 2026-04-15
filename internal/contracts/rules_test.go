@@ -6,6 +6,205 @@ import (
 	"testing"
 )
 
+func testIntersightRuleTemplates() []RuleTemplate {
+	return []RuleTemplate{
+		{
+			SDKMethod: "vnic.ethIf.create",
+			Resource:  "vnic.EthIf",
+			Rules: []SemanticRule{
+				NewRequiredRule("LanConnectivityPolicy", "vnic.LanConnectivityPolicy"),
+				NewRequiredRule("EthAdapterPolicy", "vnic.EthAdapterPolicy"),
+				NewRequiredRule("EthQosPolicy", "vnic.EthQosPolicy"),
+				NewRequiredRule("FabricEthNetworkControlPolicy", "fabric.EthNetworkControlPolicy"),
+				NewRequiredRule("FabricEthNetworkGroupPolicy", "fabric.EthNetworkGroupPolicy", 1),
+				NewConditionalRequireRule("MacAddressType", "POOL", FieldRule{Field: "MacPool", Target: "macpool.Pool"}),
+				NewConditionalForbidRule("MacAddressType", "POOL", "StaticMacAddress"),
+				NewConditionalRequireRule("MacAddressType", "STATIC", FieldRule{Field: "StaticMacAddress"}),
+				NewConditionalForbidRule("MacAddressType", "STATIC", "MacPool"),
+				NewConditionalInRequireRule("Placement.SwitchId", []any{"A", "B"}, FieldRule{Field: "Placement.AutoSlotId"}),
+			},
+		},
+		{
+			SDKMethod: "vnic.ethIf.post",
+			Resource:  "vnic.EthIf",
+			Rules: []SemanticRule{
+				NewRequiredRule("LanConnectivityPolicy", "vnic.LanConnectivityPolicy"),
+				NewRequiredRule("EthAdapterPolicy", "vnic.EthAdapterPolicy"),
+				NewRequiredRule("EthQosPolicy", "vnic.EthQosPolicy"),
+				NewRequiredRule("FabricEthNetworkControlPolicy", "fabric.EthNetworkControlPolicy"),
+				NewRequiredRule("FabricEthNetworkGroupPolicy", "fabric.EthNetworkGroupPolicy", 1),
+				NewConditionalRequireRule("MacAddressType", "POOL", FieldRule{Field: "MacPool", Target: "macpool.Pool"}),
+				NewConditionalForbidRule("MacAddressType", "POOL", "StaticMacAddress"),
+				NewConditionalRequireRule("MacAddressType", "STATIC", FieldRule{Field: "StaticMacAddress"}),
+				NewConditionalForbidRule("MacAddressType", "STATIC", "MacPool"),
+				NewConditionalInRequireRule("Placement.SwitchId", []any{"A", "B"}, FieldRule{Field: "Placement.AutoSlotId"}),
+			},
+		},
+		{
+			SDKMethod: "aaa.retentionPolicy.create",
+			Resource:  "aaa.RetentionPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("RetentionPeriod", ""),
+				NewMinimumRule(MinimumRule{Field: "RetentionPeriod", Value: 6}),
+			},
+		},
+		{
+			SDKMethod: "access.policy.create",
+			Resource:  "access.Policy",
+			Rules: []SemanticRule{
+				NewRequiredRule("AddressType", ""),
+				NewRequiredRule("ConfigurationType", ""),
+				NewConditionalRequireRule("ConfigurationType.ConfigureInband", true, FieldRule{Field: "InbandIpPool", Target: "ippool.Pool"}),
+				NewConditionalMinimumRule("ConfigurationType.ConfigureInband", true, MinimumRule{Field: "InbandVlan", Value: 4}),
+			},
+		},
+		{
+			SDKMethod: "appliance.dataExportPolicy.create",
+			Resource:  "appliance.DataExportPolicy",
+			Rules: []SemanticRule{
+				NewForbidRule("Name"),
+			},
+		},
+		{
+			SDKMethod: "cond.alarmSuppression.create",
+			Resource:  "cond.AlarmSuppression",
+			Rules: []SemanticRule{
+				NewRequiredRule("StartDate", ""),
+				NewOneOfRule("Entity", "AlarmRules"),
+			},
+		},
+		{
+			SDKMethod: "hyperflex.extFcStoragePolicy.create",
+			Resource:  "hyperflex.ExtFcStoragePolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("ExtaTraffic", ""),
+			},
+		},
+		{
+			SDKMethod: "hyperflex.extIscsiStoragePolicy.create",
+			Resource:  "hyperflex.ExtIscsiStoragePolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("ExtaTraffic", ""),
+			},
+		},
+		{
+			SDKMethod: "hyperflex.localCredentialPolicy.create",
+			Resource:  "hyperflex.LocalCredentialPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("HxdpRootPwd", ""),
+			},
+		},
+		{
+			SDKMethod: "hyperflex.nodeConfigPolicy.create",
+			Resource:  "hyperflex.NodeConfigPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("MgmtIpRange", ""),
+			},
+		},
+		{
+			SDKMethod: "hyperflex.proxySettingPolicy.create",
+			Resource:  "hyperflex.ProxySettingPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("Hostname", ""),
+				NewMinimumRule(MinimumRule{Field: "Port", Value: 1}),
+			},
+		},
+		{
+			SDKMethod: "hyperflex.softwareVersionPolicy.create",
+			Resource:  "hyperflex.SoftwareVersionPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("HxdpVersion", ""),
+			},
+		},
+		{
+			SDKMethod: "hyperflex.sysConfigPolicy.create",
+			Resource:  "hyperflex.SysConfigPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("DnsServers", "", 1),
+			},
+		},
+		{
+			SDKMethod: "hyperflex.vcenterConfigPolicy.create",
+			Resource:  "hyperflex.VcenterConfigPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("DataCenter", ""),
+			},
+		},
+		{
+			SDKMethod: "iam.ldapPolicy.create",
+			Resource:  "iam.LdapPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("Enabled", ""),
+			},
+		},
+		{
+			SDKMethod: "ntp.policy.create",
+			Resource:  "ntp.Policy",
+			Rules: []SemanticRule{
+				NewRequiredRule("Enabled", ""),
+				NewRequiredRule("Timezone", ""),
+				NewOneOfRule("NtpServers", "AuthenticatedNtpServers"),
+			},
+		},
+		{
+			SDKMethod: "recovery.scheduleConfigPolicy.create",
+			Resource:  "recovery.ScheduleConfigPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("Schedule", ""),
+			},
+		},
+		{
+			SDKMethod: "scheduler.schedulePolicy.create",
+			Resource:  "scheduler.SchedulePolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("ScheduleParams", "", 1),
+			},
+		},
+		{
+			SDKMethod: "smtp.policy.create",
+			Resource:  "smtp.Policy",
+			Rules: []SemanticRule{
+				NewRequiredRule("Enabled", ""),
+			},
+		},
+		{
+			SDKMethod: "smtp.policyTest.create",
+			Resource:  "smtp.PolicyTest",
+			Rules: []SemanticRule{
+				NewRequiredRule("Policy", "smtp.Policy"),
+			},
+		},
+		{
+			SDKMethod: "storage.driveSecurityPolicy.create",
+			Resource:  "storage.DriveSecurityPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("KeySetting", ""),
+			},
+		},
+		{
+			SDKMethod: "syslog.policy.create",
+			Resource:  "syslog.Policy",
+			Rules: []SemanticRule{
+				NewRequiredRule("LocalClients", "", 1),
+			},
+		},
+		{
+			SDKMethod: "vnic.iscsiAdapterPolicy.create",
+			Resource:  "vnic.IscsiAdapterPolicy",
+			Rules: []SemanticRule{
+				NewMinimumRule(MinimumRule{Field: "DhcpTimeout", Value: 60}),
+			},
+		},
+		{
+			SDKMethod: "vnic.iscsiStaticTargetPolicy.create",
+			Resource:  "vnic.IscsiStaticTargetPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("IpAddress", ""),
+			},
+		},
+	}
+}
+
 func TestBuildRuleCatalogIncludesPostWriteMethodsForPhaseFourResources(t *testing.T) {
 	t.Parallel()
 
@@ -38,7 +237,7 @@ func TestBuildRuleCatalogIncludesPostWriteMethodsForPhaseFourResources(t *testin
 		},
 	}
 
-	rules, err := BuildRuleCatalog(spec, catalog)
+	rules, err := BuildRuleCatalog(spec, catalog, testIntersightRuleTemplates())
 	if err != nil {
 		t.Fatalf("BuildRuleCatalog() error = %v", err)
 	}
@@ -84,7 +283,7 @@ func TestBuildRuleCatalogOmitsRequiredRulesForEthIf(t *testing.T) {
 		},
 	}
 
-	rules, err := BuildRuleCatalog(spec, catalog)
+	rules, err := BuildRuleCatalog(spec, catalog, testIntersightRuleTemplates())
 	if err != nil {
 		t.Fatalf("BuildRuleCatalog() error = %v", err)
 	}
@@ -98,6 +297,160 @@ func TestBuildRuleCatalogOmitsRequiredRulesForEthIf(t *testing.T) {
 		if rule.Kind == "required" {
 			t.Fatalf("unexpected required rule retained: %#v", rule)
 		}
+	}
+}
+
+func TestBuildRuleCatalogPreservesBackendRequiredRulesWhenSchemaLeavesFieldsOptional(t *testing.T) {
+	t.Parallel()
+
+	spec := NormalizedSpec{
+		Metadata: ArtifactSourceMetadata{
+			PublishedVersion: "1.0.0-test",
+			SourceURL:        "https://example.com/spec",
+			SHA256:           "abc123",
+			RetrievalDate:    "2026-04-08",
+		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/vnic/EthIfs": {
+				"post": {
+					OperationID: "CreateVnicEthIf",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Required: []string{
+										"LanConnectivityPolicy",
+									},
+									Properties: map[string]*NormalizedSchema{
+										"LanConnectivityPolicy":         {Relationship: true, RelationshipTarget: "vnic.LanConnectivityPolicy"},
+										"EthAdapterPolicy":              {Relationship: true, RelationshipTarget: "vnic.EthAdapterPolicy"},
+										"EthQosPolicy":                  {Relationship: true, RelationshipTarget: "vnic.EthQosPolicy"},
+										"FabricEthNetworkControlPolicy": {Relationship: true, RelationshipTarget: "fabric.EthNetworkControlPolicy"},
+										"FabricEthNetworkGroupPolicy": {
+											Type:  "array",
+											Items: &NormalizedSchema{Relationship: true, RelationshipTarget: "fabric.EthNetworkGroupPolicy"},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	catalog := SDKCatalog{
+		Metadata: spec.Metadata,
+		Methods: map[string]SDKMethod{
+			"vnic.ethIf.create": {
+				SDKMethod: "vnic.ethIf.create",
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateVnicEthIf",
+					Method:       "POST",
+					PathTemplate: "/api/v1/vnic/EthIfs",
+				},
+			},
+		},
+	}
+
+	rules, err := BuildRuleCatalog(spec, catalog, testIntersightRuleTemplates())
+	if err != nil {
+		t.Fatalf("BuildRuleCatalog() error = %v", err)
+	}
+
+	createRules, ok := rules.Methods["vnic.ethIf.create"]
+	if !ok {
+		t.Fatalf("expected rules for vnic.ethIf.create")
+	}
+
+	var requiredFields []string
+	for _, rule := range createRules.Rules {
+		if rule.Kind != "required" || len(rule.Require) == 0 {
+			continue
+		}
+		requiredFields = append(requiredFields, rule.Require[0].Field)
+	}
+
+	want := []string{
+		"EthAdapterPolicy",
+		"EthQosPolicy",
+		"FabricEthNetworkControlPolicy",
+		"FabricEthNetworkGroupPolicy",
+	}
+	if !reflect.DeepEqual(requiredFields, want) {
+		t.Fatalf("required fields = %#v, want %#v", requiredFields, want)
+	}
+}
+
+func TestBuildRuleCatalogPreservesAlarmSuppressionStartDateRequirementWhenSchemaLeavesItOptional(t *testing.T) {
+	t.Parallel()
+
+	spec := NormalizedSpec{
+		Metadata: ArtifactSourceMetadata{
+			PublishedVersion: "1.0.0-test",
+			SourceURL:        "https://example.com/spec",
+			SHA256:           "abc123",
+			RetrievalDate:    "2026-04-08",
+		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/cond/AlarmSuppressions": {
+				"post": {
+					OperationID: "CreateCondAlarmSuppression",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"StartDate":  {Type: "string", Format: "date-time"},
+										"Entity":     {Relationship: true, RelationshipTarget: "mo.BaseMo"},
+										"AlarmRules": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	catalog := SDKCatalog{
+		Metadata: spec.Metadata,
+		Methods: map[string]SDKMethod{
+			"cond.alarmSuppression.create": {
+				SDKMethod: "cond.alarmSuppression.create",
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateCondAlarmSuppression",
+					Method:       "POST",
+					PathTemplate: "/api/v1/cond/AlarmSuppressions",
+				},
+			},
+		},
+	}
+
+	rules, err := BuildRuleCatalog(spec, catalog, testIntersightRuleTemplates())
+	if err != nil {
+		t.Fatalf("BuildRuleCatalog() error = %v", err)
+	}
+
+	createRules, ok := rules.Methods["cond.alarmSuppression.create"]
+	if !ok {
+		t.Fatalf("expected rules for cond.alarmSuppression.create")
+	}
+	if len(createRules.Rules) != 2 {
+		t.Fatalf("cond.alarmSuppression.create rules = %#v, want required+one_of", createRules.Rules)
+	}
+	if len(createRules.Rules[0].Require) != 1 || createRules.Rules[0].Require[0].Field != "StartDate" {
+		t.Fatalf("unexpected alarm suppression required rule: %#v", createRules.Rules[0])
+	}
+	if createRules.Rules[1].Kind != "one_of" || len(createRules.Rules[1].RequireAny) != 2 {
+		t.Fatalf("unexpected alarm suppression one-of rule: %#v", createRules.Rules[1])
+	}
+	if createRules.Rules[1].RequireAny[0].Field != "Entity" || createRules.Rules[1].RequireAny[1].Field != "AlarmRules" {
+		t.Fatalf("unexpected alarm suppression one-of fields: %#v", createRules.Rules[1].RequireAny)
 	}
 }
 
@@ -119,6 +472,7 @@ func TestBuildRuleCatalogIncludesPolicyCreateRulesFromProbeFindings(t *testing.T
 			"aaa.retentionPolicy.create":             {SDKMethod: "aaa.retentionPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateAaaRetentionPolicy", Method: "POST"}},
 			"access.policy.create":                   {SDKMethod: "access.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateAccessPolicy", Method: "POST"}},
 			"appliance.dataExportPolicy.create":      {SDKMethod: "appliance.dataExportPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateApplianceDataExportPolicy", Method: "POST"}},
+			"cond.alarmSuppression.create":           {SDKMethod: "cond.alarmSuppression.create", Descriptor: OperationDescriptor{OperationID: "CreateCondAlarmSuppression", Method: "POST"}},
 			"hyperflex.extFcStoragePolicy.create":    {SDKMethod: "hyperflex.extFcStoragePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexExtFcStoragePolicy", Method: "POST"}},
 			"hyperflex.extIscsiStoragePolicy.create": {SDKMethod: "hyperflex.extIscsiStoragePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexExtIscsiStoragePolicy", Method: "POST"}},
 			"hyperflex.localCredentialPolicy.create": {SDKMethod: "hyperflex.localCredentialPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexLocalCredentialPolicy", Method: "POST"}},
@@ -140,7 +494,7 @@ func TestBuildRuleCatalogIncludesPolicyCreateRulesFromProbeFindings(t *testing.T
 		},
 	}
 
-	rules, err := BuildRuleCatalog(spec, catalog)
+	rules, err := BuildRuleCatalog(spec, catalog, testIntersightRuleTemplates())
 	if err != nil {
 		t.Fatalf("BuildRuleCatalog() error = %v", err)
 	}
@@ -178,6 +532,17 @@ func TestBuildRuleCatalogIncludesPolicyCreateRulesFromProbeFindings(t *testing.T
 	}
 	if ntp.Rules[0].RequireAny[0].Field != "NtpServers" || ntp.Rules[0].RequireAny[1].Field != "AuthenticatedNtpServers" {
 		t.Fatalf("unexpected ntp one-of fields: %#v", ntp.Rules[0].RequireAny)
+	}
+
+	alarmSuppression := rules.Methods["cond.alarmSuppression.create"]
+	if len(alarmSuppression.Rules) != 1 {
+		t.Fatalf("cond.alarmSuppression.create rules = %#v, want one_of only", alarmSuppression.Rules)
+	}
+	if alarmSuppression.Rules[0].Kind != "one_of" || len(alarmSuppression.Rules[0].RequireAny) != 2 {
+		t.Fatalf("unexpected alarm suppression one-of rule: %#v", alarmSuppression.Rules[0])
+	}
+	if alarmSuppression.Rules[0].RequireAny[0].Field != "Entity" || alarmSuppression.Rules[0].RequireAny[1].Field != "AlarmRules" {
+		t.Fatalf("unexpected alarm suppression one-of fields: %#v", alarmSuppression.Rules[0].RequireAny)
 	}
 
 	smtp := rules.Methods["smtp.policy.create"]
@@ -327,7 +692,12 @@ func TestValidateRuleCatalogAgainstArtifactsRejectsCanonicalResourceMismatch(t *
 		},
 	}
 
-	err := ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules)
+	err := ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules, []RuleTemplate{
+		{
+			SDKMethod: "example.widget.create",
+			Resource:  "example.Widget",
+		},
+	})
 	if err == nil || !strings.Contains(err.Error(), "does not match sdk catalog resource") {
 		t.Fatalf("ValidateRuleCatalogAgainstArtifacts() error = %v, want resource mismatch", err)
 	}
@@ -460,9 +830,20 @@ func TestValidateRuleCatalogAgainstArtifactsRejectsRequiredRuleKind(t *testing.T
 		},
 	}
 
-	err := ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules)
-	if err == nil || !strings.Contains(err.Error(), "unsupported rule kind") {
-		t.Fatalf("ValidateRuleCatalogAgainstArtifacts() error = %v, want unsupported required rule failure", err)
+	err := ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules, []RuleTemplate{
+		{
+			SDKMethod: "example.widget.create",
+			Resource:  "example.Widget",
+			Rules: []SemanticRule{
+				{
+					Kind:    "required",
+					Require: []FieldRule{{Field: "MissingField"}},
+				},
+			},
+		},
+	})
+	if err == nil || !strings.Contains(err.Error(), "unknown required field") {
+		t.Fatalf("ValidateRuleCatalogAgainstArtifacts() error = %v, want unknown required field failure", err)
 	}
 }
 
@@ -538,7 +919,19 @@ func TestValidateRuleCatalogAgainstArtifactsRejectsMismatchedRelationshipTarget(
 		},
 	}
 
-	err := ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules)
+	err := ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules, []RuleTemplate{
+		{
+			SDKMethod: "example.widget.create",
+			Resource:  "example.Widget",
+			Rules: []SemanticRule{
+				{
+					Kind:    "conditional",
+					When:    &RuleCondition{Field: "Organization", Equals: true},
+					Require: []FieldRule{{Field: "Organization", Target: "other.Target"}},
+				},
+			},
+		},
+	})
 	if err == nil || !strings.Contains(err.Error(), "does not match embedded spec target") {
 		t.Fatalf("ValidateRuleCatalogAgainstArtifacts() error = %v, want relationship target failure", err)
 	}

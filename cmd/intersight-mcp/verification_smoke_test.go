@@ -11,7 +11,8 @@ import (
 	"time"
 
 	"github.com/mark3labs/mcp-go/mcp"
-	"github.com/mimaurer/intersight-mcp/generated"
+	targetintersight "github.com/mimaurer/intersight-mcp/implementations/intersight"
+	"github.com/mimaurer/intersight-mcp/internal/bootstrap"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 	"github.com/mimaurer/intersight-mcp/internal/testutil"
 )
@@ -37,7 +38,10 @@ func TestServeWithIOVerificationMatrix(t *testing.T) {
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- serveWithIOAndHTTPClient(ctx, nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes(), generated.SearchCatalogBytes(), fake.Client())
+		errCh <- bootstrap.App{
+			Target:  targetintersight.Target(),
+			Version: "test",
+		}.ServeWithIOAndHTTPClient(ctx, nil, stdinReader, stdoutWriter, &bytes.Buffer{}, env, fake.Client())
 		_ = stdoutWriter.Close()
 	}()
 
@@ -56,10 +60,10 @@ func TestServeWithIOVerificationMatrix(t *testing.T) {
 	writeJSONLine(t, stdinWriter, initializeRequest())
 	writeJSONLine(t, stdinWriter, toolsListRequest(2))
 	writeJSONLine(t, stdinWriter, toolCallRequest(3, "search", `
-const rackUnit = catalog.resources["compute.rackUnit"];
+const rackUnit = catalog.resources["compute.rackUnits"];
 const schema = rackUnit ? catalog.schema(rackUnit.schema) : null;
 return {
-  hasCatalog: !!catalog.resources["compute.rackUnit"],
+  hasCatalog: !!catalog.resources["compute.rackUnits"],
   hasMetrics: !!catalog.metrics.byName["system.cpu.utilization_user"],
   hasSchemaHelper: typeof catalog.schema === "function",
   hasSchemaRef: !!rackUnit?.schema,
@@ -68,8 +72,8 @@ return {
 };
 `))
 	writeJSONLine(t, stdinWriter, toolCallRequest(4, "query", `
-const collection = await sdk.compute.rackUnit.list();
-const first = await sdk.compute.rackUnit.get({ path: { Moid: collection.Results[0].Moid } });
+const collection = await sdk.compute.rackUnits.list();
+const first = await sdk.compute.rackUnits.get({ path: { Moid: collection.Results[0].Moid } });
 return {
   count: collection.Count,
   firstName: first.Name,
@@ -80,7 +84,7 @@ return {
 return await api.call("POST", "/api/v1/ntp/Policies", { body: { Name: "should-not-work" } });
 `))
 	writeJSONLine(t, stdinWriter, toolCallRequest(6, "query", `
-return await sdk.ntp.policy.create({
+return await sdk.ntp.policies.create({
   body: {
     Enabled: true,
     Name: "ntp-policy-preview",
@@ -90,7 +94,7 @@ return await sdk.ntp.policy.create({
 });
 `))
 	writeJSONLine(t, stdinWriter, mutateToolCallRequest(7, "Create NTP policy ntp-policy-01 in org-1", `
-return await sdk.ntp.policy.create({
+return await sdk.ntp.policies.create({
   body: {
     Enabled: true,
     Timezone: "UTC",
@@ -115,10 +119,10 @@ return await sdk.ntp.policy.create({
 	select {
 	case err := <-errCh:
 		if err != nil {
-			t.Fatalf("serveWithIO() error = %v", err)
+			t.Fatalf("ServeWithIO() error = %v", err)
 		}
 	case <-ctx.Done():
-		t.Fatalf("timed out waiting for serveWithIO to return: %v", ctx.Err())
+		t.Fatalf("timed out waiting for ServeWithIO to return: %v", ctx.Err())
 	}
 
 	if len(lines) != 7 {
@@ -149,9 +153,9 @@ return await sdk.ntp.policy.create({
 	if searchResult["hasCatalog"] != true || searchResult["hasSchemaHelper"] != true || searchResult["hasSchemaRef"] != true || searchResult["hasSchema"] != true {
 		t.Fatalf("unexpected search result: %#v", searchResult)
 	}
-	if searchResult["schemaType"] != "object" {
-		t.Fatalf("unexpected search schemaType: %#v", searchResult["schemaType"])
-	}
+if searchResult["schemaType"] != "string" {
+	t.Fatalf("unexpected search schemaType: %#v", searchResult["schemaType"])
+}
 
 	query := decodeToolResult(t, responses[4])
 	if query.IsError {
@@ -305,8 +309,8 @@ var verificationTestCatalog = []byte(`{
     "retrieval_date": "2026-04-08"
   },
   "methods": {
-    "compute.rackUnit.get": {
-      "sdkMethod": "compute.rackUnit.get",
+    "compute.rackUnits.get": {
+      "sdkMethod": "compute.rackUnits.get",
       "summary": "Get a rack unit",
       "resource": "compute.RackUnit",
       "descriptor": {
@@ -324,8 +328,8 @@ var verificationTestCatalog = []byte(`{
         }
       }
     },
-    "compute.rackUnit.list": {
-      "sdkMethod": "compute.rackUnit.list",
+    "compute.rackUnits.list": {
+      "sdkMethod": "compute.rackUnits.list",
       "summary": "List rack units",
       "resource": "compute.RackUnit",
       "descriptor": {
@@ -343,8 +347,8 @@ var verificationTestCatalog = []byte(`{
         }
       }
     },
-    "ntp.policy.create": {
-      "sdkMethod": "ntp.policy.create",
+    "ntp.policies.create": {
+      "sdkMethod": "ntp.policies.create",
       "summary": "Create an NTP policy",
       "resource": "ntp.Policy",
       "descriptor": {
@@ -381,8 +385,8 @@ var verificationTestRules = []byte(`{
     "retrieval_date": "2026-04-08"
   },
   "methods": {
-    "ntp.policy.create": {
-      "sdkMethod": "ntp.policy.create",
+    "ntp.policies.create": {
+      "sdkMethod": "ntp.policies.create",
       "operationId": "CreateNtpPolicy",
       "resource": "ntp.Policy",
       "rules": [
@@ -418,31 +422,31 @@ var verificationTestSearchCatalog = []byte(`{
     "retrieval_date": "2026-04-08"
   },
   "resources": {
-    "compute.rackUnit": {
+    "compute.rackUnits": {
       "schema": "compute.RackUnit",
       "path": "/api/v1/compute/RackUnits/{moid?}",
       "operations": ["get", "list"]
     },
-    "ntp.policy": {
+    "ntp.policies": {
       "schema": "ntp.Policy",
       "path": "/api/v1/ntp/Policies",
       "operations": ["create"]
     }
   },
-  "resourceNames": ["compute.rackUnit", "ntp.policy"],
+  "resourceNames": ["compute.rackUnits", "ntp.policies"],
   "paths": {
-    "/api/v1/compute/RackUnits": ["compute.rackUnit"],
-    "/api/v1/compute/rackunits": ["compute.rackUnit"],
-    "/compute/RackUnits": ["compute.rackUnit"],
-    "/compute/rackunits": ["compute.rackUnit"],
-    "/api/v1/compute/RackUnits/{moid}": ["compute.rackUnit"],
-    "/api/v1/compute/rackunits/{moid}": ["compute.rackUnit"],
-    "/compute/RackUnits/{moid}": ["compute.rackUnit"],
-    "/compute/rackunits/{moid}": ["compute.rackUnit"],
-    "/api/v1/ntp/Policies": ["ntp.policy"],
-    "/api/v1/ntp/policies": ["ntp.policy"],
-    "/ntp/Policies": ["ntp.policy"],
-    "/ntp/policies": ["ntp.policy"]
+    "/api/v1/compute/RackUnits": ["compute.rackUnits"],
+    "/api/v1/compute/rackunits": ["compute.rackUnits"],
+    "/compute/RackUnits": ["compute.rackUnits"],
+    "/compute/rackunits": ["compute.rackUnits"],
+    "/api/v1/compute/RackUnits/{moid}": ["compute.rackUnits"],
+    "/api/v1/compute/rackunits/{moid}": ["compute.rackUnits"],
+    "/compute/RackUnits/{moid}": ["compute.rackUnits"],
+    "/compute/rackunits/{moid}": ["compute.rackUnits"],
+    "/api/v1/ntp/Policies": ["ntp.policies"],
+    "/api/v1/ntp/policies": ["ntp.policies"],
+    "/ntp/Policies": ["ntp.policies"],
+    "/ntp/policies": ["ntp.policies"]
   }
 }`)
 

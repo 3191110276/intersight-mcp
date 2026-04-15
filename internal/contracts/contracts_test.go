@@ -18,11 +18,22 @@ func TestNormalizeErrorAuth(t *testing.T) {
 	if !got.Error.Retryable {
 		t.Fatalf("expected auth error to be retryable")
 	}
-	if got.Error.Hint != "Check INTERSIGHT_CLIENT_ID and INTERSIGHT_CLIENT_SECRET." {
+	if got.Error.Hint != "Check provider credentials and endpoint configuration." {
 		t.Fatalf("unexpected hint: %q", got.Error.Hint)
 	}
 	if len(got.Logs) != 1 || got.Logs[0] != "log1" {
 		t.Fatalf("unexpected logs: %#v", got.Logs)
+	}
+}
+
+func TestNormalizeErrorAuthWithProviderHint(t *testing.T) {
+	t.Parallel()
+
+	got := NormalizeErrorWithOptions(AuthError{Message: "token refresh failed"}, nil, ErrorOptions{
+		AuthErrorHint: "Check EXAMPLE_TOKEN.",
+	})
+	if got.Error.Hint != "Check EXAMPLE_TOKEN." {
+		t.Fatalf("unexpected hint: %q", got.Error.Hint)
 	}
 }
 

@@ -17,7 +17,7 @@ make generate
 make build
 ```
 
-`make build` writes binaries for the default target set to `bin/`:
+`make build` discovers providers from `implementations/*` and writes one binary per provider for the default target set to `bin/`:
 
 - `bin/intersight-mcp-darwin-amd64`
 - `bin/intersight-mcp-darwin-arm64`
@@ -74,7 +74,7 @@ Additional operational tuning flags exist beyond the end-user setup documented i
 
 `--unsafe-log-full-code` and `INTERSIGHT_UNSAFE_LOG_FULL_CODE` are break-glass debugging options. When enabled together with `--log-level debug`, the server logs submitted tool code with best-effort redaction for bearer tokens, client secrets, and similar values, then emits a startup warning. Use this only temporarily on trusted machines; normal debug logging already captures code hashes, execution metadata, API call traces, and error details without storing submitted code.
 
-`query` and `mutate` compact API objects by default before returning results to clients. Callers can opt out per request with `compact: false` when they need the full raw payload.
+`query` and `mutate` compact API objects by default before returning results to clients. Callers should omit `compact` for normal use and only opt out with `compact: false` as a follow-up when the default compacted response is not sufficient and they need the full raw payload.
 
 ## Spec Update Workflow
 
@@ -82,7 +82,7 @@ When the pinned Cisco OpenAPI input, the generator, or core dependencies change:
 
 1. Replace `third_party/intersight/openapi/raw/openapi.json` with the new pinned raw spec.
 2. Update `third_party/intersight/openapi/manifest.json` so the published version, source URL, SHA-256, and retrieval date match the new raw file.
-3. Review `spec/filter.yaml` and adjust denylist entries only when there is an intentional routing change.
+3. Review `implementations/intersight/filter.yaml` and adjust denylist entries only when there is an intentional routing change.
 4. Regenerate the embedded normalized artifact with `make generate`.
 5. Run the full verification harness with `make verify`.
 6. Commit the updated raw spec, manifest, and regenerated `generated/spec_resolved.json`, `generated/sdk_catalog.json`, `generated/rules.json`, and `generated/search_catalog.json` together.

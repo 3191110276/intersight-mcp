@@ -31,16 +31,8 @@ func ValidateEmbeddedSpec(data []byte) error {
 	if len(spec.Paths) == 0 {
 		return errors.New("embedded spec validation failed: paths must be non-empty")
 	}
-	if len(spec.Schemas) == 0 {
-		return errors.New("embedded spec validation failed: schemas must be present")
-	}
-
 	operationCount := 0
-	hasAPIV1Path := false
-	for path, methods := range spec.Paths {
-		if strings.HasPrefix(path, "/api/v1/") {
-			hasAPIV1Path = true
-		}
+	for _, methods := range spec.Paths {
 		for method := range methods {
 			if _, ok := validOperationMethods[strings.ToLower(method)]; ok {
 				operationCount++
@@ -50,16 +42,14 @@ func ValidateEmbeddedSpec(data []byte) error {
 	if operationCount == 0 {
 		return errors.New("embedded spec validation failed: at least one valid operation is required")
 	}
-	if !hasAPIV1Path {
-		return errors.New("embedded spec validation failed: expected at least one /api/v1/ path")
-	}
-	if _, ok := spec.Schemas["compute.RackUnit"]; !ok {
-		return errors.New("embedded spec validation failed: compute.RackUnit schema is required")
-	}
 	return nil
 }
 
 func ValidateEmbeddedArtifacts(specData, catalogData, rulesData, searchCatalogData []byte) error {
+	return ValidateEmbeddedArtifactsWithRuleTemplates(specData, catalogData, rulesData, searchCatalogData, nil)
+}
+
+func ValidateEmbeddedArtifactsWithRuleTemplates(specData, catalogData, rulesData, searchCatalogData []byte, ruleTemplates []contracts.RuleTemplate) error {
 	if err := ValidateEmbeddedSpec(specData); err != nil {
 		return err
 	}
@@ -89,7 +79,7 @@ func ValidateEmbeddedArtifacts(specData, catalogData, rulesData, searchCatalogDa
 	if rules.Metadata.PublishedVersion == "" || rules.Metadata.SHA256 == "" {
 		return errors.New("embedded artifact validation failed: rule metadata source metadata is required")
 	}
-	if err := contracts.ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules); err != nil {
+	if err := contracts.ValidateRuleCatalogAgainstArtifacts(spec, catalog, rules, ruleTemplates); err != nil {
 		return err
 	}
 

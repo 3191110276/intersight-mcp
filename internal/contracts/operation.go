@@ -19,7 +19,8 @@ type ValidationPlan struct {
 }
 
 type FollowUpPlan struct {
-	Kind string `json:"kind"`
+	Kind    string         `json:"kind"`
+	Options map[string]any `json:"options,omitempty"`
 }
 
 type OperationDescriptor struct {

@@ -114,12 +114,41 @@ func BuildSDKCatalog(spec NormalizedSpec) (SDKCatalog, error) {
 				return SDKCatalog{}, err
 			}
 			if existing, ok := catalog.Methods[sdkMethodID]; ok {
-				return SDKCatalog{}, fmt.Errorf(
-					"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
-					sdkMethodID,
-					existing.Descriptor.OperationID,
-					op.OperationID,
-				)
+				alternateExistingID, existingErr := buildSDKMethodIDWithTerminalPathParam(existing.Descriptor.PathTemplate, existing.Descriptor.Method, existing.Descriptor.OperationID)
+				alternateID, alternateErr := buildSDKMethodIDWithTerminalPathParam(path, method, op.OperationID)
+				switch {
+				case existingErr == nil && alternateExistingID != sdkMethodID:
+					if _, alternateExists := catalog.Methods[alternateExistingID]; !alternateExists {
+						delete(catalog.Methods, sdkMethodID)
+						existing.SDKMethod = alternateExistingID
+						catalog.Methods[alternateExistingID] = existing
+					} else {
+						return SDKCatalog{}, fmt.Errorf(
+							"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
+							sdkMethodID,
+							existing.Descriptor.OperationID,
+							op.OperationID,
+						)
+					}
+				case alternateErr == nil && alternateID != sdkMethodID:
+					if _, alternateExists := catalog.Methods[alternateID]; !alternateExists {
+						sdkMethodID = alternateID
+					} else {
+						return SDKCatalog{}, fmt.Errorf(
+							"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
+							sdkMethodID,
+							existing.Descriptor.OperationID,
+							op.OperationID,
+						)
+					}
+				default:
+					return SDKCatalog{}, fmt.Errorf(
+						"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
+						sdkMethodID,
+						existing.Descriptor.OperationID,
+						op.OperationID,
+					)
+				}
 			}
 
 			descriptor := NewHTTPOperationDescriptor(method, path)
@@ -136,7 +165,11 @@ func BuildSDKCatalog(spec NormalizedSpec) (SDKCatalog, error) {
 			if body := op.RequestBody; body != nil {
 				entry.RequestBodyRequired = body.Required
 				if media, ok := body.Content["application/json"]; ok && media.Schema != nil {
-					entry.RequestBodyFields = sortedKeys(media.Schema.Properties)
+					bodySchema := media.Schema
+					if bodySchema.Circular != "" && strings.HasPrefix(bodySchema.Circular, "inline.") {
+						bodySchema = dereferenceSchema(spec, bodySchema)
+					}
+					entry.RequestBodyFields = sortedKeys(bodySchema.Properties)
 				}
 			}
 			resource, err := deriveCanonicalResource(spec, entry, op)
@@ -197,7 +230,7 @@ func validateCatalogReferences(spec NormalizedSpec, catalog SDKCatalog) error {
 			return fmt.Errorf("embedded artifact validation failed: sdk catalog method %q points at unknown operation %q", name, method.Descriptor.OperationID)
 		}
 
-		if err := validateCatalogFieldReferences(name, bodySchema, method.RequestBodyFields); err != nil {
+		if err := validateCatalogFieldReferences(spec, name, bodySchema, method.RequestBodyFields); err != nil {
 			return err
 		}
 		if err := validateCatalogSchemaReferences(spec, name, method.RelatedSchemas); err != nil {
@@ -242,12 +275,15 @@ func findSpecOperationForDescriptor(spec NormalizedSpec, descriptor OperationDes
 	return op, bodySchema, true
 }
 
-func validateCatalogFieldReferences(name string, bodySchema *NormalizedSchema, fields []string) error {
+func validateCatalogFieldReferences(spec NormalizedSpec, name string, bodySchema *NormalizedSchema, fields []string) error {
 	if len(fields) == 0 {
 		return nil
 	}
 	if bodySchema == nil {
 		return fmt.Errorf("embedded artifact validation failed: sdk catalog method %q declares request body fields for an operation without an application/json request body", name)
+	}
+	if bodySchema.Circular != "" && strings.HasPrefix(bodySchema.Circular, "inline.") {
+		bodySchema = dereferenceSchema(spec, bodySchema)
 	}
 	for _, field := range fields {
 		if _, ok := bodySchema.Properties[field]; !ok {
@@ -291,13 +327,19 @@ func normalizeOperationDescriptor(descriptor OperationDescriptor) OperationDescr
 }
 
 func buildSDKMethodID(path, method, operationID string) (string, error) {
-	trimmed := strings.Trim(strings.TrimPrefix(path, "/api/v1/"), "/")
-	if trimmed == "" || trimmed == path {
+	return buildSDKMethodIDWithVerbStrategy(path, method, operationID, false)
+}
+
+func buildSDKMethodIDWithTerminalPathParam(path, method, operationID string) (string, error) {
+	return buildSDKMethodIDWithVerbStrategy(path, method, operationID, true)
+}
+
+func buildSDKMethodIDWithVerbStrategy(path, method, operationID string, useTerminalPathParam bool) (string, error) {
+	segments := sdkMethodPathSegments(path)
+	if len(segments) == 0 {
 		return "", fmt.Errorf("sdk catalog generation failed: cannot derive sdk method for %s %s", strings.ToUpper(method), path)
 	}
-
-	segments := strings.Split(trimmed, "/")
-	namespace := lowerCamelIdentifier(singularizeWord(segments[0]))
+	namespace := lowerCamelIdentifier(segments[0])
 	if namespace == "" {
 		return "", fmt.Errorf("sdk catalog generation failed: cannot derive namespace for %s %s", strings.ToUpper(method), path)
 	}
@@ -305,10 +347,14 @@ func buildSDKMethodID(path, method, operationID string) (string, error) {
 	var resourceParts []string
 	var action string
 	hasPathParam := false
+	lastSegmentIsPathParam := false
 	for i := 1; i < len(segments); i++ {
 		segment := segments[i]
 		if isPathParameter(segment) {
 			hasPathParam = true
+			if i == len(segments)-1 {
+				lastSegmentIsPathParam = true
+			}
 			continue
 		}
 		if strings.EqualFold(segment, "Actions") {
@@ -321,15 +367,68 @@ func buildSDKMethodID(path, method, operationID string) (string, error) {
 		resourceParts = append(resourceParts, segment)
 	}
 
-	resource := lowerCamelIdentifier(joinSingularized(resourceParts))
+	resource := lowerCamelIdentifier(joinPathParts(resourceParts))
+	if resource == "" {
+		resource = namespace
+	}
 	if resource == "" {
 		resource = lowerCamelIdentifier(operationID)
 	}
-	verb := deriveSDKVerb(method, hasPathParam, action)
+	pathParamForVerb := hasPathParam
+	if useTerminalPathParam {
+		pathParamForVerb = lastSegmentIsPathParam
+	}
+	verb := deriveSDKVerb(method, pathParamForVerb, action)
 	if verb == "" {
 		return "", fmt.Errorf("sdk catalog generation failed: cannot derive sdk method verb for %s %s", strings.ToUpper(method), path)
 	}
 	return namespace + "." + resource + "." + verb, nil
+}
+
+func sdkMethodPathSegments(path string) []string {
+	rawSegments := strings.Split(strings.Trim(strings.TrimSpace(path), "/"), "/")
+	if len(rawSegments) == 0 {
+		return nil
+	}
+
+	segments := make([]string, 0, len(rawSegments))
+	for _, segment := range rawSegments {
+		segment = strings.TrimSpace(segment)
+		if segment == "" {
+			continue
+		}
+		segments = append(segments, segment)
+	}
+	if len(segments) == 0 {
+		return nil
+	}
+
+	if len(segments) >= 2 && strings.EqualFold(segments[0], "api") && isVersionSegment(segments[1]) {
+		segments = segments[2:]
+	} else if isVersionSegment(segments[0]) {
+		segments = segments[1:]
+	}
+
+	if len(segments) == 0 {
+		return nil
+	}
+	return segments
+}
+
+func isVersionSegment(segment string) bool {
+	segment = strings.TrimSpace(segment)
+	if len(segment) < 2 {
+		return false
+	}
+	if segment[0] != 'v' && segment[0] != 'V' {
+		return false
+	}
+	for i := 1; i < len(segment); i++ {
+		if segment[i] < '0' || segment[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func deriveSDKVerb(method string, hasPathParam bool, action string) string {
@@ -502,6 +601,14 @@ func canonicalResourceCandidatesFromSchema(spec NormalizedSpec, schema *Normaliz
 		if _, ok := visited[schema.Circular]; ok {
 			return nil
 		}
+		if strings.HasPrefix(schema.Circular, "inline.") {
+			nextVisited := cloneStringSet(visited)
+			nextVisited[schema.Circular] = struct{}{}
+			if target, ok := spec.Schemas[schema.Circular]; ok {
+				return canonicalResourceCandidatesFromSchema(spec, &target, nextVisited)
+			}
+			return nil
+		}
 		if !isEnvelopeSchemaName(schema.Circular) {
 			return []string{schema.Circular}
 		}
@@ -595,28 +702,15 @@ func cloneStringSet(in map[string]struct{}) map[string]struct{} {
 	return out
 }
 
-func joinSingularized(parts []string) string {
+func joinPathParts(parts []string) string {
 	if len(parts) == 0 {
 		return ""
 	}
 	var builder strings.Builder
 	for _, part := range parts {
-		builder.WriteString(singularizeWord(part))
+		builder.WriteString(part)
 	}
 	return builder.String()
-}
-
-func singularizeWord(value string) string {
-	switch {
-	case strings.HasSuffix(value, "ies") && len(value) > 3:
-		return value[:len(value)-3] + "y"
-	case strings.HasSuffix(value, "sses"), strings.HasSuffix(value, "shes"), strings.HasSuffix(value, "ches"), strings.HasSuffix(value, "xes"), strings.HasSuffix(value, "zes"):
-		return value[:len(value)-2]
-	case strings.HasSuffix(value, "s") && !strings.HasSuffix(value, "ss") && len(value) > 1:
-		return value[:len(value)-1]
-	default:
-		return value
-	}
 }
 
 func lowerCamelIdentifier(value string) string {

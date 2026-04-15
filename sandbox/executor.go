@@ -6,6 +6,7 @@ import (
 
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 	"github.com/mimaurer/intersight-mcp/internal/limits"
+	"github.com/mimaurer/intersight-mcp/internal/providerext"
 )
 
 type Mode string
@@ -24,9 +25,7 @@ type Result struct {
 	Presentation *PresentationHint
 }
 
-type PresentationHint struct {
-	Kind string
-}
+type PresentationHint = providerext.PresentationHint
 
 const (
 	PresentationKindMetricsImage = "metrics-image"
@@ -51,13 +50,13 @@ type APIRequestOptions struct {
 }
 
 type Config struct {
-	SearchTimeout   time.Duration
-	GlobalTimeout   time.Duration
-	PerCallTimeout  time.Duration
-	MaxCodeSize     int
-	MaxAPICalls     int
-	MaxOutputBytes  int64
-	WASMMemoryBytes int
+	SearchTimeout     time.Duration
+	GlobalTimeout     time.Duration
+	PerCallTimeout    time.Duration
+	MaxCodeSize       int
+	MaxAPICalls       int
+	MaxOutputBytes    int64
+	WASMMemoryBytes   int
 	EnableMetricsApps bool
 }
 

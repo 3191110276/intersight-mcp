@@ -1,8 +1,10 @@
 package contracts
 
 import (
+	"cmp"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 )
 
@@ -11,7 +13,7 @@ type SearchCatalog struct {
 	Resources     map[string]SearchResource `json:"resources"`
 	ResourceNames []string                  `json:"resourceNames"`
 	Paths         map[string][]string       `json:"paths,omitempty"`
-	Metrics       SearchMetricsCatalog      `json:"metrics,omitempty"`
+	Metrics       *SearchMetricsCatalog     `json:"metrics,omitempty"`
 }
 
 type SearchResource struct {
@@ -39,9 +41,13 @@ func BuildSearchCatalog(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatal
 		return SearchCatalog{}, fmt.Errorf("search catalog generation failed: spec, sdk catalog, and rule metadata must share identical source metadata")
 	}
 
-	metrics = NormalizeSearchMetricsCatalog(metrics)
-	if err := ValidateSearchMetricsCatalog(metrics); err != nil {
-		return SearchCatalog{}, err
+	var normalizedMetrics *SearchMetricsCatalog
+	if !searchMetricsCatalogIsEmpty(metrics) {
+		metrics = NormalizeSearchMetricsCatalog(metrics)
+		if err := ValidateSearchMetricsCatalog(metrics); err != nil {
+			return SearchCatalog{}, err
+		}
+		normalizedMetrics = &metrics
 	}
 
 	out := SearchCatalog{
@@ -49,7 +55,7 @@ func BuildSearchCatalog(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatal
 		Resources:     map[string]SearchResource{},
 		ResourceNames: []string{},
 		Paths:         map[string][]string{},
-		Metrics:       metrics,
+		Metrics:       normalizedMetrics,
 	}
 
 	for _, sdkMethod := range sortedKeys(catalog.Methods) {
@@ -84,6 +90,7 @@ func BuildSearchCatalog(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatal
 		out.Resources[resourceKey] = resource
 		out.ResourceNames = append(out.ResourceNames, resourceKey)
 	}
+	addSearchSchemaAliases(&out)
 
 	return normalizeSearchCatalog(out), nil
 }
@@ -94,8 +101,10 @@ func ValidateSearchCatalogAgainstArtifacts(spec NormalizedSpec, catalog SDKCatal
 	}
 
 	search = normalizeSearchCatalog(search)
-	if err := ValidateSearchMetricsCatalog(search.Metrics); err != nil {
-		return err
+	if search.Metrics != nil {
+		if err := ValidateSearchMetricsCatalog(*search.Metrics); err != nil {
+			return err
+		}
 	}
 
 	expected, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
@@ -103,8 +112,8 @@ func ValidateSearchCatalogAgainstArtifacts(spec NormalizedSpec, catalog SDKCatal
 		return err
 	}
 	expected = normalizeSearchCatalog(expected)
-	expected.Metrics = SearchMetricsCatalog{}
-	search.Metrics = SearchMetricsCatalog{}
+	expected.Metrics = nil
+	search.Metrics = nil
 
 	if reflect.DeepEqual(expected, search) {
 		return nil
@@ -136,7 +145,14 @@ func normalizeSearchCatalog(catalog SearchCatalog) SearchCatalog {
 	if catalog.Paths == nil {
 		catalog.Paths = map[string][]string{}
 	}
-	catalog.Metrics = NormalizeSearchMetricsCatalog(catalog.Metrics)
+	if catalog.Metrics != nil {
+		normalized := NormalizeSearchMetricsCatalog(*catalog.Metrics)
+		if searchMetricsCatalogIsEmpty(normalized) {
+			catalog.Metrics = nil
+		} else {
+			catalog.Metrics = &normalized
+		}
+	}
 	for key, resource := range catalog.Resources {
 		resource = normalizeSearchResource(resource)
 		catalog.Resources[key] = resource
@@ -146,6 +162,27 @@ func normalizeSearchCatalog(catalog SearchCatalog) SearchCatalog {
 		catalog.Paths[key] = uniqueSortedStrings(resources)
 	}
 	return catalog
+}
+
+func addSearchSchemaAliases(catalog *SearchCatalog) {
+	if catalog == nil || len(catalog.Resources) == 0 {
+		return
+	}
+	for _, key := range sortedKeys(catalog.Resources) {
+		resource := catalog.Resources[key]
+		alias := searchResourceSchemaAlias(resource.Schema)
+		if alias == "" || alias == key {
+			continue
+		}
+		if existing, ok := catalog.Resources[alias]; ok {
+			if reflect.DeepEqual(normalizeSearchResource(existing), normalizeSearchResource(resource)) {
+				catalog.ResourceNames = append(catalog.ResourceNames, alias)
+			}
+			continue
+		}
+		catalog.Resources[alias] = resource
+		catalog.ResourceNames = append(catalog.ResourceNames, alias)
+	}
 }
 
 func normalizeSearchResource(resource SearchResource) SearchResource {
@@ -170,6 +207,10 @@ func normalizeSearchFields(fields map[string]SearchField) map[string]SearchField
 		fields[key] = field
 	}
 	return fields
+}
+
+func searchMetricsCatalogIsEmpty(catalog SearchMetricsCatalog) bool {
+	return len(catalog.Groups) == 0 && len(catalog.ByName) == 0 && len(catalog.Examples) == 0
 }
 
 func selectSearchCreateFields(spec NormalizedSpec, method SDKMethod, rules []SemanticRule, existing map[string]SearchField) map[string]SearchField {
@@ -384,7 +425,7 @@ func shouldIncludeSearchField(name string, schema *NormalizedSchema) bool {
 		return false
 	}
 	switch strings.TrimSpace(searchFieldRef(schema)) {
-	case "iam.Account.Relationship", "mo.BaseMo.Relationship", "mo.VersionContext":
+	case "iam.Account.Relationship", "mo.VersionContext":
 		return false
 	}
 	return true
@@ -532,9 +573,7 @@ func indexSearchPath(index map[string][]string, rawPath, resourceKey string) {
 	}
 
 	keys := []string{path}
-	if trimmed, ok := trimAPIV1Prefix(path); ok {
-		keys = append(keys, trimmed)
-	}
+	keys = append(keys, searchPathAliases(path)...)
 
 	for _, key := range keys {
 		index[key] = append(index[key], resourceKey)
@@ -545,19 +584,25 @@ func indexSearchPath(index map[string][]string, rawPath, resourceKey string) {
 	}
 }
 
-func trimAPIV1Prefix(path string) (string, bool) {
-	const prefix = "/api/v1"
-	if !strings.HasPrefix(path, prefix) {
-		return "", false
+func searchPathAliases(path string) []string {
+	segments := strings.Split(strings.Trim(strings.TrimSpace(path), "/"), "/")
+	if len(segments) == 0 {
+		return nil
 	}
-	trimmed := strings.TrimPrefix(path, prefix)
-	if trimmed == "" {
-		return "/", true
+
+	var start int
+	switch {
+	case len(segments) >= 2 && strings.EqualFold(segments[0], "api") && isVersionSegment(segments[1]):
+		start = 2
+	case isVersionSegment(segments[0]):
+		start = 1
+	default:
+		return nil
 	}
-	if !strings.HasPrefix(trimmed, "/") {
-		trimmed = "/" + trimmed
+	if start >= len(segments) {
+		return []string{"/"}
 	}
-	return trimmed, true
+	return []string{"/" + strings.Join(segments[start:], "/")}
 }
 
 func splitSearchSDKMethod(sdkMethod string) (resourceKey, leaf string, ok bool) {
@@ -569,6 +614,15 @@ func splitSearchSDKMethod(sdkMethod string) (resourceKey, leaf string, ok bool) 
 		return "", "", false
 	}
 	return parts[0] + "." + parts[1], parts[2], true
+}
+
+func searchResourceSchemaAlias(schemaName string) string {
+	schemaName = strings.TrimSpace(schemaName)
+	parts := strings.Split(schemaName, ".")
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return ""
+	}
+	return parts[0] + "." + lowerCamelIdentifier(parts[1])
 }
 
 func selectSearchResourceSchema(spec NormalizedSpec, current string, method SDKMethod) string {
@@ -584,7 +638,7 @@ func selectSearchResourceSchema(spec NormalizedSpec, current string, method SDKM
 			return candidate
 		}
 	}
-	for _, candidate := range method.RelatedSchemas {
+	for _, candidate := range preferredSearchRelatedSchemas(method.RelatedSchemas) {
 		candidate = strings.TrimSpace(candidate)
 		if candidate == "" || isSupportSchemaName(candidate) {
 			continue
@@ -594,6 +648,31 @@ func selectSearchResourceSchema(spec NormalizedSpec, current string, method SDKM
 		}
 	}
 	return ""
+}
+
+func preferredSearchRelatedSchemas(candidates []string) []string {
+	if len(candidates) == 0 {
+		return nil
+	}
+	out := append([]string(nil), candidates...)
+	slices.SortStableFunc(out, func(a, b string) int {
+		return cmp.Compare(searchSchemaPriority(a), searchSchemaPriority(b))
+	})
+	return out
+}
+
+func searchSchemaPriority(name string) int {
+	name = strings.TrimSpace(name)
+	switch {
+	case strings.Contains(name, ".response."):
+		return 0
+	case strings.Contains(name, ".request"):
+		return 1
+	case strings.Contains(name, ".parameter."):
+		return 3
+	default:
+		return 2
+	}
 }
 
 func canonicalResourceFromSDKStem(spec NormalizedSpec, sdkMethod string) string {

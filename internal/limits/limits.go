@@ -3,7 +3,6 @@ package limits
 import "time"
 
 const (
-	DefaultEndpoint      = "https://intersight.com"
 	DefaultGlobalTimeout = 40 * time.Second
 	DefaultMaxAPICalls   = 250
 	DefaultMaxOutput     = 512 * 1024

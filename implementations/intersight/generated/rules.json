@@ -1,0 +1,2426 @@
+{
+  "metadata": {
+    "published_version": "1.0.11-20260402085822330",
+    "source_url": "https://developer.cisco.com/docs/intersight/intersight-api-reference-overview/",
+    "sha256": "3a928ce4f076e24e46b1e74b3778d46ed149e381052b93f8aa9968b86e26052e",
+    "retrieval_date": "2026-04-06"
+  },
+  "methods": {
+    "aaa.retentionPolicies.create": {
+      "sdkMethod": "aaa.retentionPolicies.create",
+      "operationId": "CreateAaaRetentionPolicy",
+      "resource": "aaa.RetentionPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "RetentionPeriod"
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "RetentionPeriod",
+              "value": 6
+            }
+          ]
+        }
+      ]
+    },
+    "aaa.retentionPolicies.post": {
+      "sdkMethod": "aaa.retentionPolicies.post",
+      "operationId": "UpdateAaaRetentionPolicy",
+      "resource": "aaa.RetentionPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "RetentionPeriod"
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "RetentionPeriod",
+              "value": 6
+            }
+          ]
+        }
+      ]
+    },
+    "aaa.retentionPolicies.update": {
+      "sdkMethod": "aaa.retentionPolicies.update",
+      "operationId": "PatchAaaRetentionPolicy",
+      "resource": "aaa.RetentionPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "RetentionPeriod"
+            }
+          ]
+        },
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "RetentionPeriod",
+              "value": 6
+            }
+          ]
+        }
+      ]
+    },
+    "access.policies.create": {
+      "sdkMethod": "access.policies.create",
+      "operationId": "CreateAccessPolicy",
+      "resource": "access.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "AddressType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ConfigurationType"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ConfigurationType.ConfigureInband",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "InbandIpPool",
+              "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ConfigurationType.ConfigureInband",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "InbandVlan",
+              "value": 4
+            }
+          ]
+        }
+      ]
+    },
+    "access.policies.post": {
+      "sdkMethod": "access.policies.post",
+      "operationId": "UpdateAccessPolicy",
+      "resource": "access.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "AddressType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ConfigurationType"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ConfigurationType.ConfigureInband",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "InbandIpPool",
+              "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ConfigurationType.ConfigureInband",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "InbandVlan",
+              "value": 4
+            }
+          ]
+        }
+      ]
+    },
+    "access.policies.update": {
+      "sdkMethod": "access.policies.update",
+      "operationId": "PatchAccessPolicy",
+      "resource": "access.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "AddressType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ConfigurationType"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ConfigurationType.ConfigureInband",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "InbandIpPool",
+              "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "ConfigurationType.ConfigureInband",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "InbandVlan",
+              "value": 4
+            }
+          ]
+        }
+      ]
+    },
+    "adapter.configPolicies.create": {
+      "sdkMethod": "adapter.configPolicies.create",
+      "operationId": "CreateAdapterConfigPolicy",
+      "resource": "adapter.ConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Settings",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "adapter.configPolicies.post": {
+      "sdkMethod": "adapter.configPolicies.post",
+      "operationId": "UpdateAdapterConfigPolicy",
+      "resource": "adapter.ConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Settings",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "adapter.configPolicies.update": {
+      "sdkMethod": "adapter.configPolicies.update",
+      "operationId": "PatchAdapterConfigPolicy",
+      "resource": "adapter.ConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Settings",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "appliance.dataExportPolicies.create": {
+      "sdkMethod": "appliance.dataExportPolicies.create",
+      "operationId": "CreateApplianceDataExportPolicy",
+      "resource": "appliance.DataExportPolicy",
+      "rules": [
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Name"
+          ]
+        }
+      ]
+    },
+    "appliance.dataExportPolicies.post": {
+      "sdkMethod": "appliance.dataExportPolicies.post",
+      "operationId": "UpdateApplianceDataExportPolicy",
+      "resource": "appliance.DataExportPolicy",
+      "rules": [
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Name"
+          ]
+        }
+      ]
+    },
+    "appliance.dataExportPolicies.update": {
+      "sdkMethod": "appliance.dataExportPolicies.update",
+      "operationId": "PatchApplianceDataExportPolicy",
+      "resource": "appliance.DataExportPolicy",
+      "rules": [
+        {
+          "kind": "forbidden",
+          "forbid": [
+            "Name"
+          ]
+        }
+      ]
+    },
+    "comm.httpProxyPolicies.create": {
+      "sdkMethod": "comm.httpProxyPolicies.create",
+      "operationId": "CreateCommHttpProxyPolicy",
+      "resource": "comm.HttpProxyPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Hostname"
+            }
+          ]
+        }
+      ]
+    },
+    "comm.httpProxyPolicies.post": {
+      "sdkMethod": "comm.httpProxyPolicies.post",
+      "operationId": "UpdateCommHttpProxyPolicy",
+      "resource": "comm.HttpProxyPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Hostname"
+            }
+          ]
+        }
+      ]
+    },
+    "comm.httpProxyPolicies.update": {
+      "sdkMethod": "comm.httpProxyPolicies.update",
+      "operationId": "PatchCommHttpProxyPolicy",
+      "resource": "comm.HttpProxyPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Hostname"
+            }
+          ]
+        }
+      ]
+    },
+    "compute.pcieConnectivityPolicies.create": {
+      "sdkMethod": "compute.pcieConnectivityPolicies.create",
+      "operationId": "CreateComputePcieConnectivityPolicy",
+      "resource": "compute.PcieConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PcieZones",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "compute.pcieConnectivityPolicies.post": {
+      "sdkMethod": "compute.pcieConnectivityPolicies.post",
+      "operationId": "UpdateComputePcieConnectivityPolicy",
+      "resource": "compute.PcieConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PcieZones",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "compute.pcieConnectivityPolicies.update": {
+      "sdkMethod": "compute.pcieConnectivityPolicies.update",
+      "operationId": "PatchComputePcieConnectivityPolicy",
+      "resource": "compute.PcieConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PcieZones",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "cond.alarmSuppressions.create": {
+      "sdkMethod": "cond.alarmSuppressions.create",
+      "operationId": "CreateCondAlarmSuppression",
+      "resource": "cond.AlarmSuppression",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "StartDate"
+            }
+          ]
+        },
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AlarmRules"
+            },
+            {
+              "field": "Entity"
+            }
+          ]
+        }
+      ]
+    },
+    "cond.alarmSuppressions.post": {
+      "sdkMethod": "cond.alarmSuppressions.post",
+      "operationId": "UpdateCondAlarmSuppression",
+      "resource": "cond.AlarmSuppression",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "StartDate"
+            }
+          ]
+        },
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AlarmRules"
+            },
+            {
+              "field": "Entity"
+            }
+          ]
+        }
+      ]
+    },
+    "cond.alarmSuppressions.update": {
+      "sdkMethod": "cond.alarmSuppressions.update",
+      "operationId": "PatchCondAlarmSuppression",
+      "resource": "cond.AlarmSuppression",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AlarmRules"
+            },
+            {
+              "field": "Entity"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.ethNetworkGroupPolicies.create": {
+      "sdkMethod": "fabric.ethNetworkGroupPolicies.create",
+      "operationId": "CreateFabricEthNetworkGroupPolicy",
+      "resource": "fabric.EthNetworkGroupPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings.AllowedVlans"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.ethNetworkGroupPolicies.post": {
+      "sdkMethod": "fabric.ethNetworkGroupPolicies.post",
+      "operationId": "UpdateFabricEthNetworkGroupPolicy",
+      "resource": "fabric.EthNetworkGroupPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings.AllowedVlans"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.ethNetworkGroupPolicies.update": {
+      "sdkMethod": "fabric.ethNetworkGroupPolicies.update",
+      "operationId": "PatchFabricEthNetworkGroupPolicy",
+      "resource": "fabric.EthNetworkGroupPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings.AllowedVlans"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.macSecPolicies.create": {
+      "sdkMethod": "fabric.macSecPolicies.create",
+      "operationId": "CreateFabricMacSecPolicy",
+      "resource": "fabric.MacSecPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PrimaryKeyChain"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.macSecPolicies.post": {
+      "sdkMethod": "fabric.macSecPolicies.post",
+      "operationId": "UpdateFabricMacSecPolicy",
+      "resource": "fabric.MacSecPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PrimaryKeyChain"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.macSecPolicies.update": {
+      "sdkMethod": "fabric.macSecPolicies.update",
+      "operationId": "PatchFabricMacSecPolicy",
+      "resource": "fabric.MacSecPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PrimaryKeyChain"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.ldapPolicies.create": {
+      "sdkMethod": "iam.ldapPolicies.create",
+      "operationId": "CreateIamLdapPolicy",
+      "resource": "iam.LdapPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "BaseProperties"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.ldapPolicies.post": {
+      "sdkMethod": "iam.ldapPolicies.post",
+      "operationId": "UpdateIamLdapPolicy",
+      "resource": "iam.LdapPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "BaseProperties"
+            }
+          ]
+        }
+      ]
+    },
+    "iam.ldapPolicies.update": {
+      "sdkMethod": "iam.ldapPolicies.update",
+      "operationId": "PatchIamLdapPolicy",
+      "resource": "iam.LdapPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "BaseProperties"
+            }
+          ]
+        }
+      ]
+    },
+    "ntp.policies.create": {
+      "sdkMethod": "ntp.policies.create",
+      "operationId": "CreateNtpPolicy",
+      "resource": "ntp.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Timezone"
+            }
+          ]
+        },
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AuthenticatedNtpServers"
+            },
+            {
+              "field": "NtpServers"
+            }
+          ]
+        }
+      ]
+    },
+    "ntp.policies.post": {
+      "sdkMethod": "ntp.policies.post",
+      "operationId": "UpdateNtpPolicy",
+      "resource": "ntp.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Timezone"
+            }
+          ]
+        },
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AuthenticatedNtpServers"
+            },
+            {
+              "field": "NtpServers"
+            }
+          ]
+        }
+      ]
+    },
+    "ntp.policies.update": {
+      "sdkMethod": "ntp.policies.update",
+      "operationId": "PatchNtpPolicy",
+      "resource": "ntp.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Timezone"
+            }
+          ]
+        },
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AuthenticatedNtpServers"
+            },
+            {
+              "field": "NtpServers"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.backupConfigPolicies.create": {
+      "sdkMethod": "recovery.backupConfigPolicies.create",
+      "operationId": "CreateRecoveryBackupConfigPolicy",
+      "resource": "recovery.BackupConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.backupConfigPolicies.post": {
+      "sdkMethod": "recovery.backupConfigPolicies.post",
+      "operationId": "UpdateRecoveryBackupConfigPolicy",
+      "resource": "recovery.BackupConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.backupConfigPolicies.update": {
+      "sdkMethod": "recovery.backupConfigPolicies.update",
+      "operationId": "PatchRecoveryBackupConfigPolicy",
+      "resource": "recovery.BackupConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.scheduleConfigPolicies.create": {
+      "sdkMethod": "recovery.scheduleConfigPolicies.create",
+      "operationId": "CreateRecoveryScheduleConfigPolicy",
+      "resource": "recovery.ScheduleConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule.ExecutionTime"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule.FrequencyUnit"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.scheduleConfigPolicies.post": {
+      "sdkMethod": "recovery.scheduleConfigPolicies.post",
+      "operationId": "UpdateRecoveryScheduleConfigPolicy",
+      "resource": "recovery.ScheduleConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule.ExecutionTime"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule.FrequencyUnit"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.scheduleConfigPolicies.update": {
+      "sdkMethod": "recovery.scheduleConfigPolicies.update",
+      "operationId": "PatchRecoveryScheduleConfigPolicy",
+      "resource": "recovery.ScheduleConfigPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule.ExecutionTime"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Schedule.FrequencyUnit"
+            }
+          ]
+        }
+      ]
+    },
+    "resourcepool.qualificationPolicies.create": {
+      "sdkMethod": "resourcepool.qualificationPolicies.create",
+      "operationId": "CreateResourcepoolQualificationPolicy",
+      "resource": "resourcepool.QualificationPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Qualifiers",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "resourcepool.qualificationPolicies.post": {
+      "sdkMethod": "resourcepool.qualificationPolicies.post",
+      "operationId": "UpdateResourcepoolQualificationPolicy",
+      "resource": "resourcepool.QualificationPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Qualifiers",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "resourcepool.qualificationPolicies.update": {
+      "sdkMethod": "resourcepool.qualificationPolicies.update",
+      "operationId": "PatchResourcepoolQualificationPolicy",
+      "resource": "resourcepool.QualificationPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Qualifiers",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "scheduler.schedulePolicies.create": {
+      "sdkMethod": "scheduler.schedulePolicies.create",
+      "operationId": "CreateSchedulerSchedulePolicy",
+      "resource": "scheduler.SchedulePolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ScheduleParams",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "scheduler.schedulePolicies.post": {
+      "sdkMethod": "scheduler.schedulePolicies.post",
+      "operationId": "UpdateSchedulerSchedulePolicy",
+      "resource": "scheduler.SchedulePolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ScheduleParams",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "scheduler.schedulePolicies.update": {
+      "sdkMethod": "scheduler.schedulePolicies.update",
+      "operationId": "PatchSchedulerSchedulePolicy",
+      "resource": "scheduler.SchedulePolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ScheduleParams",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "smtp.policies.create": {
+      "sdkMethod": "smtp.policies.create",
+      "operationId": "CreateSmtpPolicy",
+      "resource": "smtp.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SenderEmail"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpPort"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpRecipients",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpServer"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "MinSeverity"
+            }
+          ]
+        }
+      ]
+    },
+    "smtp.policies.post": {
+      "sdkMethod": "smtp.policies.post",
+      "operationId": "UpdateSmtpPolicy",
+      "resource": "smtp.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SenderEmail"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpPort"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpRecipients",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpServer"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "MinSeverity"
+            }
+          ]
+        }
+      ]
+    },
+    "smtp.policies.update": {
+      "sdkMethod": "smtp.policies.update",
+      "operationId": "PatchSmtpPolicy",
+      "resource": "smtp.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Enabled"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SenderEmail"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpPort"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpRecipients",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "SmtpServer"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "MinSeverity"
+            }
+          ]
+        }
+      ]
+    },
+    "smtp.policyTests.create": {
+      "sdkMethod": "smtp.policyTests.create",
+      "operationId": "CreateSmtpPolicyTest",
+      "resource": "smtp.PolicyTest",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Policy",
+              "target": "smtp.Policy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Recipients",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "smtp.policyTests.post": {
+      "sdkMethod": "smtp.policyTests.post",
+      "operationId": "UpdateSmtpPolicyTest",
+      "resource": "smtp.PolicyTest",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Policy",
+              "target": "smtp.Policy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Recipients",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "smtp.policyTests.update": {
+      "sdkMethod": "smtp.policyTests.update",
+      "operationId": "PatchSmtpPolicyTest",
+      "resource": "smtp.PolicyTest",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Policy",
+              "target": "smtp.Policy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Recipients",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "storage.driveSecurityPolicies.create": {
+      "sdkMethod": "storage.driveSecurityPolicies.create",
+      "operationId": "CreateStorageDriveSecurityPolicy",
+      "resource": "storage.DriveSecurityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "KeySetting"
+            }
+          ]
+        }
+      ]
+    },
+    "storage.driveSecurityPolicies.post": {
+      "sdkMethod": "storage.driveSecurityPolicies.post",
+      "operationId": "UpdateStorageDriveSecurityPolicy",
+      "resource": "storage.DriveSecurityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "KeySetting"
+            }
+          ]
+        }
+      ]
+    },
+    "storage.driveSecurityPolicies.update": {
+      "sdkMethod": "storage.driveSecurityPolicies.update",
+      "operationId": "PatchStorageDriveSecurityPolicy",
+      "resource": "storage.DriveSecurityPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "KeySetting"
+            }
+          ]
+        }
+      ]
+    },
+    "syslog.policies.create": {
+      "sdkMethod": "syslog.policies.create",
+      "operationId": "CreateSyslogPolicy",
+      "resource": "syslog.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "LocalClients",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "syslog.policies.post": {
+      "sdkMethod": "syslog.policies.post",
+      "operationId": "UpdateSyslogPolicy",
+      "resource": "syslog.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "LocalClients",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "syslog.policies.update": {
+      "sdkMethod": "syslog.policies.update",
+      "operationId": "PatchSyslogPolicy",
+      "resource": "syslog.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "LocalClients",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethAdapterPolicies.create": {
+      "sdkMethod": "vnic.ethAdapterPolicies.create",
+      "operationId": "CreateVnicEthAdapterPolicy",
+      "resource": "vnic.EthAdapterPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RssSettings",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "RssHashSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EtherChannelPinningEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "TxQueueSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EtherChannelPinningEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "TxQueueSettings.Count",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethAdapterPolicies.post": {
+      "sdkMethod": "vnic.ethAdapterPolicies.post",
+      "operationId": "UpdateVnicEthAdapterPolicy",
+      "resource": "vnic.EthAdapterPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RssSettings",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "RssHashSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EtherChannelPinningEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "TxQueueSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EtherChannelPinningEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "TxQueueSettings.Count",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethAdapterPolicies.update": {
+      "sdkMethod": "vnic.ethAdapterPolicies.update",
+      "operationId": "PatchVnicEthAdapterPolicy",
+      "resource": "vnic.EthAdapterPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "RssSettings",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "RssHashSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EtherChannelPinningEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "TxQueueSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "EtherChannelPinningEnabled",
+            "equals": true
+          },
+          "minimum": [
+            {
+              "field": "TxQueueSettings.Count",
+              "value": 2
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethIfs.create": {
+      "sdkMethod": "vnic.ethIfs.create",
+      "operationId": "CreateVnicEthIf",
+      "resource": "vnic.EthIf",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "LanConnectivityPolicy",
+              "target": "vnic.LanConnectivityPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthAdapterPolicy",
+              "target": "vnic.EthAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthQosPolicy",
+              "target": "vnic.EthQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "POOL"
+          },
+          "require": [
+            {
+              "field": "MacPool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "POOL"
+          },
+          "forbid": [
+            "StaticMacAddress"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "STATIC"
+          },
+          "require": [
+            {
+              "field": "StaticMacAddress"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "STATIC"
+          },
+          "forbid": [
+            "MacPool"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Placement.SwitchId",
+            "in": [
+              "A",
+              "B"
+            ]
+          },
+          "require": [
+            {
+              "field": "Placement.AutoSlotId"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethIfs.post": {
+      "sdkMethod": "vnic.ethIfs.post",
+      "operationId": "UpdateVnicEthIf",
+      "resource": "vnic.EthIf",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "LanConnectivityPolicy",
+              "target": "vnic.LanConnectivityPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthAdapterPolicy",
+              "target": "vnic.EthAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthQosPolicy",
+              "target": "vnic.EthQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "POOL"
+          },
+          "require": [
+            {
+              "field": "MacPool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "POOL"
+          },
+          "forbid": [
+            "StaticMacAddress"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "STATIC"
+          },
+          "require": [
+            {
+              "field": "StaticMacAddress"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "STATIC"
+          },
+          "forbid": [
+            "MacPool"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Placement.SwitchId",
+            "in": [
+              "A",
+              "B"
+            ]
+          },
+          "require": [
+            {
+              "field": "Placement.AutoSlotId"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethIfs.update": {
+      "sdkMethod": "vnic.ethIfs.update",
+      "operationId": "PatchVnicEthIf",
+      "resource": "vnic.EthIf",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "LanConnectivityPolicy",
+              "target": "vnic.LanConnectivityPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthAdapterPolicy",
+              "target": "vnic.EthAdapterPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "EthQosPolicy",
+              "target": "vnic.EthQosPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkControlPolicy",
+              "target": "fabric.EthNetworkControlPolicy"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FabricEthNetworkGroupPolicy",
+              "target": "fabric.EthNetworkGroupPolicy",
+              "minCount": 1
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "POOL"
+          },
+          "require": [
+            {
+              "field": "MacPool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "POOL"
+          },
+          "forbid": [
+            "StaticMacAddress"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "STATIC"
+          },
+          "require": [
+            {
+              "field": "StaticMacAddress"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "MacAddressType",
+            "equals": "STATIC"
+          },
+          "forbid": [
+            "MacPool"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "Placement.SwitchId",
+            "in": [
+              "A",
+              "B"
+            ]
+          },
+          "require": [
+            {
+              "field": "Placement.AutoSlotId"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethNetworkPolicies.create": {
+      "sdkMethod": "vnic.ethNetworkPolicies.create",
+      "operationId": "CreateVnicEthNetworkPolicy",
+      "resource": "vnic.EthNetworkPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.Mode",
+            "equals": "ACCESS"
+          },
+          "require": [
+            {
+              "field": "VlanSettings.DefaultVlan"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.Mode",
+            "equals": "TRUNK"
+          },
+          "require": [
+            {
+              "field": "VlanSettings.AllowedVlans"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethNetworkPolicies.post": {
+      "sdkMethod": "vnic.ethNetworkPolicies.post",
+      "operationId": "UpdateVnicEthNetworkPolicy",
+      "resource": "vnic.EthNetworkPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.Mode",
+            "equals": "ACCESS"
+          },
+          "require": [
+            {
+              "field": "VlanSettings.DefaultVlan"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.Mode",
+            "equals": "TRUNK"
+          },
+          "require": [
+            {
+              "field": "VlanSettings.AllowedVlans"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.ethNetworkPolicies.update": {
+      "sdkMethod": "vnic.ethNetworkPolicies.update",
+      "operationId": "PatchVnicEthNetworkPolicy",
+      "resource": "vnic.EthNetworkPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "VlanSettings"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.Mode",
+            "equals": "ACCESS"
+          },
+          "require": [
+            {
+              "field": "VlanSettings.DefaultVlan"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.Mode",
+            "equals": "TRUNK"
+          },
+          "require": [
+            {
+              "field": "VlanSettings.AllowedVlans"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "VlanSettings.QinqEnabled",
+            "equals": true
+          },
+          "require": [
+            {
+              "field": "VlanSettings.QinqVlan"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiAdapterPolicies.create": {
+      "sdkMethod": "vnic.iscsiAdapterPolicies.create",
+      "operationId": "CreateVnicIscsiAdapterPolicy",
+      "resource": "vnic.IscsiAdapterPolicy",
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "DhcpTimeout",
+              "value": 60
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiAdapterPolicies.post": {
+      "sdkMethod": "vnic.iscsiAdapterPolicies.post",
+      "operationId": "UpdateVnicIscsiAdapterPolicy",
+      "resource": "vnic.IscsiAdapterPolicy",
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "DhcpTimeout",
+              "value": 60
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiAdapterPolicies.update": {
+      "sdkMethod": "vnic.iscsiAdapterPolicies.update",
+      "operationId": "PatchVnicIscsiAdapterPolicy",
+      "resource": "vnic.IscsiAdapterPolicy",
+      "rules": [
+        {
+          "kind": "minimum",
+          "minimum": [
+            {
+              "field": "DhcpTimeout",
+              "value": 60
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiBootPolicies.create": {
+      "sdkMethod": "vnic.iscsiBootPolicies.create",
+      "operationId": "CreateVnicIscsiBootPolicy",
+      "resource": "vnic.IscsiBootPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PrimaryTargetPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiBootPolicies.post": {
+      "sdkMethod": "vnic.iscsiBootPolicies.post",
+      "operationId": "UpdateVnicIscsiBootPolicy",
+      "resource": "vnic.IscsiBootPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PrimaryTargetPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiBootPolicies.update": {
+      "sdkMethod": "vnic.iscsiBootPolicies.update",
+      "operationId": "PatchVnicIscsiBootPolicy",
+      "resource": "vnic.IscsiBootPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PrimaryTargetPolicy"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiStaticTargetPolicies.create": {
+      "sdkMethod": "vnic.iscsiStaticTargetPolicies.create",
+      "operationId": "CreateVnicIscsiStaticTargetPolicy",
+      "resource": "vnic.IscsiStaticTargetPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "IpAddress"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "IscsiIpType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Port"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TargetName"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Lun"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiStaticTargetPolicies.post": {
+      "sdkMethod": "vnic.iscsiStaticTargetPolicies.post",
+      "operationId": "UpdateVnicIscsiStaticTargetPolicy",
+      "resource": "vnic.IscsiStaticTargetPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "IpAddress"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "IscsiIpType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Port"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TargetName"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Lun"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.iscsiStaticTargetPolicies.update": {
+      "sdkMethod": "vnic.iscsiStaticTargetPolicies.update",
+      "operationId": "PatchVnicIscsiStaticTargetPolicy",
+      "resource": "vnic.IscsiStaticTargetPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "IpAddress"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "IscsiIpType"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Port"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "TargetName"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Lun"
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.lanConnectivityPolicies.create": {
+      "sdkMethod": "vnic.lanConnectivityPolicies.create",
+      "operationId": "CreateVnicLanConnectivityPolicy",
+      "resource": "vnic.LanConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Pool"
+          },
+          "require": [
+            {
+              "field": "IqnPool",
+              "target": "iqnpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Pool"
+          },
+          "forbid": [
+            "StaticIqnName"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Static"
+          },
+          "require": [
+            {
+              "field": "StaticIqnName"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Static"
+          },
+          "forbid": [
+            "IqnPool"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PlacementMode",
+            "equals": "custom"
+          },
+          "require": [
+            {
+              "field": "EthIfs",
+              "target": "vnic.EthIf",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.lanConnectivityPolicies.post": {
+      "sdkMethod": "vnic.lanConnectivityPolicies.post",
+      "operationId": "UpdateVnicLanConnectivityPolicy",
+      "resource": "vnic.LanConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Pool"
+          },
+          "require": [
+            {
+              "field": "IqnPool",
+              "target": "iqnpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Pool"
+          },
+          "forbid": [
+            "StaticIqnName"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Static"
+          },
+          "require": [
+            {
+              "field": "StaticIqnName"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Static"
+          },
+          "forbid": [
+            "IqnPool"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PlacementMode",
+            "equals": "custom"
+          },
+          "require": [
+            {
+              "field": "EthIfs",
+              "target": "vnic.EthIf",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "vnic.lanConnectivityPolicies.update": {
+      "sdkMethod": "vnic.lanConnectivityPolicies.update",
+      "operationId": "PatchVnicLanConnectivityPolicy",
+      "resource": "vnic.LanConnectivityPolicy",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Pool"
+          },
+          "require": [
+            {
+              "field": "IqnPool",
+              "target": "iqnpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Pool"
+          },
+          "forbid": [
+            "StaticIqnName"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Static"
+          },
+          "require": [
+            {
+              "field": "StaticIqnName"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "IqnAllocationType",
+            "equals": "Static"
+          },
+          "forbid": [
+            "IqnPool"
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "PlacementMode",
+            "equals": "custom"
+          },
+          "require": [
+            {
+              "field": "EthIfs",
+              "target": "vnic.EthIf",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

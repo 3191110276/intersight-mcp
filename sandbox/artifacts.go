@@ -17,6 +17,10 @@ type ArtifactBundle struct {
 // LoadArtifactBundle parses and prepares the embedded artifacts once so later
 // executor construction can reuse the same immutable state.
 func LoadArtifactBundle(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*ArtifactBundle, error) {
+	return LoadArtifactBundleWithExtensions(specJSON, catalogJSON, rulesJSON, searchJSON, Extensions{})
+}
+
+func LoadArtifactBundleWithExtensions(specJSON, catalogJSON, rulesJSON, searchJSON []byte, ext Extensions) (*ArtifactBundle, error) {
 	if !json.Valid(specJSON) {
 		return nil, contracts.ValidationError{Message: "embedded spec is not valid JSON"}
 	}
@@ -30,11 +34,11 @@ func LoadArtifactBundle(specJSON, catalogJSON, rulesJSON, searchJSON []byte) (*A
 		return nil, contracts.ValidationError{Message: "embedded search catalog is not valid JSON"}
 	}
 
-	specIndex, err := loadDryRunSpecIndex(specJSON)
+	specIndex, err := loadDryRunSpecIndex(specJSON, ext)
 	if err != nil {
 		return nil, err
 	}
-	sdk, err := loadSDKRuntime(specJSON, catalogJSON, rulesJSON)
+	sdk, err := loadSDKRuntime(specJSON, catalogJSON, rulesJSON, ext)
 	if err != nil {
 		return nil, err
 	}

@@ -5,29 +5,23 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/mimaurer/intersight-mcp/implementations"
+	_ "github.com/mimaurer/intersight-mcp/implementations/all"
 )
 
 func main() {
 	var (
-		inPath      string
-		filterPath  string
-		metricsPath string
-		outPath     string
+		provider string
 	)
 
-	flag.StringVar(&inPath, "in", "", "path to the pinned raw OpenAPI input")
-	flag.StringVar(&filterPath, "filter", "", "path to the committed filter policy")
-	flag.StringVar(&metricsPath, "metrics", "", "path to the committed metrics catalog input")
-	flag.StringVar(&outPath, "out", "", "path to the resolved spec output")
+	flag.StringVar(&provider, "provider", "intersight", "provider name")
 	flag.Parse()
 
 	if err := run(runConfig{
-		inPath:      inPath,
-		filterPath:  filterPath,
-		metricsPath: metricsPath,
-		outPath:     outPath,
-		stdout:      os.Stdout,
-		stderr:      os.Stderr,
+		provider: provider,
+		stdout:   os.Stdout,
+		stderr:   os.Stderr,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "generate: %v\n", err)
 		os.Exit(1)
@@ -35,18 +29,31 @@ func main() {
 }
 
 type runConfig struct {
-	inPath      string
-	filterPath  string
-	metricsPath string
-	outPath     string
-	stdout      *os.File
-	stderr      *os.File
+	provider string
+	stdout   *os.File
+	stderr   *os.File
 }
 
 func run(cfg runConfig) error {
-	if cfg.inPath == "" || cfg.filterPath == "" || cfg.metricsPath == "" || cfg.outPath == "" {
-		return errors.New("all of --in, --filter, --metrics, and --out are required")
+	target, err := implementations.LookupTarget(cfg.provider)
+	if err != nil {
+		return err
 	}
-	gen := newGenerator(cfg.inPath, cfg.filterPath, cfg.metricsPath, cfg.outPath, cfg.stdout, cfg.stderr)
+	generation := target.GenerationConfig()
+	if generation.RawSpecPath == "" || generation.ManifestPath == "" || generation.OutputPath == "" {
+		return errors.New("provider generation config requires raw spec, manifest, and output paths")
+	}
+	gen := newGenerator(
+		generation.RawSpecPath,
+		generation.ManifestPath,
+		generation.FilterPath,
+		generation.MetricsPath,
+		generation.OutputPath,
+		generation.FallbackPathPrefixes,
+		generation.RuleTemplates,
+		generation.SchemaNormalizationHook,
+		cfg.stdout,
+		cfg.stderr,
+	)
 	return gen.Run()
 }

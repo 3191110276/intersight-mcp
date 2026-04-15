@@ -1,11 +1,15 @@
 package sandbox
 
-import "testing"
+import (
+	"testing"
+
+	targetintersight "github.com/mimaurer/intersight-mcp/implementations/intersight"
+)
 
 func TestValidateRequestBodyAgainstSchemaRequiredIssue(t *testing.T) {
 	t.Parallel()
 
-	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{}, &dryRunSchema{
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{ext: targetintersight.SandboxExtensions()}, &dryRunSchema{
 		Type:     "object",
 		Required: []string{"Name"},
 		Properties: map[string]*dryRunSchema{
@@ -22,7 +26,7 @@ func TestValidateRequestBodyAgainstSchemaRequiredIssue(t *testing.T) {
 func TestValidateRequestBodyAgainstSchemaAdditionalPropertyIssue(t *testing.T) {
 	t.Parallel()
 
-	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{}, &dryRunSchema{
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{ext: targetintersight.SandboxExtensions()}, &dryRunSchema{
 		Type:                 "object",
 		Properties:           map[string]*dryRunSchema{},
 		AdditionalProperties: []byte("false"),
@@ -47,7 +51,7 @@ func TestValidateRequestBodyAgainstSchemaTypeMismatchIssue(t *testing.T) {
 func TestValidateRequestBodyAgainstSchemaEnumIssue(t *testing.T) {
 	t.Parallel()
 
-	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{}, &dryRunSchema{
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{ext: targetintersight.SandboxExtensions()}, &dryRunSchema{
 		Type: "string",
 		Enum: []any{"fast", "safe"},
 	}, "turbo")
@@ -55,6 +59,18 @@ func TestValidateRequestBodyAgainstSchemaEnumIssue(t *testing.T) {
 		t.Fatalf("len(errs) = %d, want 1", len(errs))
 	}
 	assertDryRunIssue(t, errs[0], "$", "enum", validationSourceOpenAPI)
+}
+
+func TestValidateRequestBodyAgainstSchemaIntegerEnumAcceptsNumericTypes(t *testing.T) {
+	t.Parallel()
+
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{}, &dryRunSchema{
+		Type: "integer",
+		Enum: []any{float64(9600), float64(115200)},
+	}, 115200)
+	if len(errs) != 0 {
+		t.Fatalf("len(errs) = %d, want 0: %#v", len(errs), errs)
+	}
 }
 
 func TestValidateRequestBodyAgainstSchemaOneOfAndAnyOfIssues(t *testing.T) {
@@ -80,7 +96,7 @@ func TestValidateRequestBodyAgainstSchemaOneOfAndAnyOfIssues(t *testing.T) {
 func TestValidateRequestBodyAgainstSchemaRelationshipIssues(t *testing.T) {
 	t.Parallel()
 
-	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{}, &dryRunSchema{
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{ext: targetintersight.SandboxExtensions()}, &dryRunSchema{
 		Type:                   "object",
 		Relationship:           true,
 		RelationshipTarget:     "organization.Organization",
@@ -109,7 +125,7 @@ func TestValidateRequestBodyAgainstSchemaRelationshipAllowsMoidOnly(t *testing.T
 func TestNormalizeValueForSchemaAddsTopLevelDiscriminators(t *testing.T) {
 	t.Parallel()
 
-	normalized := normalizeValueForSchema(&dryRunSpecIndex{}, &dryRunSchema{
+	normalized := normalizeValueForSchema(&dryRunSpecIndex{ext: targetintersight.SandboxExtensions()}, &dryRunSchema{
 		Type: "object",
 		Properties: map[string]*dryRunSchema{
 			"ClassId": {
@@ -139,7 +155,7 @@ func TestNormalizeValueForSchemaAddsTopLevelDiscriminators(t *testing.T) {
 func TestNormalizeValueForSchemaDoesNotOverrideExplicitDiscriminators(t *testing.T) {
 	t.Parallel()
 
-	normalized := normalizeValueForSchema(&dryRunSpecIndex{}, &dryRunSchema{
+	normalized := normalizeValueForSchema(&dryRunSpecIndex{ext: targetintersight.SandboxExtensions()}, &dryRunSchema{
 		Type: "object",
 		Properties: map[string]*dryRunSchema{
 			"ClassId": {

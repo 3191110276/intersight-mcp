@@ -19,8 +19,9 @@ const (
 )
 
 type SuccessEnvelope struct {
-	OK     bool `json:"ok"`
-	Result any  `json:"result"`
+	OK     bool     `json:"ok"`
+	Result any      `json:"result"`
+	Logs   []string `json:"logs,omitempty"`
 }
 
 type ErrorEnvelope struct {
@@ -38,14 +39,23 @@ type OutwardToolError struct {
 	Details   any    `json:"details,omitempty"`
 }
 
-func Success(result any) SuccessEnvelope {
+func Success(result any, logs ...string) SuccessEnvelope {
 	return SuccessEnvelope{
 		OK:     true,
 		Result: result,
+		Logs:   cloneLogs(logs),
 	}
 }
 
 func NormalizeError(err error, logs []string) ErrorEnvelope {
+	return NormalizeErrorWithOptions(err, logs, ErrorOptions{})
+}
+
+type ErrorOptions struct {
+	AuthErrorHint string
+}
+
+func NormalizeErrorWithOptions(err error, logs []string, options ErrorOptions) ErrorEnvelope {
 	if err == nil {
 		err = InternalError{Message: "unknown internal error"}
 	}
@@ -53,10 +63,17 @@ func NormalizeError(err error, logs []string) ErrorEnvelope {
 	var normalized OutwardToolError
 	switch e := classify(err).(type) {
 	case AuthError:
+		hint := strings.TrimSpace(e.Hint)
+		if hint == "" {
+			hint = strings.TrimSpace(options.AuthErrorHint)
+		}
+		if hint == "" {
+			hint = "Check provider credentials and endpoint configuration."
+		}
 		normalized = OutwardToolError{
 			Type:      ErrorTypeAuth,
 			Message:   e.message(),
-			Hint:      "Check INTERSIGHT_CLIENT_ID and INTERSIGHT_CLIENT_SECRET.",
+			Hint:      hint,
 			Retryable: true,
 		}
 	case HTTPError:
@@ -144,6 +161,7 @@ func NormalizeError(err error, logs []string) ErrorEnvelope {
 
 type AuthError struct {
 	Message string
+	Hint    string
 	Err     error
 }
 
@@ -173,7 +191,7 @@ func (e HTTPError) message() string {
 		return e.Message
 	}
 	if e.Status > 0 {
-		return fmt.Sprintf("Intersight returned HTTP %d", e.Status)
+		return fmt.Sprintf("API returned HTTP %d", e.Status)
 	}
 	if e.Err != nil {
 		return e.Err.Error()

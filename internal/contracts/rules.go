@@ -46,26 +46,33 @@ type MinimumRule struct {
 	Value float64 `json:"value"`
 }
 
-func BuildRuleCatalog(spec NormalizedSpec, catalog SDKCatalog) (RuleCatalog, error) {
+type RuleTemplate struct {
+	SDKMethod string
+	Resource  string
+	Rules     []SemanticRule
+}
+
+func BuildRuleCatalog(spec NormalizedSpec, catalog SDKCatalog, templates []RuleTemplate) (RuleCatalog, error) {
 	rules := RuleCatalog{
 		Metadata: spec.Metadata,
 		Methods:  map[string]MethodRules{},
 	}
 
-	for _, entry := range defaultRuleTemplates() {
-		method, ok := catalog.Methods[entry.SDKMethod]
+	for _, entry := range templates {
+		method, ok := resolveRuleTemplateMethod(catalog, entry)
 		if !ok {
 			continue
 		}
+		_, bodySchema, _ := findSpecOperationForDescriptor(spec, method.Descriptor)
 		filteredRules := make([]SemanticRule, 0, len(entry.Rules))
 		for _, rule := range entry.Rules {
-			if strings.TrimSpace(rule.Kind) == "required" {
+			if strings.TrimSpace(rule.Kind) == "required" && shouldOmitRequiredRule(spec, bodySchema, rule) {
 				continue
 			}
 			filteredRules = append(filteredRules, rule)
 		}
-		rules.Methods[entry.SDKMethod] = MethodRules{
-			SDKMethod:   entry.SDKMethod,
+		rules.Methods[method.SDKMethod] = MethodRules{
+			SDKMethod:   method.SDKMethod,
 			OperationID: method.Descriptor.OperationID,
 			Resource:    entry.Resource,
 			Rules:       filteredRules,
@@ -75,12 +82,50 @@ func BuildRuleCatalog(spec NormalizedSpec, catalog SDKCatalog) (RuleCatalog, err
 	return rules, nil
 }
 
-func ValidateRuleCatalogAgainstArtifacts(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatalog) error {
+func resolveRuleTemplateMethod(catalog SDKCatalog, entry RuleTemplate) (SDKMethod, bool) {
+	if method, ok := catalog.Methods[entry.SDKMethod]; ok {
+		return method, true
+	}
+
+	verb := sdkMethodVerb(entry.SDKMethod)
+	if verb == "" || strings.TrimSpace(entry.Resource) == "" {
+		return SDKMethod{}, false
+	}
+
+	var match SDKMethod
+	for _, method := range catalog.Methods {
+		if method.Resource != entry.Resource || sdkMethodVerb(method.SDKMethod) != verb {
+			continue
+		}
+		if match.SDKMethod != "" {
+			return SDKMethod{}, false
+		}
+		match = method
+	}
+	if match.SDKMethod == "" {
+		return SDKMethod{}, false
+	}
+	return match, true
+}
+
+func sdkMethodVerb(name string) string {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ""
+	}
+	idx := strings.LastIndexByte(name, '.')
+	if idx < 0 || idx == len(name)-1 {
+		return ""
+	}
+	return name[idx+1:]
+}
+
+func ValidateRuleCatalogAgainstArtifacts(spec NormalizedSpec, catalog SDKCatalog, rules RuleCatalog, templates []RuleTemplate) error {
 	if spec.Metadata != catalog.Metadata || spec.Metadata != rules.Metadata {
 		return fmt.Errorf("embedded artifact validation failed: spec, sdk catalog, and rule metadata must share identical source metadata")
 	}
 
-	expected, err := BuildRuleCatalog(spec, catalog)
+	expected, err := BuildRuleCatalog(spec, catalog, templates)
 	if err != nil {
 		return err
 	}
@@ -144,9 +189,6 @@ func validateMethodRules(spec NormalizedSpec, sdkMethod string, methodRules Meth
 		kind := strings.TrimSpace(rule.Kind)
 		if kind == "" {
 			return fmt.Errorf("embedded artifact validation failed: rules entry %q contains a rule without kind", sdkMethod)
-		}
-		if kind == "required" {
-			return fmt.Errorf("embedded artifact validation failed: rules entry %q uses unsupported rule kind %q", sdkMethod, kind)
 		}
 		if rule.When != nil {
 			if _, ok := schemaAtFieldPath(spec, bodySchema, rule.When.Field); !ok {
@@ -261,6 +303,47 @@ func normalizeRuleCatalog(catalog RuleCatalog) RuleCatalog {
 	return catalog
 }
 
+func shouldOmitRequiredRule(spec NormalizedSpec, bodySchema *NormalizedSchema, rule SemanticRule) bool {
+	if bodySchema == nil || len(rule.Require) == 0 {
+		return true
+	}
+	for _, requirement := range rule.Require {
+		if requirement.MinCount > 0 {
+			return false
+		}
+		if !fieldRequiredBySchema(spec, bodySchema, requirement.Field) {
+			return false
+		}
+	}
+	return true
+}
+
+func fieldRequiredBySchema(spec NormalizedSpec, root *NormalizedSchema, fieldPath string) bool {
+	current := dereferenceSchema(spec, root)
+	if current == nil {
+		return false
+	}
+	segments := strings.Split(strings.TrimSpace(fieldPath), ".")
+	if len(segments) == 0 {
+		return false
+	}
+	for _, segment := range segments {
+		if segment == "" {
+			return false
+		}
+		current = dereferenceSchema(spec, current)
+		if current == nil || !slices.Contains(current.Required, segment) {
+			return false
+		}
+		next, ok := current.Properties[segment]
+		if !ok {
+			return false
+		}
+		current = next
+	}
+	return true
+}
+
 func normalizeSemanticRules(rules []SemanticRule) []SemanticRule {
 	if len(rules) == 0 {
 		return nil
@@ -287,978 +370,7 @@ func normalizeSemanticRules(rules []SemanticRule) []SemanticRule {
 	return out
 }
 
-type methodRuleTemplate struct {
-	SDKMethod string
-	Resource  string
-	Rules     []SemanticRule
-}
-
-func defaultRuleTemplates() []methodRuleTemplate {
-	return []methodRuleTemplate{
-		{
-			SDKMethod: "aaa.retentionPolicy.create",
-			Resource:  "aaa.RetentionPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("RetentionPeriod", ""),
-				minimumRule(MinimumRule{Field: "RetentionPeriod", Value: 6}),
-			},
-		},
-		{
-			SDKMethod: "aaa.retentionPolicy.post",
-			Resource:  "aaa.RetentionPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("RetentionPeriod", ""),
-				minimumRule(MinimumRule{Field: "RetentionPeriod", Value: 6}),
-			},
-		},
-		{
-			SDKMethod: "aaa.retentionPolicy.update",
-			Resource:  "aaa.RetentionPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("RetentionPeriod", ""),
-				minimumRule(MinimumRule{Field: "RetentionPeriod", Value: 6}),
-			},
-		},
-		{
-			SDKMethod: "access.policy.create",
-			Resource:  "access.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("AddressType", ""),
-				requiredFieldRule("ConfigurationType", ""),
-				whenRequireRule("ConfigurationType.ConfigureInband", true, FieldRule{Field: "InbandIpPool", Target: "ippool.Pool"}),
-				whenMinimumRule("ConfigurationType.ConfigureInband", true, MinimumRule{Field: "InbandVlan", Value: 4}),
-			},
-		},
-		{
-			SDKMethod: "access.policy.post",
-			Resource:  "access.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("AddressType", ""),
-				requiredFieldRule("ConfigurationType", ""),
-				whenRequireRule("ConfigurationType.ConfigureInband", true, FieldRule{Field: "InbandIpPool", Target: "ippool.Pool"}),
-				whenMinimumRule("ConfigurationType.ConfigureInband", true, MinimumRule{Field: "InbandVlan", Value: 4}),
-			},
-		},
-		{
-			SDKMethod: "access.policy.update",
-			Resource:  "access.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("AddressType", ""),
-				requiredFieldRule("ConfigurationType", ""),
-				whenRequireRule("ConfigurationType.ConfigureInband", true, FieldRule{Field: "InbandIpPool", Target: "ippool.Pool"}),
-				whenMinimumRule("ConfigurationType.ConfigureInband", true, MinimumRule{Field: "InbandVlan", Value: 4}),
-			},
-		},
-		{
-			SDKMethod: "adapter.configPolicy.create",
-			Resource:  "adapter.ConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Settings", "", 1),
-			},
-		},
-		{
-			SDKMethod: "adapter.configPolicy.post",
-			Resource:  "adapter.ConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Settings", "", 1),
-			},
-		},
-		{
-			SDKMethod: "adapter.configPolicy.update",
-			Resource:  "adapter.ConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Settings", "", 1),
-			},
-		},
-		{
-			SDKMethod: "appliance.dataExportPolicy.create",
-			Resource:  "appliance.DataExportPolicy",
-			Rules: []SemanticRule{
-				forbidFieldRule("Name"),
-			},
-		},
-		{
-			SDKMethod: "appliance.dataExportPolicy.post",
-			Resource:  "appliance.DataExportPolicy",
-			Rules: []SemanticRule{
-				forbidFieldRule("Name"),
-			},
-		},
-		{
-			SDKMethod: "appliance.dataExportPolicy.update",
-			Resource:  "appliance.DataExportPolicy",
-			Rules: []SemanticRule{
-				forbidFieldRule("Name"),
-			},
-		},
-		{
-			SDKMethod: "appliance.dataExportPolicy.patch",
-			Resource:  "appliance.DataExportPolicy",
-			Rules: []SemanticRule{
-				forbidFieldRule("Name"),
-			},
-		},
-		{
-			SDKMethod: "comm.httpProxyPolicy.create",
-			Resource:  "comm.HttpProxyPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Hostname", ""),
-			},
-		},
-		{
-			SDKMethod: "comm.httpProxyPolicy.post",
-			Resource:  "comm.HttpProxyPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Hostname", ""),
-			},
-		},
-		{
-			SDKMethod: "comm.httpProxyPolicy.update",
-			Resource:  "comm.HttpProxyPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Hostname", ""),
-			},
-		},
-		{
-			SDKMethod: "compute.pcieConnectivityPolicy.create",
-			Resource:  "compute.PcieConnectivityPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PcieZones", "", 1),
-			},
-		},
-		{
-			SDKMethod: "compute.pcieConnectivityPolicy.post",
-			Resource:  "compute.PcieConnectivityPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PcieZones", "", 1),
-			},
-		},
-		{
-			SDKMethod: "compute.pcieConnectivityPolicy.update",
-			Resource:  "compute.PcieConnectivityPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PcieZones", "", 1),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethIf.create",
-			Resource:  "vnic.EthIf",
-			Rules: []SemanticRule{
-				requiredFieldRule("LanConnectivityPolicy", "vnic.LanConnectivityPolicy"),
-				requiredFieldRule("FabricEthNetworkGroupPolicy", "fabric.EthNetworkGroupPolicy", 1),
-				whenRequireRule("MacAddressType", "POOL", FieldRule{Field: "MacPool", Target: "macpool.Pool"}),
-				whenForbidRule("MacAddressType", "POOL", "StaticMacAddress"),
-				whenRequireRule("MacAddressType", "STATIC", FieldRule{Field: "StaticMacAddress"}),
-				whenForbidRule("MacAddressType", "STATIC", "MacPool"),
-				whenInRequireRule("Placement.SwitchId", []any{"A", "B"}, FieldRule{Field: "Placement.AutoSlotId"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethIf.post",
-			Resource:  "vnic.EthIf",
-			Rules: []SemanticRule{
-				requiredFieldRule("LanConnectivityPolicy", "vnic.LanConnectivityPolicy"),
-				requiredFieldRule("FabricEthNetworkGroupPolicy", "fabric.EthNetworkGroupPolicy", 1),
-				whenRequireRule("MacAddressType", "POOL", FieldRule{Field: "MacPool", Target: "macpool.Pool"}),
-				whenForbidRule("MacAddressType", "POOL", "StaticMacAddress"),
-				whenRequireRule("MacAddressType", "STATIC", FieldRule{Field: "StaticMacAddress"}),
-				whenForbidRule("MacAddressType", "STATIC", "MacPool"),
-				whenInRequireRule("Placement.SwitchId", []any{"A", "B"}, FieldRule{Field: "Placement.AutoSlotId"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethIf.update",
-			Resource:  "vnic.EthIf",
-			Rules: []SemanticRule{
-				requiredFieldRule("LanConnectivityPolicy", "vnic.LanConnectivityPolicy"),
-				requiredFieldRule("FabricEthNetworkGroupPolicy", "fabric.EthNetworkGroupPolicy", 1),
-				whenRequireRule("MacAddressType", "POOL", FieldRule{Field: "MacPool", Target: "macpool.Pool"}),
-				whenForbidRule("MacAddressType", "POOL", "StaticMacAddress"),
-				whenRequireRule("MacAddressType", "STATIC", FieldRule{Field: "StaticMacAddress"}),
-				whenForbidRule("MacAddressType", "STATIC", "MacPool"),
-				whenInRequireRule("Placement.SwitchId", []any{"A", "B"}, FieldRule{Field: "Placement.AutoSlotId"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethIf.patch",
-			Resource:  "vnic.EthIf",
-			Rules: []SemanticRule{
-				whenRequireRule("MacAddressType", "POOL", FieldRule{Field: "MacPool", Target: "macpool.Pool"}),
-				whenForbidRule("MacAddressType", "POOL", "StaticMacAddress"),
-				whenRequireRule("MacAddressType", "STATIC", FieldRule{Field: "StaticMacAddress"}),
-				whenForbidRule("MacAddressType", "STATIC", "MacPool"),
-				whenInRequireRule("Placement.SwitchId", []any{"A", "B"}, FieldRule{Field: "Placement.AutoSlotId"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.lanConnectivityPolicy.create",
-			Resource:  "vnic.LanConnectivityPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("IqnAllocationType", "Pool", FieldRule{Field: "IqnPool", Target: "iqnpool.Pool"}),
-				whenForbidRule("IqnAllocationType", "Pool", "StaticIqnName"),
-				whenRequireRule("IqnAllocationType", "Static", FieldRule{Field: "StaticIqnName"}),
-				whenForbidRule("IqnAllocationType", "Static", "IqnPool"),
-				whenRequireRule("PlacementMode", "custom", FieldRule{Field: "EthIfs", MinCount: 1, Target: "vnic.EthIf"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.lanConnectivityPolicy.post",
-			Resource:  "vnic.LanConnectivityPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("IqnAllocationType", "Pool", FieldRule{Field: "IqnPool", Target: "iqnpool.Pool"}),
-				whenForbidRule("IqnAllocationType", "Pool", "StaticIqnName"),
-				whenRequireRule("IqnAllocationType", "Static", FieldRule{Field: "StaticIqnName"}),
-				whenForbidRule("IqnAllocationType", "Static", "IqnPool"),
-				whenRequireRule("PlacementMode", "custom", FieldRule{Field: "EthIfs", MinCount: 1, Target: "vnic.EthIf"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.lanConnectivityPolicy.update",
-			Resource:  "vnic.LanConnectivityPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("IqnAllocationType", "Pool", FieldRule{Field: "IqnPool", Target: "iqnpool.Pool"}),
-				whenForbidRule("IqnAllocationType", "Pool", "StaticIqnName"),
-				whenRequireRule("IqnAllocationType", "Static", FieldRule{Field: "StaticIqnName"}),
-				whenForbidRule("IqnAllocationType", "Static", "IqnPool"),
-				whenRequireRule("PlacementMode", "custom", FieldRule{Field: "EthIfs", MinCount: 1, Target: "vnic.EthIf"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.lanConnectivityPolicy.patch",
-			Resource:  "vnic.LanConnectivityPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("IqnAllocationType", "Pool", FieldRule{Field: "IqnPool", Target: "iqnpool.Pool"}),
-				whenForbidRule("IqnAllocationType", "Pool", "StaticIqnName"),
-				whenRequireRule("IqnAllocationType", "Static", FieldRule{Field: "StaticIqnName"}),
-				whenForbidRule("IqnAllocationType", "Static", "IqnPool"),
-				whenRequireRule("PlacementMode", "custom", FieldRule{Field: "EthIfs", MinCount: 1, Target: "vnic.EthIf"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethNetworkPolicy.create",
-			Resource:  "vnic.EthNetworkPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("VlanSettings", ""),
-				whenRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
-				whenRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
-				whenRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethNetworkPolicy.post",
-			Resource:  "vnic.EthNetworkPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("VlanSettings", ""),
-				whenRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
-				whenRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
-				whenRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethNetworkPolicy.update",
-			Resource:  "vnic.EthNetworkPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("VlanSettings", ""),
-				whenRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
-				whenRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
-				whenRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethNetworkPolicy.patch",
-			Resource:  "vnic.EthNetworkPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
-				whenRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
-				whenRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethAdapterPolicy.create",
-			Resource:  "vnic.EthAdapterPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("RssSettings", true, FieldRule{Field: "RssHashSettings"}),
-				whenRequireRule("EtherChannelPinningEnabled", true, FieldRule{Field: "TxQueueSettings"}),
-				whenMinimumRule("EtherChannelPinningEnabled", true, MinimumRule{Field: "TxQueueSettings.Count", Value: 2}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethAdapterPolicy.post",
-			Resource:  "vnic.EthAdapterPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("RssSettings", true, FieldRule{Field: "RssHashSettings"}),
-				whenRequireRule("EtherChannelPinningEnabled", true, FieldRule{Field: "TxQueueSettings"}),
-				whenMinimumRule("EtherChannelPinningEnabled", true, MinimumRule{Field: "TxQueueSettings.Count", Value: 2}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethAdapterPolicy.update",
-			Resource:  "vnic.EthAdapterPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("RssSettings", true, FieldRule{Field: "RssHashSettings"}),
-				whenRequireRule("EtherChannelPinningEnabled", true, FieldRule{Field: "TxQueueSettings"}),
-				whenMinimumRule("EtherChannelPinningEnabled", true, MinimumRule{Field: "TxQueueSettings.Count", Value: 2}),
-			},
-		},
-		{
-			SDKMethod: "vnic.ethAdapterPolicy.patch",
-			Resource:  "vnic.EthAdapterPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("RssSettings", true, FieldRule{Field: "RssHashSettings"}),
-				whenRequireRule("EtherChannelPinningEnabled", true, FieldRule{Field: "TxQueueSettings"}),
-				whenMinimumRule("EtherChannelPinningEnabled", true, MinimumRule{Field: "TxQueueSettings.Count", Value: 2}),
-			},
-		},
-		{
-			SDKMethod: "fabric.ethNetworkGroupPolicy.create",
-			Resource:  "fabric.EthNetworkGroupPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("VlanSettings", ""),
-				requiredFieldRule("VlanSettings.AllowedVlans", ""),
-				whenRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
-		},
-		{
-			SDKMethod: "fabric.ethNetworkGroupPolicy.post",
-			Resource:  "fabric.EthNetworkGroupPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("VlanSettings", ""),
-				requiredFieldRule("VlanSettings.AllowedVlans", ""),
-				whenRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
-		},
-		{
-			SDKMethod: "fabric.ethNetworkGroupPolicy.update",
-			Resource:  "fabric.EthNetworkGroupPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("VlanSettings", ""),
-				requiredFieldRule("VlanSettings.AllowedVlans", ""),
-				whenRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
-		},
-		{
-			SDKMethod: "fabric.ethNetworkGroupPolicy.patch",
-			Resource:  "fabric.EthNetworkGroupPolicy",
-			Rules: []SemanticRule{
-				whenRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
-		},
-		{
-			SDKMethod: "fabric.macSecPolicy.create",
-			Resource:  "fabric.MacSecPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PrimaryKeyChain", ""),
-			},
-		},
-		{
-			SDKMethod: "fabric.macSecPolicy.post",
-			Resource:  "fabric.MacSecPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PrimaryKeyChain", ""),
-			},
-		},
-		{
-			SDKMethod: "fabric.macSecPolicy.update",
-			Resource:  "fabric.MacSecPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PrimaryKeyChain", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.clusterReplicationNetworkPolicy.create",
-			Resource:  "hyperflex.ClusterReplicationNetworkPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ReplicationIpranges", "", 1),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.clusterReplicationNetworkPolicy.post",
-			Resource:  "hyperflex.ClusterReplicationNetworkPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ReplicationIpranges", "", 1),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.clusterReplicationNetworkPolicy.update",
-			Resource:  "hyperflex.ClusterReplicationNetworkPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ReplicationIpranges", "", 1),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.nodeConfigPolicy.create",
-			Resource:  "hyperflex.NodeConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("MgmtIpRange", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.nodeConfigPolicy.post",
-			Resource:  "hyperflex.NodeConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("MgmtIpRange", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.nodeConfigPolicy.update",
-			Resource:  "hyperflex.NodeConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("MgmtIpRange", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.localCredentialPolicy.create",
-			Resource:  "hyperflex.LocalCredentialPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("HxdpRootPwd", ""),
-				requiredFieldRule("HypervisorAdmin", ""),
-				requiredFieldRule("HypervisorAdminPwd", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.localCredentialPolicy.post",
-			Resource:  "hyperflex.LocalCredentialPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("HxdpRootPwd", ""),
-				requiredFieldRule("HypervisorAdmin", ""),
-				requiredFieldRule("HypervisorAdminPwd", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.localCredentialPolicy.update",
-			Resource:  "hyperflex.LocalCredentialPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("HxdpRootPwd", ""),
-				requiredFieldRule("HypervisorAdmin", ""),
-				requiredFieldRule("HypervisorAdminPwd", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.proxySettingPolicy.create",
-			Resource:  "hyperflex.ProxySettingPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Hostname", ""),
-				minimumRule(MinimumRule{Field: "Port", Value: 1}),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.proxySettingPolicy.post",
-			Resource:  "hyperflex.ProxySettingPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Hostname", ""),
-				minimumRule(MinimumRule{Field: "Port", Value: 1}),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.proxySettingPolicy.update",
-			Resource:  "hyperflex.ProxySettingPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Hostname", ""),
-				minimumRule(MinimumRule{Field: "Port", Value: 1}),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.softwareVersionPolicy.create",
-			Resource:  "hyperflex.SoftwareVersionPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("HxdpVersion", ""),
-				requiredFieldRule("UpgradeTypes", "", 1),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.softwareVersionPolicy.post",
-			Resource:  "hyperflex.SoftwareVersionPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("HxdpVersion", ""),
-				requiredFieldRule("UpgradeTypes", "", 1),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.softwareVersionPolicy.update",
-			Resource:  "hyperflex.SoftwareVersionPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("HxdpVersion", ""),
-				requiredFieldRule("UpgradeTypes", "", 1),
-			},
-		},
-		{
-			SDKMethod: "iam.ldapPolicy.create",
-			Resource:  "iam.LdapPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("BaseProperties", ""),
-			},
-		},
-		{
-			SDKMethod: "iam.ldapPolicy.post",
-			Resource:  "iam.LdapPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("BaseProperties", ""),
-			},
-		},
-		{
-			SDKMethod: "iam.ldapPolicy.update",
-			Resource:  "iam.LdapPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("BaseProperties", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.ucsmConfigPolicy.create",
-			Resource:  "hyperflex.UcsmConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ServerFirmwareVersion", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.ucsmConfigPolicy.post",
-			Resource:  "hyperflex.UcsmConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ServerFirmwareVersion", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.ucsmConfigPolicy.update",
-			Resource:  "hyperflex.UcsmConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ServerFirmwareVersion", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.sysConfigPolicy.create",
-			Resource:  "hyperflex.SysConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("DnsServers", "", 1),
-				requiredFieldRule("NtpServers", "", 1),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.sysConfigPolicy.post",
-			Resource:  "hyperflex.SysConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("DnsServers", "", 1),
-				requiredFieldRule("NtpServers", "", 1),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.sysConfigPolicy.update",
-			Resource:  "hyperflex.SysConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("DnsServers", "", 1),
-				requiredFieldRule("NtpServers", "", 1),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.vcenterConfigPolicy.create",
-			Resource:  "hyperflex.VcenterConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("DataCenter", ""),
-				requiredFieldRule("Hostname", ""),
-				requiredFieldRule("Username", ""),
-				requiredFieldRule("Password", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.vcenterConfigPolicy.post",
-			Resource:  "hyperflex.VcenterConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("DataCenter", ""),
-				requiredFieldRule("Hostname", ""),
-				requiredFieldRule("Username", ""),
-				requiredFieldRule("Password", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.vcenterConfigPolicy.update",
-			Resource:  "hyperflex.VcenterConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("DataCenter", ""),
-				requiredFieldRule("Hostname", ""),
-				requiredFieldRule("Username", ""),
-				requiredFieldRule("Password", ""),
-			},
-		},
-		{
-			SDKMethod: "ntp.policy.create",
-			Resource:  "ntp.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("Timezone", ""),
-				oneOfFieldRule("NtpServers", "AuthenticatedNtpServers"),
-			},
-		},
-		{
-			SDKMethod: "ntp.policy.post",
-			Resource:  "ntp.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("Timezone", ""),
-				oneOfFieldRule("NtpServers", "AuthenticatedNtpServers"),
-			},
-		},
-		{
-			SDKMethod: "ntp.policy.update",
-			Resource:  "ntp.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("Timezone", ""),
-				oneOfFieldRule("NtpServers", "AuthenticatedNtpServers"),
-			},
-		},
-		{
-			SDKMethod: "recovery.backupConfigPolicy.create",
-			Resource:  "recovery.BackupConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("FileNamePrefix", ""),
-			},
-		},
-		{
-			SDKMethod: "recovery.backupConfigPolicy.post",
-			Resource:  "recovery.BackupConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("FileNamePrefix", ""),
-			},
-		},
-		{
-			SDKMethod: "recovery.backupConfigPolicy.update",
-			Resource:  "recovery.BackupConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("FileNamePrefix", ""),
-			},
-		},
-		{
-			SDKMethod: "recovery.scheduleConfigPolicy.create",
-			Resource:  "recovery.ScheduleConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Schedule", ""),
-				requiredFieldRule("Schedule.ExecutionTime", ""),
-				requiredFieldRule("Schedule.FrequencyUnit", ""),
-			},
-		},
-		{
-			SDKMethod: "recovery.scheduleConfigPolicy.post",
-			Resource:  "recovery.ScheduleConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Schedule", ""),
-				requiredFieldRule("Schedule.ExecutionTime", ""),
-				requiredFieldRule("Schedule.FrequencyUnit", ""),
-			},
-		},
-		{
-			SDKMethod: "recovery.scheduleConfigPolicy.update",
-			Resource:  "recovery.ScheduleConfigPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Schedule", ""),
-				requiredFieldRule("Schedule.ExecutionTime", ""),
-				requiredFieldRule("Schedule.FrequencyUnit", ""),
-			},
-		},
-		{
-			SDKMethod: "resourcepool.qualificationPolicy.create",
-			Resource:  "resourcepool.QualificationPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Qualifiers", "", 1),
-			},
-		},
-		{
-			SDKMethod: "resourcepool.qualificationPolicy.post",
-			Resource:  "resourcepool.QualificationPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Qualifiers", "", 1),
-			},
-		},
-		{
-			SDKMethod: "resourcepool.qualificationPolicy.update",
-			Resource:  "resourcepool.QualificationPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Qualifiers", "", 1),
-			},
-		},
-		{
-			SDKMethod: "smtp.policy.create",
-			Resource:  "smtp.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("SenderEmail", ""),
-				requiredFieldRule("SmtpPort", ""),
-				requiredFieldRule("SmtpRecipients", "", 1),
-				requiredFieldRule("SmtpServer", ""),
-				requiredFieldRule("MinSeverity", ""),
-			},
-		},
-		{
-			SDKMethod: "smtp.policy.post",
-			Resource:  "smtp.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("SenderEmail", ""),
-				requiredFieldRule("SmtpPort", ""),
-				requiredFieldRule("SmtpRecipients", "", 1),
-				requiredFieldRule("SmtpServer", ""),
-				requiredFieldRule("MinSeverity", ""),
-			},
-		},
-		{
-			SDKMethod: "smtp.policy.update",
-			Resource:  "smtp.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("Enabled", ""),
-				requiredFieldRule("SenderEmail", ""),
-				requiredFieldRule("SmtpPort", ""),
-				requiredFieldRule("SmtpRecipients", "", 1),
-				requiredFieldRule("SmtpServer", ""),
-				requiredFieldRule("MinSeverity", ""),
-			},
-		},
-		{
-			SDKMethod: "syslog.policy.create",
-			Resource:  "syslog.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("LocalClients", "", 1),
-			},
-		},
-		{
-			SDKMethod: "syslog.policy.post",
-			Resource:  "syslog.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("LocalClients", "", 1),
-			},
-		},
-		{
-			SDKMethod: "syslog.policy.update",
-			Resource:  "syslog.Policy",
-			Rules: []SemanticRule{
-				requiredFieldRule("LocalClients", "", 1),
-			},
-		},
-		{
-			SDKMethod: "scheduler.schedulePolicy.create",
-			Resource:  "scheduler.SchedulePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ScheduleParams", "", 1),
-			},
-		},
-		{
-			SDKMethod: "scheduler.schedulePolicy.post",
-			Resource:  "scheduler.SchedulePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ScheduleParams", "", 1),
-			},
-		},
-		{
-			SDKMethod: "scheduler.schedulePolicy.update",
-			Resource:  "scheduler.SchedulePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ScheduleParams", "", 1),
-			},
-		},
-		{
-			SDKMethod: "storage.driveSecurityPolicy.create",
-			Resource:  "storage.DriveSecurityPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("KeySetting", ""),
-			},
-		},
-		{
-			SDKMethod: "storage.driveSecurityPolicy.post",
-			Resource:  "storage.DriveSecurityPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("KeySetting", ""),
-			},
-		},
-		{
-			SDKMethod: "storage.driveSecurityPolicy.update",
-			Resource:  "storage.DriveSecurityPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("KeySetting", ""),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiAdapterPolicy.create",
-			Resource:  "vnic.IscsiAdapterPolicy",
-			Rules: []SemanticRule{
-				minimumRule(MinimumRule{Field: "DhcpTimeout", Value: 60}),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiAdapterPolicy.post",
-			Resource:  "vnic.IscsiAdapterPolicy",
-			Rules: []SemanticRule{
-				minimumRule(MinimumRule{Field: "DhcpTimeout", Value: 60}),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiAdapterPolicy.update",
-			Resource:  "vnic.IscsiAdapterPolicy",
-			Rules: []SemanticRule{
-				minimumRule(MinimumRule{Field: "DhcpTimeout", Value: 60}),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiBootPolicy.create",
-			Resource:  "vnic.IscsiBootPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PrimaryTargetPolicy", ""),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiBootPolicy.post",
-			Resource:  "vnic.IscsiBootPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PrimaryTargetPolicy", ""),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiBootPolicy.update",
-			Resource:  "vnic.IscsiBootPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("PrimaryTargetPolicy", ""),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiStaticTargetPolicy.create",
-			Resource:  "vnic.IscsiStaticTargetPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("IpAddress", ""),
-				requiredFieldRule("IscsiIpType", ""),
-				requiredFieldRule("Port", ""),
-				requiredFieldRule("TargetName", ""),
-				requiredFieldRule("Lun", ""),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiStaticTargetPolicy.post",
-			Resource:  "vnic.IscsiStaticTargetPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("IpAddress", ""),
-				requiredFieldRule("IscsiIpType", ""),
-				requiredFieldRule("Port", ""),
-				requiredFieldRule("TargetName", ""),
-				requiredFieldRule("Lun", ""),
-			},
-		},
-		{
-			SDKMethod: "vnic.iscsiStaticTargetPolicy.update",
-			Resource:  "vnic.IscsiStaticTargetPolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("IpAddress", ""),
-				requiredFieldRule("IscsiIpType", ""),
-				requiredFieldRule("Port", ""),
-				requiredFieldRule("TargetName", ""),
-				requiredFieldRule("Lun", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.extIscsiStoragePolicy.create",
-			Resource:  "hyperflex.ExtIscsiStoragePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ExtaTraffic", ""),
-				requiredFieldRule("ExtaTraffic.Name", ""),
-				requiredFieldRule("ExtaTraffic.VlanId", ""),
-				requiredFieldRule("ExtbTraffic", ""),
-				requiredFieldRule("ExtbTraffic.Name", ""),
-				requiredFieldRule("ExtbTraffic.VlanId", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.extIscsiStoragePolicy.post",
-			Resource:  "hyperflex.ExtIscsiStoragePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ExtaTraffic", ""),
-				requiredFieldRule("ExtaTraffic.Name", ""),
-				requiredFieldRule("ExtaTraffic.VlanId", ""),
-				requiredFieldRule("ExtbTraffic", ""),
-				requiredFieldRule("ExtbTraffic.Name", ""),
-				requiredFieldRule("ExtbTraffic.VlanId", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.extIscsiStoragePolicy.update",
-			Resource:  "hyperflex.ExtIscsiStoragePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ExtaTraffic", ""),
-				requiredFieldRule("ExtaTraffic.Name", ""),
-				requiredFieldRule("ExtaTraffic.VlanId", ""),
-				requiredFieldRule("ExtbTraffic", ""),
-				requiredFieldRule("ExtbTraffic.Name", ""),
-				requiredFieldRule("ExtbTraffic.VlanId", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.extFcStoragePolicy.create",
-			Resource:  "hyperflex.ExtFcStoragePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ExtaTraffic", ""),
-				requiredFieldRule("ExtaTraffic.Name", ""),
-				requiredFieldRule("ExtaTraffic.VsanId", ""),
-				requiredFieldRule("ExtbTraffic", ""),
-				requiredFieldRule("ExtbTraffic.Name", ""),
-				requiredFieldRule("ExtbTraffic.VsanId", ""),
-				requiredFieldRule("WwxnPrefixRange", ""),
-				requiredFieldRule("WwxnPrefixRange.StartAddr", ""),
-				requiredFieldRule("WwxnPrefixRange.EndAddr", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.extFcStoragePolicy.post",
-			Resource:  "hyperflex.ExtFcStoragePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ExtaTraffic", ""),
-				requiredFieldRule("ExtaTraffic.Name", ""),
-				requiredFieldRule("ExtaTraffic.VsanId", ""),
-				requiredFieldRule("ExtbTraffic", ""),
-				requiredFieldRule("ExtbTraffic.Name", ""),
-				requiredFieldRule("ExtbTraffic.VsanId", ""),
-				requiredFieldRule("WwxnPrefixRange", ""),
-				requiredFieldRule("WwxnPrefixRange.StartAddr", ""),
-				requiredFieldRule("WwxnPrefixRange.EndAddr", ""),
-			},
-		},
-		{
-			SDKMethod: "hyperflex.extFcStoragePolicy.update",
-			Resource:  "hyperflex.ExtFcStoragePolicy",
-			Rules: []SemanticRule{
-				requiredFieldRule("ExtaTraffic", ""),
-				requiredFieldRule("ExtaTraffic.Name", ""),
-				requiredFieldRule("ExtaTraffic.VsanId", ""),
-				requiredFieldRule("ExtbTraffic", ""),
-				requiredFieldRule("ExtbTraffic.Name", ""),
-				requiredFieldRule("ExtbTraffic.VsanId", ""),
-				requiredFieldRule("WwxnPrefixRange", ""),
-				requiredFieldRule("WwxnPrefixRange.StartAddr", ""),
-				requiredFieldRule("WwxnPrefixRange.EndAddr", ""),
-			},
-		},
-		{
-			SDKMethod: "smtp.policyTest.create",
-			Resource:  "smtp.PolicyTest",
-			Rules: []SemanticRule{
-				requiredFieldRule("Policy", "smtp.Policy"),
-				requiredFieldRule("Recipients", "", 1),
-			},
-		},
-		{
-			SDKMethod: "smtp.policyTest.post",
-			Resource:  "smtp.PolicyTest",
-			Rules: []SemanticRule{
-				requiredFieldRule("Policy", "smtp.Policy"),
-				requiredFieldRule("Recipients", "", 1),
-			},
-		},
-		{
-			SDKMethod: "smtp.policyTest.update",
-			Resource:  "smtp.PolicyTest",
-			Rules: []SemanticRule{
-				requiredFieldRule("Policy", "smtp.Policy"),
-				requiredFieldRule("Recipients", "", 1),
-			},
-		},
-	}
-}
-
-func requiredFieldRule(field, target string, minCount ...int) SemanticRule {
+func NewRequiredRule(field, target string, minCount ...int) SemanticRule {
 	requirement := FieldRule{Field: field, Target: target}
 	if len(minCount) > 0 {
 		requirement.MinCount = minCount[0]
@@ -1269,7 +381,7 @@ func requiredFieldRule(field, target string, minCount ...int) SemanticRule {
 	}
 }
 
-func whenRequireRule(field string, equals any, requirement FieldRule) SemanticRule {
+func NewConditionalRequireRule(field string, equals any, requirement FieldRule) SemanticRule {
 	return SemanticRule{
 		Kind:    "conditional",
 		When:    &RuleCondition{Field: field, Equals: equals},
@@ -1277,7 +389,7 @@ func whenRequireRule(field string, equals any, requirement FieldRule) SemanticRu
 	}
 }
 
-func whenInRequireRule(field string, values []any, requirement FieldRule) SemanticRule {
+func NewConditionalInRequireRule(field string, values []any, requirement FieldRule) SemanticRule {
 	return SemanticRule{
 		Kind:    "conditional",
 		When:    &RuleCondition{Field: field, In: append([]any(nil), values...)},
@@ -1285,7 +397,7 @@ func whenInRequireRule(field string, values []any, requirement FieldRule) Semant
 	}
 }
 
-func whenForbidRule(field string, equals any, forbidden string) SemanticRule {
+func NewConditionalForbidRule(field string, equals any, forbidden string) SemanticRule {
 	return SemanticRule{
 		Kind:   "conditional",
 		When:   &RuleCondition{Field: field, Equals: equals},
@@ -1293,21 +405,21 @@ func whenForbidRule(field string, equals any, forbidden string) SemanticRule {
 	}
 }
 
-func forbidFieldRule(field string) SemanticRule {
+func NewForbidRule(field string) SemanticRule {
 	return SemanticRule{
 		Kind:   "forbidden",
 		Forbid: []string{field},
 	}
 }
 
-func minimumRule(minimum MinimumRule) SemanticRule {
+func NewMinimumRule(minimum MinimumRule) SemanticRule {
 	return SemanticRule{
 		Kind:    "minimum",
 		Minimum: []MinimumRule{minimum},
 	}
 }
 
-func oneOfFieldRule(fields ...string) SemanticRule {
+func NewOneOfRule(fields ...string) SemanticRule {
 	requireAny := make([]FieldRule, 0, len(fields))
 	for _, field := range fields {
 		requireAny = append(requireAny, FieldRule{Field: field})
@@ -1318,7 +430,7 @@ func oneOfFieldRule(fields ...string) SemanticRule {
 	}
 }
 
-func whenMinimumRule(field string, equals any, minimum MinimumRule) SemanticRule {
+func NewConditionalMinimumRule(field string, equals any, minimum MinimumRule) SemanticRule {
 	return SemanticRule{
 		Kind:    "conditional",
 		When:    &RuleCondition{Field: field, Equals: equals},

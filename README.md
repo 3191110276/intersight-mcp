@@ -50,4 +50,4 @@ With `--read-only`, it registers only `search` and `query`.
 
 The MCP client will thus usually call `search` first to understand the API, then either `query` or `mutate` to read or perform changes respectively.
 
-`query` and `mutate` compact API objects by default to remove low-signal metadata fields from results. Pass `compact: false` in a tool call when raw API output is needed.
+`query` and `mutate` compact API objects by default to remove low-signal metadata fields from results. Omit `compact` for normal use. Only retry with `compact: false` when the default compacted response is not sufficient and raw API output is needed.

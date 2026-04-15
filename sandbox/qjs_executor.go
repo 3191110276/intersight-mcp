@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/fastschema/qjs"
-	"github.com/mimaurer/intersight-mcp/generated"
 	"github.com/mimaurer/intersight-mcp/internal/contracts"
 )
 
@@ -21,20 +20,19 @@ type qjsExecutor struct {
 }
 
 func NewQJSExecutor(cfg Config, client APICaller) Executor {
-	spec, specErr := loadDryRunSpecIndex(generated.ResolvedSpecBytes())
-	sdk, sdkErr := loadSDKRuntime(generated.ResolvedSpecBytes(), generated.SDKCatalogBytes(), generated.RulesBytes())
-	initErr := errors.Join(specErr, sdkErr)
 	return &qjsExecutor{
 		cfg:     normalizeConfig(cfg),
 		client:  client,
-		spec:    spec,
-		sdk:     sdk,
-		initErr: initErr,
+		initErr: errors.New("embedded sandbox artifacts are not configured; use NewQJSExecutorFromBundle or NewQJSExecutorWithArtifacts"),
 	}
 }
 
 func NewQJSExecutorWithSpec(cfg Config, client APICaller, specJSON []byte) (Executor, error) {
-	spec, err := loadDryRunSpecIndex(specJSON)
+	return NewQJSExecutorWithSpecAndExtensions(cfg, client, specJSON, Extensions{})
+}
+
+func NewQJSExecutorWithSpecAndExtensions(cfg Config, client APICaller, specJSON []byte, ext Extensions) (Executor, error) {
+	spec, err := loadDryRunSpecIndex(specJSON, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -46,11 +44,15 @@ func NewQJSExecutorWithSpec(cfg Config, client APICaller, specJSON []byte) (Exec
 }
 
 func NewQJSExecutorWithArtifacts(cfg Config, client APICaller, specJSON, catalogJSON, rulesJSON []byte) (Executor, error) {
-	spec, err := loadDryRunSpecIndex(specJSON)
+	return NewQJSExecutorWithArtifactsAndExtensions(cfg, client, specJSON, catalogJSON, rulesJSON, Extensions{})
+}
+
+func NewQJSExecutorWithArtifactsAndExtensions(cfg Config, client APICaller, specJSON, catalogJSON, rulesJSON []byte, ext Extensions) (Executor, error) {
+	spec, err := loadDryRunSpecIndex(specJSON, ext)
 	if err != nil {
 		return nil, err
 	}
-	sdk, err := loadSDKRuntime(specJSON, catalogJSON, rulesJSON)
+	sdk, err := loadSDKRuntime(specJSON, catalogJSON, rulesJSON, ext)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +325,7 @@ func normalizeThrown(execCtx context.Context, payload any) error {
 				return contracts.HTTPError{
 					Status:  status,
 					Body:    errorPayload["body"],
-					Message: fmt.Sprintf("Intersight returned HTTP %d", status),
+					Message: fmt.Sprintf("API returned HTTP %d", status),
 				}
 			case "network":
 				return contracts.NetworkError{Message: stringOr(errorPayload["message"], message)}

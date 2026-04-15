@@ -14,6 +14,7 @@ import (
 type dryRunSpecIndex struct {
 	Paths   map[string]map[string]dryRunOperation `json:"paths"`
 	Schemas map[string]dryRunSchema               `json:"schemas"`
+	ext     Extensions
 }
 
 type dryRunOperation struct {
@@ -62,7 +63,7 @@ type schemaValidationState struct {
 	visiting map[string]int
 }
 
-func loadDryRunSpecIndex(specJSON []byte) (*dryRunSpecIndex, error) {
+func loadDryRunSpecIndex(specJSON []byte, ext Extensions) (*dryRunSpecIndex, error) {
 	if len(specJSON) == 0 {
 		return nil, nil
 	}
@@ -74,6 +75,7 @@ func loadDryRunSpecIndex(specJSON []byte) (*dryRunSpecIndex, error) {
 	if err := json.Unmarshal(specJSON, &spec); err != nil {
 		return nil, contracts.ValidationError{Message: "decode embedded spec", Err: err}
 	}
+	spec.ext = normalizeExtensions(ext)
 	return &spec, nil
 }
 
@@ -165,13 +167,16 @@ func normalizeValueForSchema(spec *dryRunSpecIndex, schema *dryRunSchema, value 
 		return normalizeValueForSchema(spec, &target, value, state)
 	}
 
-	if schema.Relationship {
-		return normalizeRelationshipValue(schema, value)
+	if schema.Relationship && spec.ext.RelationshipBehavior != nil {
+		return normalizeRelationshipValue(spec.ext.RelationshipBehavior, schema, value)
 	}
 
 	switch typed := value.(type) {
 	case map[string]any:
-		out := normalizeObjectDiscriminators(schema, typed)
+		out := typed
+		if spec.ext.AutofillDiscriminators {
+			out = normalizeObjectDiscriminators(schema, typed)
+		}
 		for key, child := range out {
 			childSchema := schema.Properties[key]
 			out[key] = normalizeValueForSchema(spec, childSchema, child, state)
@@ -223,7 +228,7 @@ func singletonStringEnumProperty(schema *dryRunSchema, name string) (string, boo
 	return value, true
 }
 
-func normalizeRelationshipValue(schema *dryRunSchema, value any) any {
+func normalizeRelationshipValue(behavior *RelationshipBehavior, schema *dryRunSchema, value any) any {
 	obj, ok := value.(map[string]any)
 	if !ok {
 		return value
@@ -236,14 +241,14 @@ func normalizeRelationshipValue(schema *dryRunSchema, value any) any {
 	if strings.TrimSpace(stringValue(out["Selector"])) != "" {
 		return out
 	}
-	if strings.TrimSpace(stringValue(out["Moid"])) == "" {
+	if strings.TrimSpace(stringValue(out[behavior.MoidField])) == "" {
 		return out
 	}
-	if strings.TrimSpace(stringValue(out["ObjectType"])) == "" && schema.RelationshipTarget != "" {
-		out["ObjectType"] = schema.RelationshipTarget
+	if behavior.AutofillTargetObjectType && strings.TrimSpace(stringValue(out[behavior.ObjectTypeField])) == "" && schema.RelationshipTarget != "" {
+		out[behavior.ObjectTypeField] = schema.RelationshipTarget
 	}
-	if strings.TrimSpace(stringValue(out["ClassId"])) == "" {
-		out["ClassId"] = "mo.MoRef"
+	if strings.TrimSpace(stringValue(out[behavior.ClassIDField])) == "" && strings.TrimSpace(behavior.DefaultClassID) != "" {
+		out[behavior.ClassIDField] = behavior.DefaultClassID
 	}
 	return out
 }
@@ -275,8 +280,8 @@ func validateValueAgainstSchema(spec *dryRunSpecIndex, schema *dryRunSchema, val
 		return []dryRunValidationError{newOpenAPIIssue(fieldPath, "nullable", "nullable", "Field does not allow null.")}
 	}
 
-	if schema.Relationship {
-		return validateRelationshipValue(schema, value, fieldPath)
+	if schema.Relationship && spec.ext.RelationshipBehavior != nil {
+		return validateRelationshipValue(spec.ext.RelationshipBehavior, schema, value, fieldPath)
 	}
 
 	if len(schema.OneOf) > 0 {
@@ -347,24 +352,26 @@ anyOfMatched:
 	return nil
 }
 
-func validateRelationshipValue(schema *dryRunSchema, value any, fieldPath string) []dryRunValidationError {
+func validateRelationshipValue(behavior *RelationshipBehavior, schema *dryRunSchema, value any, fieldPath string) []dryRunValidationError {
 	obj, ok := value.(map[string]any)
 	if !ok {
 		return []dryRunValidationError{newTypeMismatchIssue(fieldPath, "object", value)}
 	}
 
-	if selector := strings.TrimSpace(stringValue(obj["Selector"])); selector != "" {
-		return []dryRunValidationError{newOpenAPIIssue(fieldPath, "relationship", "relationship", "Selector-only relationship payloads are not accepted for writes; provide a Moid reference or typed MoRef.")}
+	if behavior.RejectSelector {
+		if selector := strings.TrimSpace(stringValue(obj["Selector"])); selector != "" {
+			return []dryRunValidationError{newOpenAPIIssue(fieldPath, "relationship", behavior.RelationshipRuleName, behavior.SelectorMessage)}
+		}
 	}
 
-	classID := strings.TrimSpace(stringValue(obj["ClassId"]))
-	objectType := strings.TrimSpace(stringValue(obj["ObjectType"]))
-	moid := strings.TrimSpace(stringValue(obj["Moid"]))
-	allowMoidRef := relationshipWriteFormAllowed(schema, "moidRef")
-	allowTypedMoRef := relationshipWriteFormAllowed(schema, "typedMoRef")
+	classID := strings.TrimSpace(stringValue(obj[behavior.ClassIDField]))
+	objectType := strings.TrimSpace(stringValue(obj[behavior.ObjectTypeField]))
+	moid := strings.TrimSpace(stringValue(obj[behavior.MoidField]))
+	allowMoidRef := relationshipWriteFormAllowed(schema, behavior.AllowMoidRefWriteForm)
+	allowTypedMoRef := relationshipWriteFormAllowed(schema, behavior.AllowTypedMoRefWriteForm)
 
 	if moid == "" {
-		return []dryRunValidationError{newOpenAPIIssue(joinFieldPath(fieldPath, "Moid"), "relationship", "relationship", "Relationship Moid is required.")}
+		return []dryRunValidationError{newOpenAPIIssue(joinFieldPath(fieldPath, behavior.MoidField), "relationship", behavior.RelationshipRuleName, behavior.MissingMoidMessage)}
 	}
 
 	if classID == "" && objectType == "" && allowMoidRef {
@@ -372,27 +379,27 @@ func validateRelationshipValue(schema *dryRunSchema, value any, fieldPath string
 	}
 
 	if !allowTypedMoRef {
-		return []dryRunValidationError{newOpenAPIIssue(fieldPath, "relationship", "relationship", "Relationship payload shape is not accepted for writes.")}
+		return []dryRunValidationError{newOpenAPIIssue(fieldPath, "relationship", behavior.RelationshipRuleName, behavior.InvalidPayloadShapeMessage)}
 	}
 
-	if classID != "mo.MoRef" {
+	if behavior.RequiredClassID != "" && classID != behavior.RequiredClassID {
 		return []dryRunValidationError{{
-			Path:     joinFieldPath(fieldPath, "ClassId"),
+			Path:     joinFieldPath(fieldPath, behavior.ClassIDField),
 			Type:     "relationship",
 			Source:   validationSourceOpenAPI,
-			Rule:     "relationship",
-			Message:  `Relationship ClassId must be "mo.MoRef".`,
-			Expected: "mo.MoRef",
+			Rule:     behavior.RelationshipRuleName,
+			Message:  fmt.Sprintf("Relationship %s must be %q.", behavior.ClassIDField, behavior.RequiredClassID),
+			Expected: behavior.RequiredClassID,
 			Actual:   classID,
 		}}
 	}
 	if schema.RelationshipTarget != "" && objectType != schema.RelationshipTarget {
 		return []dryRunValidationError{{
-			Path:     joinFieldPath(fieldPath, "ObjectType"),
+			Path:     joinFieldPath(fieldPath, behavior.ObjectTypeField),
 			Type:     "relationship",
 			Source:   validationSourceOpenAPI,
-			Rule:     "relationship",
-			Message:  fmt.Sprintf("Relationship ObjectType must be %q.", schema.RelationshipTarget),
+			Rule:     behavior.RelationshipRuleName,
+			Message:  fmt.Sprintf("Relationship %s must be %q.", behavior.ObjectTypeField, schema.RelationshipTarget),
 			Expected: schema.RelationshipTarget,
 			Actual:   objectType,
 		}}
@@ -547,8 +554,20 @@ func valueMatchesEnum(value any, allowed []any) bool {
 		if reflect.DeepEqual(value, candidate) {
 			return true
 		}
+		if numbersEqual(value, candidate) {
+			return true
+		}
 	}
 	return false
+}
+
+func numbersEqual(left, right any) bool {
+	if !isNumber(left) || !isNumber(right) {
+		return false
+	}
+	lf, lok := asFloat64(left)
+	rf, rok := asFloat64(right)
+	return lok && rok && lf == rf
 }
 
 func formatValue(value any) string {

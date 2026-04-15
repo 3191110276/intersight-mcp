@@ -2,6 +2,7 @@ package sandbox
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,7 +21,7 @@ func (b *apiBridge) callSDK(execCtx context.Context, sdkMethod string, args map[
 		return nil, contracts.ReferenceError{Message: "sdk is not available in this runtime"}
 	}
 
-	if isCustomSDKMethod(sdkMethod) {
+	if b.sdk.isCustomSDKMethod(sdkMethod) {
 		return b.callCustomSDK(execCtx, sdkMethod, args)
 	}
 
@@ -44,7 +45,7 @@ func (b *apiBridge) callSDK(execCtx context.Context, sdkMethod string, args map[
 		}
 	}
 
-	operation, err := b.sdk.compileOperation(sdkMethod, args, b.mode)
+	operation, validationReport, err := b.sdk.compileOperation(sdkMethod, args, b.mode)
 	if err != nil {
 		rejection, rejectErr := rejectionValue(err, b.perCallTimeout, b.maxAPICalls)
 		if rejectErr != nil {
@@ -56,22 +57,13 @@ func (b *apiBridge) callSDK(execCtx context.Context, sdkMethod string, args map[
 		}, nil
 	}
 
-	count := int(b.callCount.Add(1))
-	if count > b.maxAPICalls {
-		return map[string]any{
-			"ok": false,
-			"error": map[string]any{
-				"kind":    "limit",
-				"message": fmt.Sprintf("API call limit reached (%d/%d)", b.maxAPICalls, b.maxAPICalls),
-				"limit":   b.maxAPICalls,
-			},
-		}, nil
+	if b.mode == ModeMutate {
+		if err := b.preflightMutation(execCtx, sdkMethod, operation); err != nil {
+			return nil, err
+		}
 	}
 
-	callCtx, cancel := context.WithTimeout(execCtx, b.perCallTimeout)
-	defer cancel()
-
-	result, err := b.client.Do(callCtx, operation)
+	result, err := b.executeOperation(execCtx, operation)
 	if err != nil {
 		rejection, rejectErr := rejectionValue(err, b.perCallTimeout, b.maxAPICalls)
 		if rejectErr != nil {
@@ -82,11 +74,20 @@ func (b *apiBridge) callSDK(execCtx context.Context, sdkMethod string, args map[
 			"error": rejection,
 		}, nil
 	}
+	if b.mode == ModeMutate {
+		if err := b.verifyMutationResult(execCtx, sdkMethod, operation, result); err != nil {
+			return nil, err
+		}
+	}
 
-	return map[string]any{
+	response := map[string]any{
 		"ok":    true,
 		"value": result,
-	}, nil
+	}
+	if len(validationReport) > 0 {
+		response["logs"] = validationReport
+	}
+	return response, nil
 }
 
 func (b *apiBridge) callCustomSDK(execCtx context.Context, sdkMethod string, args map[string]any) (map[string]any, error) {
@@ -102,22 +103,7 @@ func (b *apiBridge) callCustomSDK(execCtx context.Context, sdkMethod string, arg
 		}, nil
 	}
 
-	count := int(b.callCount.Add(1))
-	if count > b.maxAPICalls {
-		return map[string]any{
-			"ok": false,
-			"error": map[string]any{
-				"kind":    "limit",
-				"message": fmt.Sprintf("API call limit reached (%d/%d)", b.maxAPICalls, b.maxAPICalls),
-				"limit":   b.maxAPICalls,
-			},
-		}, nil
-	}
-
-	callCtx, cancel := context.WithTimeout(execCtx, b.perCallTimeout)
-	defer cancel()
-
-	result, err := b.client.Do(callCtx, operation)
+	result, err := b.executeOperation(execCtx, operation)
 	if err != nil {
 		rejection, rejectErr := rejectionValue(err, b.perCallTimeout, b.maxAPICalls)
 		if rejectErr != nil {
@@ -129,12 +115,26 @@ func (b *apiBridge) callCustomSDK(execCtx context.Context, sdkMethod string, arg
 		}, nil
 	}
 
-	b.presentation = telemetryPresentationHintWithApps(sdkMethod, args, b.enableMetricsApps)
+	if custom := b.sdk.extensions.CustomSDKMethods[strings.TrimSpace(sdkMethod)]; custom.PresentationHint != nil {
+		b.presentation = custom.PresentationHint(sdkMethod, args, b.enableMetricsApps)
+	}
 
 	return map[string]any{
 		"ok":    true,
 		"value": result,
 	}, nil
+}
+
+func (b *apiBridge) executeOperation(execCtx context.Context, operation contracts.OperationDescriptor) (any, error) {
+	count := int(b.callCount.Add(1))
+	if count > b.maxAPICalls {
+		return nil, contracts.LimitError{Message: fmt.Sprintf("API call limit reached (%d/%d)", b.maxAPICalls, b.maxAPICalls)}
+	}
+
+	callCtx, cancel := context.WithTimeout(execCtx, b.perCallTimeout)
+	defer cancel()
+
+	return b.client.Do(callCtx, operation)
 }
 
 func (r *sdkRuntime) sdkMethod(sdkMethod string) (contracts.SDKMethod, error) {
@@ -149,19 +149,23 @@ func (r *sdkRuntime) sdkMethod(sdkMethod string) (contracts.SDKMethod, error) {
 }
 
 func (r *sdkRuntime) compileCustomOperation(sdkMethod string, args map[string]any, mode Mode, enableMetricsApps bool) (contracts.OperationDescriptor, error) {
-	switch strings.TrimSpace(sdkMethod) {
-	case telemetryQuerySDKMethod:
-		return compileTelemetryQueryOperation(args, mode, enableMetricsApps)
-	default:
+	method, ok := r.extensions.CustomSDKMethods[strings.TrimSpace(sdkMethod)]
+	if !ok || method.CompileOperation == nil {
 		return contracts.OperationDescriptor{}, contracts.ValidationError{
 			Message: fmt.Sprintf("unknown custom sdk method %q", sdkMethod),
 			Details: map[string]any{"sdkMethod": sdkMethod},
 		}
 	}
+	return method.CompileOperation(args, string(mode), enableMetricsApps)
+}
+
+func (r *sdkRuntime) isCustomSDKMethod(sdkMethod string) bool {
+	_, ok := r.extensions.CustomSDKMethods[strings.TrimSpace(sdkMethod)]
+	return ok
 }
 
 func (b *apiBridge) validateSDKOffline(sdkMethod string, args map[string]any) (map[string]any, error) {
-	operation, err := b.sdk.compileOperation(sdkMethod, args, ModeValidate)
+	operation, _, err := b.sdk.compileOperation(sdkMethod, args, ModeValidate)
 	if err == nil {
 		return map[string]any{
 			"ok":    true,
@@ -183,59 +187,60 @@ func (b *apiBridge) validateSDKOffline(sdkMethod string, args map[string]any) (m
 	return nil, err
 }
 
-func (r *sdkRuntime) compileOperation(sdkMethod string, args map[string]any, mode Mode) (contracts.OperationDescriptor, error) {
+func (r *sdkRuntime) compileOperation(sdkMethod string, args map[string]any, mode Mode) (contracts.OperationDescriptor, []string, error) {
 	method, err := r.sdkMethod(sdkMethod)
 	if err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 
 	if err := guardSDKMethod(mode, method.Descriptor.Method, sdkMethod); err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 
 	specOp, schema, err := r.lookupOperation(method)
 	if err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 
 	normalizedArgs, err := validateSDKArgs(args, method)
 	if err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 
 	operation := method.Descriptor
 	operation.PathParams = map[string]string{}
 	operation.QueryParams = map[string][]string{}
 	operation.Headers = map[string][]string{}
+	var validationReport []string
 
 	pathArgs, err := decodeNamedStringMap(normalizedArgs["path"], "path")
 	if err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 	if err := validatePathArgs(method, pathArgs); err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 	operation.PathParams = pathArgs
 
 	queryArgs, err := decodeQueryArgMap(normalizedArgs["query"])
 	if err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 	if err := validateAllowedMultiKeys("query", queryArgs, method.QueryParameters); err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 	operation.QueryParams = queryArgs
 
 	headerArgs, err := compileHeaderArgs(normalizedArgs, method, specOp)
 	if err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 	operation.Headers = headerArgs
 
 	body, hasBody := normalizedArgs["body"]
 	if hasBody {
 		if schema == nil {
-			return contracts.OperationDescriptor{}, newSDKContractValidationError(sdkMethod, fmt.Sprintf("sdk method %q does not accept body", sdkMethod), validationIssue{
+			return contracts.OperationDescriptor{}, nil, newSDKContractValidationError(sdkMethod, fmt.Sprintf("sdk method %q does not accept body", sdkMethod), validationIssue{
 				Type:      "sdk_contract",
 				Source:    validationSourceSDKContract,
 				Message:   fmt.Sprintf("sdk method %q does not accept body", sdkMethod),
@@ -251,7 +256,7 @@ func (r *sdkRuntime) compileOperation(sdkMethod string, args map[string]any, mod
 			layers[2].Passed = len(ruleIssues) == 0
 			issues := append([]dryRunValidationError{}, schemaIssues...)
 			issues = append(issues, ruleIssues...)
-			return contracts.OperationDescriptor{}, contracts.ValidationError{
+			validationErr := contracts.ValidationError{
 				Message: fmt.Sprintf("sdk method %q request body failed local validation", sdkMethod),
 				Details: map[string]any{
 					"sdkMethod": sdkMethod,
@@ -259,11 +264,16 @@ func (r *sdkRuntime) compileOperation(sdkMethod string, args map[string]any, mod
 					"layers":    layers,
 				},
 			}
+			if mode != ModeMutate {
+				return contracts.OperationDescriptor{}, nil, validationErr
+			}
+			operation.Body = body
+			validationReport = validationWarningLogs(sdkMethod, validationErr)
 		}
 		operation.Body = body
 	} else if method.RequestBodyRequired {
 		message := fmt.Sprintf("sdk method %q requires body", sdkMethod)
-		return contracts.OperationDescriptor{}, newSDKContractValidationError(sdkMethod, message, validationIssue{
+		return contracts.OperationDescriptor{}, nil, newSDKContractValidationError(sdkMethod, message, validationIssue{
 			Type:      "sdk_contract",
 			Source:    validationSourceSDKContract,
 			Message:   message,
@@ -273,13 +283,13 @@ func (r *sdkRuntime) compileOperation(sdkMethod string, args map[string]any, mod
 
 	resolvedPath, err := resolveTemplatePath(operation.PathTemplate, operation.PathParams)
 	if err != nil {
-		return contracts.OperationDescriptor{}, err
+		return contracts.OperationDescriptor{}, nil, err
 	}
 	operation.Path = resolvedPath
 
 	if operation.Body != nil {
 		if ok, message := validatePathBodyMoid(operation.Path, operation.Body); !ok {
-			return contracts.OperationDescriptor{}, newSDKContractValidationError(sdkMethod, message, validationIssue{
+			return contracts.OperationDescriptor{}, nil, newSDKContractValidationError(sdkMethod, message, validationIssue{
 				Path:      "body.Moid",
 				Type:      "sdk_contract",
 				Source:    validationSourceSDKContract,
@@ -289,7 +299,28 @@ func (r *sdkRuntime) compileOperation(sdkMethod string, args map[string]any, mod
 		}
 	}
 
-	return operation, nil
+	return operation, validationReport, nil
+}
+
+func validationWarningLogs(sdkMethod string, err contracts.ValidationError) []string {
+	report := map[string]any{
+		"warning":   "local validation failed but mutate continued; the server response is authoritative",
+		"sdkMethod": sdkMethod,
+	}
+	if details, ok := err.Details.(map[string]any); ok {
+		report["issues"] = normalizeValidationIssues(details["issues"], sdkMethod)
+		report["layers"] = normalizeValidationLayers(details["layers"])
+	}
+
+	lines := []string{
+		fmt.Sprintf("Local validation warning for %s: mutate continued and deferred blocking to the server.", sdkMethod),
+	}
+	if encoded, marshalErr := json.Marshal(report); marshalErr == nil {
+		lines = append(lines, string(encoded))
+	} else {
+		lines = append(lines, err.Error())
+	}
+	return lines
 }
 
 func (r *sdkRuntime) validationSuccessReport(sdkMethod string, operation contracts.OperationDescriptor) map[string]any {
@@ -459,291 +490,6 @@ func validateSDKArgs(args map[string]any, method contracts.SDKMethod) (map[strin
 	}
 
 	return args, nil
-}
-
-func compileTelemetryQueryOperation(args map[string]any, mode Mode, enableMetricsApps bool) (contracts.OperationDescriptor, error) {
-	if mode != ModeQuery {
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: fmt.Sprintf("%q is a read-only telemetry query and only runs in query", telemetryQuerySDKMethod),
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"method":    http.MethodPost,
-				"toolMode":  string(mode),
-			},
-		}
-	}
-	if args == nil {
-		args = map[string]any{}
-	}
-
-	allowed := map[string]struct{}{
-		"dataSource":       {},
-		"dimensions":       {},
-		"virtualColumns":   {},
-		"limitSpec":        {},
-		"having":           {},
-		"granularity":      {},
-		"filter":           {},
-		"aggregations":     {},
-		"postAggregations": {},
-		"intervals":        {},
-		"subtotalsSpec":    {},
-		"context":          {},
-		"render":           {},
-	}
-	var unknown []string
-	for key := range args {
-		if _, ok := allowed[key]; !ok {
-			unknown = append(unknown, key)
-		}
-	}
-	if len(unknown) > 0 {
-		sort.Strings(unknown)
-		message := fmt.Sprintf("sdk method %q received unknown arguments: %s", telemetryQuerySDKMethod, strings.Join(unknown, ", "))
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: message,
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"issues": []validationIssue{{
-					Type:      "unknown_field",
-					Source:    validationSourceSDKContract,
-					Message:   message,
-					SDKMethod: telemetryQuerySDKMethod,
-					Actual:    unknown,
-				}},
-				"layers": sdkContractFailureLayers(),
-			},
-		}
-	}
-
-	dataSource, ok := args["dataSource"]
-	if !ok || dataSource == nil {
-		message := fmt.Sprintf("sdk method %q requires dataSource", telemetryQuerySDKMethod)
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: message,
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"issues": []validationIssue{{
-					Type:      "required",
-					Source:    validationSourceSDKContract,
-					Message:   message,
-					SDKMethod: telemetryQuerySDKMethod,
-				}},
-				"layers": sdkContractFailureLayers(),
-			},
-		}
-	}
-
-	if _, ok := dataSource.(string); !ok {
-		message := fmt.Sprintf("sdk method %q dataSource must be a string", telemetryQuerySDKMethod)
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: message,
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"issues": []validationIssue{{
-					Path:      "dataSource",
-					Type:      "type_mismatch",
-					Source:    validationSourceSDKContract,
-					Message:   message,
-					Expected:  "string",
-					Actual:    fmt.Sprintf("%T", dataSource),
-					SDKMethod: telemetryQuerySDKMethod,
-				}},
-				"layers": sdkContractFailureLayers(),
-			},
-		}
-	}
-
-	dimensions, ok := args["dimensions"]
-	if !ok || dimensions == nil {
-		message := fmt.Sprintf("sdk method %q requires dimensions", telemetryQuerySDKMethod)
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: message,
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"issues": []validationIssue{{
-					Path:      "dimensions",
-					Type:      "required",
-					Source:    validationSourceSDKContract,
-					Message:   message,
-					SDKMethod: telemetryQuerySDKMethod,
-				}},
-				"layers": sdkContractFailureLayers(),
-			},
-		}
-	}
-
-	if !isArrayLike(dimensions) {
-		message := fmt.Sprintf("sdk method %q dimensions must be an array", telemetryQuerySDKMethod)
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: message,
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"issues": []validationIssue{{
-					Path:      "dimensions",
-					Type:      "type_mismatch",
-					Source:    validationSourceSDKContract,
-					Message:   message,
-					Expected:  "array",
-					Actual:    fmt.Sprintf("%T", dimensions),
-					SDKMethod: telemetryQuerySDKMethod,
-				}},
-				"layers": sdkContractFailureLayers(),
-			},
-		}
-	}
-
-	granularity, ok := args["granularity"]
-	if !ok || granularity == nil {
-		message := fmt.Sprintf("sdk method %q requires granularity", telemetryQuerySDKMethod)
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: message,
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"issues": []validationIssue{{
-					Path:      "granularity",
-					Type:      "required",
-					Source:    validationSourceSDKContract,
-					Message:   message,
-					SDKMethod: telemetryQuerySDKMethod,
-				}},
-				"layers": sdkContractFailureLayers(),
-			},
-		}
-	}
-
-	intervals, ok := args["intervals"]
-	if !ok || intervals == nil {
-		message := fmt.Sprintf("sdk method %q requires intervals", telemetryQuerySDKMethod)
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: message,
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"issues": []validationIssue{{
-					Path:      "intervals",
-					Type:      "required",
-					Source:    validationSourceSDKContract,
-					Message:   message,
-					SDKMethod: telemetryQuerySDKMethod,
-				}},
-				"layers": sdkContractFailureLayers(),
-			},
-		}
-	}
-
-	if !isArrayLike(intervals) {
-		message := fmt.Sprintf("sdk method %q intervals must be an array", telemetryQuerySDKMethod)
-		return contracts.OperationDescriptor{}, contracts.ValidationError{
-			Message: message,
-			Details: map[string]any{
-				"sdkMethod": telemetryQuerySDKMethod,
-				"issues": []validationIssue{{
-					Path:      "intervals",
-					Type:      "type_mismatch",
-					Source:    validationSourceSDKContract,
-					Message:   message,
-					Expected:  "array",
-					Actual:    fmt.Sprintf("%T", intervals),
-					SDKMethod: telemetryQuerySDKMethod,
-				}},
-				"layers": sdkContractFailureLayers(),
-			},
-		}
-	}
-
-	if _, err := requireTelemetryRenderMode(args, enableMetricsApps); err != nil {
-		return contracts.OperationDescriptor{}, err
-	}
-
-	bodyObject := map[string]any{
-		"queryType":   "groupBy",
-		"dataSource":  dataSource,
-		"dimensions":  dimensions,
-		"granularity": granularity,
-		"intervals":   intervals,
-	}
-	for _, key := range []string{"virtualColumns", "limitSpec", "having", "filter", "aggregations", "postAggregations", "subtotalsSpec", "context"} {
-		if value, exists := args[key]; exists {
-			bodyObject[key] = value
-		}
-	}
-
-	operation := contracts.NewHTTPOperationDescriptor(http.MethodPost, "/api/v1/telemetry/TimeSeries")
-	operation.OperationID = "CustomTelemetryQuery"
-	operation.Body = bodyObject
-	return operation, nil
-}
-
-func isArrayLike(value any) bool {
-	switch value.(type) {
-	case []any, []string, []int, []int64, []float64, []bool, []map[string]any:
-		return true
-	default:
-		return false
-	}
-}
-
-const (
-	telemetryRenderOff = "off"
-)
-
-func requireTelemetryRenderMode(args map[string]any, enableMetricsApps bool) (string, error) {
-	render, ok := telemetryRenderMode(args, enableMetricsApps)
-	if ok {
-		return render, nil
-	}
-
-	expected := []string{telemetryRenderOff}
-	message := fmt.Sprintf("sdk method %q render must be one of: %s", telemetryQuerySDKMethod, telemetryRenderOff)
-	actual := "<missing>"
-	if args != nil {
-		if value, exists := args["render"]; exists {
-			actual = fmt.Sprintf("%v", value)
-		}
-	}
-	return "", contracts.ValidationError{
-		Message: message,
-		Details: map[string]any{
-			"sdkMethod": telemetryQuerySDKMethod,
-			"issues": []validationIssue{{
-				Path:      "render",
-				Type:      "enum",
-				Source:    validationSourceSDKContract,
-				Message:   message,
-				Expected:  expected,
-				Actual:    actual,
-				SDKMethod: telemetryQuerySDKMethod,
-			}},
-			"layers": sdkContractFailureLayers(),
-		},
-	}
-}
-
-func telemetryPresentationHintWithApps(sdkMethod string, args map[string]any, enableMetricsApps bool) *PresentationHint {
-	return nil
-}
-
-func telemetryRenderMode(args map[string]any, enableMetricsApps bool) (string, bool) {
-	if args == nil {
-		return telemetryRenderOff, true
-	}
-
-	value, exists := args["render"]
-	if !exists || value == nil {
-		return telemetryRenderOff, true
-	}
-
-	render, ok := value.(string)
-	if !ok {
-		return "", false
-	}
-
-	switch strings.TrimSpace(render) {
-	case telemetryRenderOff:
-		return telemetryRenderOff, true
-	default:
-		return "", false
-	}
 }
 
 func validatePathArgs(method contracts.SDKMethod, pathArgs map[string]string) error {
