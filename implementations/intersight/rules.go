@@ -178,6 +178,177 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "fcpool.pool.create",
+			Resource:  "fcpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PoolPurpose", ""),
+			},
+		},
+		{
+			SDKMethod: "fcpool.pool.post",
+			Resource:  "fcpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PoolPurpose", ""),
+			},
+		},
+		{
+			SDKMethod: "fcpool.pool.update",
+			Resource:  "fcpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("PoolPurpose", ""),
+			},
+		},
+		{
+			SDKMethod: "fcpool.reservation.create",
+			Resource:  "fcpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "fcpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "fcpool.reservation.post",
+			Resource:  "fcpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "fcpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "fcpool.reservation.update",
+			Resource:  "fcpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "fcpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "inventory.request.create",
+			Resource:  "inventory.Request",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Device", "asset.DeviceRegistration"),
+			},
+		},
+		{
+			SDKMethod: "inventory.request.post",
+			Resource:  "inventory.Request",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Device", "asset.DeviceRegistration"),
+			},
+		},
+		{
+			SDKMethod: "inventory.request.update",
+			Resource:  "inventory.Request",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Device", "asset.DeviceRegistration"),
+			},
+		},
+		{
+			SDKMethod: "ippool.reservation.create",
+			Resource:  "ippool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "ippool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "ippool.reservation.post",
+			Resource:  "ippool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "ippool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "ippool.reservation.update",
+			Resource:  "ippool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "ippool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "iqnpool.pool.create",
+			Resource:  "iqnpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Prefix", ""),
+			},
+		},
+		{
+			SDKMethod: "iqnpool.pool.post",
+			Resource:  "iqnpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Prefix", ""),
+			},
+		},
+		{
+			SDKMethod: "iqnpool.pool.update",
+			Resource:  "iqnpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Prefix", ""),
+			},
+		},
+		{
+			SDKMethod: "iqnpool.reservation.create",
+			Resource:  "iqnpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "iqnpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "iqnpool.reservation.post",
+			Resource:  "iqnpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "iqnpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "iqnpool.reservation.update",
+			Resource:  "iqnpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "iqnpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "macpool.reservation.create",
+			Resource:  "macpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "macpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "macpool.reservation.post",
+			Resource:  "macpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "macpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "macpool.reservation.update",
+			Resource:  "macpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "macpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
 			SDKMethod: "compute.pcieConnectivityPolicy.create",
 			Resource:  "compute.PcieConnectivityPolicy",
 			Rules: []SemanticRule{
@@ -802,6 +973,27 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "recovery.onDemandBackup.create",
+			Resource:  "recovery.OnDemandBackup",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("FileNamePrefix", ""),
+			},
+		},
+		{
+			SDKMethod: "recovery.onDemandBackup.post",
+			Resource:  "recovery.OnDemandBackup",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("FileNamePrefix", ""),
+			},
+		},
+		{
+			SDKMethod: "recovery.onDemandBackup.update",
+			Resource:  "recovery.OnDemandBackup",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("FileNamePrefix", ""),
+			},
+		},
+		{
 			SDKMethod: "resourcepool.qualificationPolicy.create",
 			Resource:  "resourcepool.QualificationPolicy",
 			Rules: []SemanticRule{
@@ -901,6 +1093,27 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "server.diagnostics.create",
+			Resource:  "server.Diagnostics",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("ComponentList", "", 1),
+			},
+		},
+		{
+			SDKMethod: "server.diagnostics.post",
+			Resource:  "server.Diagnostics",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("ComponentList", "", 1),
+			},
+		},
+		{
+			SDKMethod: "server.diagnostics.update",
+			Resource:  "server.Diagnostics",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("ComponentList", "", 1),
+			},
+		},
+		{
 			SDKMethod: "storage.driveSecurityPolicy.create",
 			Resource:  "storage.DriveSecurityPolicy",
 			Rules: []SemanticRule{
@@ -919,6 +1132,54 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "storage.DriveSecurityPolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("KeySetting", ""),
+			},
+		},
+		{
+			SDKMethod: "uuidpool.pool.create",
+			Resource:  "uuidpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Prefix", ""),
+			},
+		},
+		{
+			SDKMethod: "uuidpool.pool.post",
+			Resource:  "uuidpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Prefix", ""),
+			},
+		},
+		{
+			SDKMethod: "uuidpool.pool.update",
+			Resource:  "uuidpool.Pool",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Prefix", ""),
+			},
+		},
+		{
+			SDKMethod: "uuidpool.reservation.create",
+			Resource:  "uuidpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "uuidpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "uuidpool.reservation.post",
+			Resource:  "uuidpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "uuidpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		},
+		{
+			SDKMethod: "uuidpool.reservation.update",
+			Resource:  "uuidpool.Reservation",
+			Rules: []SemanticRule{
+				contracts.NewOneOfRule("AllocationType", "Pool"),
+				contracts.NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: "uuidpool.Pool"}),
+				contracts.NewConditionalForbidRule("AllocationType", "static", "Pool"),
 			},
 		},
 		{

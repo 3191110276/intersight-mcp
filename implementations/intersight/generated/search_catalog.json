@@ -17440,6 +17440,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PoolPurpose"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17503,6 +17513,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PoolPurpose"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17517,7 +17537,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "Block": {
           "ref": "fcpool.FcBlock.Relationship",
@@ -17539,6 +17563,10 @@
         },
         "Pool": {
           "ref": "fcpool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -17561,6 +17589,31 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -17575,7 +17628,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "Block": {
           "ref": "fcpool.FcBlock.Relationship",
@@ -17597,6 +17654,10 @@
         },
         "Pool": {
           "ref": "fcpool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -17619,6 +17680,31 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -23593,6 +23679,17 @@
         }
       },
       "path": "/api/v1/inventory/Requests",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Device",
+              "target": "asset.DeviceRegistration"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -23618,6 +23715,17 @@
         }
       },
       "path": "/api/v1/inventory/Requests",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Device",
+              "target": "asset.DeviceRegistration"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create"
       ]
@@ -23906,7 +24014,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "BlockHead": {
           "ref": "ippool.ShadowBlock.Relationship",
@@ -23929,6 +24041,10 @@
         },
         "Pool": {
           "ref": "ippool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -23966,6 +24082,31 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -23980,7 +24121,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "BlockHead": {
           "ref": "ippool.ShadowBlock.Relationship",
@@ -24003,6 +24148,10 @@
         },
         "Pool": {
           "ref": "ippool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -24040,6 +24189,31 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -24160,6 +24334,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -24223,6 +24407,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -24237,7 +24431,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "Block": {
           "ref": "iqnpool.Block.Relationship",
@@ -24256,6 +24454,10 @@
         },
         "Pool": {
           "ref": "iqnpool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -24279,6 +24481,31 @@
         }
       },
       "path": "/api/v1/iqnpool/Reservations",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "iqnpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -24291,7 +24518,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "Block": {
           "ref": "iqnpool.Block.Relationship",
@@ -24310,6 +24541,10 @@
         },
         "Pool": {
           "ref": "iqnpool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -24333,6 +24568,31 @@
         }
       },
       "path": "/api/v1/iqnpool/Reservations",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "iqnpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -25398,7 +25658,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "BlockHead": {
           "ref": "macpool.IdBlock.Relationship",
@@ -25422,6 +25686,10 @@
         },
         "Pool": {
           "ref": "macpool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -25444,6 +25712,31 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -25458,7 +25751,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "BlockHead": {
           "ref": "macpool.IdBlock.Relationship",
@@ -25482,6 +25779,10 @@
         },
         "Pool": {
           "ref": "macpool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -25504,6 +25805,31 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -29349,6 +29675,16 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -29415,6 +29751,16 @@
           "type": "string"
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -31084,6 +31430,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ComponentList",
+              "minCount": 1
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -39228,6 +39585,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -39291,6 +39658,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -39305,7 +39682,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "Block": {
           "ref": "uuidpool.Block.Relationship",
@@ -39324,6 +39705,10 @@
         },
         "Pool": {
           "ref": "uuidpool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -39347,6 +39732,31 @@
         }
       },
       "path": "/api/v1/uuidpool/Reservations",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "uuidpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -39359,7 +39769,11 @@
       "createFields": {
         "AllocationType": {
           "type": "string",
-          "enum": true
+          "enum": true,
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ]
         },
         "Block": {
           "ref": "uuidpool.Block.Relationship",
@@ -39378,6 +39792,10 @@
         },
         "Pool": {
           "ref": "uuidpool.Pool.Relationship",
+          "oneOf": [
+            "AllocationType",
+            "Pool"
+          ],
           "example": {
             "Moid": "\u003cpool.Relationship-moid\u003e"
           }
@@ -39401,6 +39819,31 @@
         }
       },
       "path": "/api/v1/uuidpool/Reservations",
+      "rules": [
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "uuidpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",

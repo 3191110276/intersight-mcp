@@ -249,10 +249,10 @@ func TestBuildRuleCatalogIncludesPostWriteMethodsForPhaseFourResources(t *testin
 								Schema: &NormalizedSchema{
 									Type: "object",
 									Properties: map[string]*NormalizedSchema{
-										"Name":                   {Type: "string"},
-										"Enabled":                {Type: "boolean"},
-										"Timezone":               {Type: "string"},
-										"NtpServers":             {Type: "array", Items: &NormalizedSchema{Type: "string"}},
+										"Name":                    {Type: "string"},
+										"Enabled":                 {Type: "boolean"},
+										"Timezone":                {Type: "string"},
+										"NtpServers":              {Type: "array", Items: &NormalizedSchema{Type: "string"}},
 										"AuthenticatedNtpServers": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
 									},
 								},
@@ -373,6 +373,39 @@ func TestBuildRuleCatalogOmitsRequiredRulesForEthIf(t *testing.T) {
 			SourceURL:        "https://example.com/spec",
 			SHA256:           "abc123",
 			RetrievalDate:    "2026-04-08",
+		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/vnic/EthIfs": {
+				"post": {
+					OperationID: "CreateVnicEthIf",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Required: []string{
+										"LanConnectivityPolicy",
+										"EthAdapterPolicy",
+										"EthQosPolicy",
+										"FabricEthNetworkControlPolicy",
+										"FabricEthNetworkGroupPolicy",
+									},
+									Properties: map[string]*NormalizedSchema{
+										"LanConnectivityPolicy":         {Relationship: true, RelationshipTarget: "vnic.LanConnectivityPolicy"},
+										"EthAdapterPolicy":              {Relationship: true, RelationshipTarget: "vnic.EthAdapterPolicy"},
+										"EthQosPolicy":                  {Relationship: true, RelationshipTarget: "vnic.EthQosPolicy"},
+										"FabricEthNetworkControlPolicy": {Relationship: true, RelationshipTarget: "fabric.EthNetworkControlPolicy"},
+										"FabricEthNetworkGroupPolicy": {
+											Type:  "array",
+											Items: &NormalizedSchema{Relationship: true, RelationshipTarget: "fabric.EthNetworkGroupPolicy"},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -740,6 +773,128 @@ func TestBuildRuleCatalogIncludesPolicyCreateRulesFromProbeFindings(t *testing.T
 	extFc := rules.Methods["hyperflex.extFcStoragePolicy.create"]
 	if len(extFc.Rules) != 0 {
 		t.Fatalf("hyperflex.extFcStoragePolicy.create rules = %#v, want no custom rules", extFc.Rules)
+	}
+}
+
+func TestBuildRuleCatalogIncludesAdditionalProbeFindingRules(t *testing.T) {
+	t.Parallel()
+
+	spec := NormalizedSpec{
+		Metadata: ArtifactSourceMetadata{
+			PublishedVersion: "1.0.0-test",
+			SourceURL:        "https://example.com/spec",
+			SHA256:           "abc123",
+			RetrievalDate:    "2026-04-08",
+		},
+	}
+
+	catalog := SDKCatalog{
+		Metadata: spec.Metadata,
+		Methods: map[string]SDKMethod{
+			"inventory.request.create":       {SDKMethod: "inventory.request.create", Resource: "inventory.Request", Descriptor: OperationDescriptor{OperationID: "CreateInventoryRequest", Method: "POST", PathTemplate: "/api/v1/inventory/Requests"}},
+			"recovery.onDemandBackup.create": {SDKMethod: "recovery.onDemandBackup.create", Resource: "recovery.OnDemandBackup", Descriptor: OperationDescriptor{OperationID: "CreateRecoveryOnDemandBackup", Method: "POST", PathTemplate: "/api/v1/recovery/OnDemandBackups"}},
+			"server.diagnostics.create":      {SDKMethod: "server.diagnostics.create", Resource: "server.Diagnostics", Descriptor: OperationDescriptor{OperationID: "CreateServerDiagnostics", Method: "POST", PathTemplate: "/api/v1/server/Diagnostics"}},
+			"uuidpool.pool.create":           {SDKMethod: "uuidpool.pool.create", Resource: "uuidpool.Pool", Descriptor: OperationDescriptor{OperationID: "CreateUuidpoolPool", Method: "POST", PathTemplate: "/api/v1/uuidpool/Pools"}},
+			"iqnpool.pool.create":            {SDKMethod: "iqnpool.pool.create", Resource: "iqnpool.Pool", Descriptor: OperationDescriptor{OperationID: "CreateIqnpoolPool", Method: "POST", PathTemplate: "/api/v1/iqnpool/Pools"}},
+			"fcpool.pool.create":             {SDKMethod: "fcpool.pool.create", Resource: "fcpool.Pool", Descriptor: OperationDescriptor{OperationID: "CreateFcpoolPool", Method: "POST", PathTemplate: "/api/v1/fcpool/Pools"}},
+			"uuidpool.reservation.create":    {SDKMethod: "uuidpool.reservation.create", Resource: "uuidpool.Reservation", Descriptor: OperationDescriptor{OperationID: "CreateUuidpoolReservation", Method: "POST", PathTemplate: "/api/v1/uuidpool/Reservations"}},
+			"macpool.reservation.create":     {SDKMethod: "macpool.reservation.create", Resource: "macpool.Reservation", Descriptor: OperationDescriptor{OperationID: "CreateMacpoolReservation", Method: "POST", PathTemplate: "/api/v1/macpool/Reservations"}},
+			"ippool.reservation.create":      {SDKMethod: "ippool.reservation.create", Resource: "ippool.Reservation", Descriptor: OperationDescriptor{OperationID: "CreateIppoolReservation", Method: "POST", PathTemplate: "/api/v1/ippool/Reservations"}},
+			"iqnpool.reservation.create":     {SDKMethod: "iqnpool.reservation.create", Resource: "iqnpool.Reservation", Descriptor: OperationDescriptor{OperationID: "CreateIqnpoolReservation", Method: "POST", PathTemplate: "/api/v1/iqnpool/Reservations"}},
+			"fcpool.reservation.create":      {SDKMethod: "fcpool.reservation.create", Resource: "fcpool.Reservation", Descriptor: OperationDescriptor{OperationID: "CreateFcpoolReservation", Method: "POST", PathTemplate: "/api/v1/fcpool/Reservations"}},
+		},
+	}
+
+	templates := []RuleTemplate{
+		{
+			SDKMethod: "inventory.request.create",
+			Resource:  "inventory.Request",
+			Rules: []SemanticRule{
+				NewRequiredRule("Device", "asset.DeviceRegistration"),
+			},
+		},
+		{
+			SDKMethod: "recovery.onDemandBackup.create",
+			Resource:  "recovery.OnDemandBackup",
+			Rules: []SemanticRule{
+				NewRequiredRule("FileNamePrefix", ""),
+			},
+		},
+		{
+			SDKMethod: "server.diagnostics.create",
+			Resource:  "server.Diagnostics",
+			Rules: []SemanticRule{
+				NewRequiredRule("ComponentList", "", 1),
+			},
+		},
+		{
+			SDKMethod: "uuidpool.pool.create",
+			Resource:  "uuidpool.Pool",
+			Rules: []SemanticRule{
+				NewRequiredRule("Prefix", ""),
+			},
+		},
+		{
+			SDKMethod: "iqnpool.pool.create",
+			Resource:  "iqnpool.Pool",
+			Rules: []SemanticRule{
+				NewRequiredRule("Prefix", ""),
+			},
+		},
+		{
+			SDKMethod: "fcpool.pool.create",
+			Resource:  "fcpool.Pool",
+			Rules: []SemanticRule{
+				NewRequiredRule("PoolPurpose", ""),
+			},
+		},
+	}
+
+	for _, sdkMethod := range []string{
+		"uuidpool.reservation.create",
+		"macpool.reservation.create",
+		"ippool.reservation.create",
+		"iqnpool.reservation.create",
+		"fcpool.reservation.create",
+	} {
+		resource := catalog.Methods[sdkMethod].Resource
+		poolTarget := strings.TrimSuffix(resource, ".Reservation") + ".Pool"
+		templates = append(templates, RuleTemplate{
+			SDKMethod: sdkMethod,
+			Resource:  resource,
+			Rules: []SemanticRule{
+				NewOneOfRule("AllocationType", "Pool"),
+				NewConditionalRequireRule("AllocationType", "dynamic", FieldRule{Field: "Pool", Target: poolTarget}),
+				NewConditionalForbidRule("AllocationType", "static", "Pool"),
+			},
+		})
+	}
+
+	rules, err := BuildRuleCatalog(spec, catalog, templates)
+	if err != nil {
+		t.Fatalf("BuildRuleCatalog() error = %v", err)
+	}
+
+	for _, sdkMethod := range []string{
+		"uuidpool.reservation.create",
+		"macpool.reservation.create",
+		"ippool.reservation.create",
+		"iqnpool.reservation.create",
+		"fcpool.reservation.create",
+	} {
+		got := rules.Methods[sdkMethod].Rules
+		if len(got) != 3 {
+			t.Fatalf("%s rules = %#v, want three rules", sdkMethod, got)
+		}
+		if got[0].Kind != "one_of" || len(got[0].RequireAny) != 2 || got[0].RequireAny[0].Field != "AllocationType" || got[0].RequireAny[1].Field != "Pool" {
+			t.Fatalf("unexpected reservation one-of rule for %s: %#v", sdkMethod, got[0])
+		}
+		if got[1].When == nil || got[1].When.Field != "AllocationType" || got[1].When.Equals != "dynamic" || len(got[1].Require) != 1 || got[1].Require[0].Field != "Pool" {
+			t.Fatalf("unexpected reservation dynamic rule for %s: %#v", sdkMethod, got[1])
+		}
+		if got[2].When == nil || got[2].When.Field != "AllocationType" || got[2].When.Equals != "static" || !reflect.DeepEqual(got[2].Forbid, []string{"Pool"}) {
+			t.Fatalf("unexpected reservation static forbid rule for %s: %#v", sdkMethod, got[2])
+		}
 	}
 }
 

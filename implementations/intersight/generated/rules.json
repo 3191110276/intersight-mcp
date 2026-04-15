@@ -761,6 +761,174 @@
         }
       ]
     },
+    "fcpool.pools.create": {
+      "sdkMethod": "fcpool.pools.create",
+      "operationId": "CreateFcpoolPool",
+      "resource": "fcpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PoolPurpose"
+            }
+          ]
+        }
+      ]
+    },
+    "fcpool.pools.post": {
+      "sdkMethod": "fcpool.pools.post",
+      "operationId": "UpdateFcpoolPool",
+      "resource": "fcpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PoolPurpose"
+            }
+          ]
+        }
+      ]
+    },
+    "fcpool.pools.update": {
+      "sdkMethod": "fcpool.pools.update",
+      "operationId": "PatchFcpoolPool",
+      "resource": "fcpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "PoolPurpose"
+            }
+          ]
+        }
+      ]
+    },
+    "fcpool.reservations.create": {
+      "sdkMethod": "fcpool.reservations.create",
+      "operationId": "CreateFcpoolReservation",
+      "resource": "fcpool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
+    "fcpool.reservations.post": {
+      "sdkMethod": "fcpool.reservations.post",
+      "operationId": "UpdateFcpoolReservation",
+      "resource": "fcpool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
+    "fcpool.reservations.update": {
+      "sdkMethod": "fcpool.reservations.update",
+      "operationId": "PatchFcpoolReservation",
+      "resource": "fcpool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "fcpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
     "iam.ldapPolicies.create": {
       "sdkMethod": "iam.ldapPolicies.create",
       "operationId": "CreateIamLdapPolicy",
@@ -826,6 +994,354 @@
             {
               "field": "BaseProperties"
             }
+          ]
+        }
+      ]
+    },
+    "inventory.requests.create": {
+      "sdkMethod": "inventory.requests.create",
+      "operationId": "CreateInventoryRequest",
+      "resource": "inventory.Request",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Device",
+              "target": "asset.DeviceRegistration"
+            }
+          ]
+        }
+      ]
+    },
+    "ippool.reservations.create": {
+      "sdkMethod": "ippool.reservations.create",
+      "operationId": "CreateIppoolReservation",
+      "resource": "ippool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
+    "ippool.reservations.post": {
+      "sdkMethod": "ippool.reservations.post",
+      "operationId": "UpdateIppoolReservation",
+      "resource": "ippool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
+    "ippool.reservations.update": {
+      "sdkMethod": "ippool.reservations.update",
+      "operationId": "PatchIppoolReservation",
+      "resource": "ippool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "ippool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
+    "iqnpool.pools.create": {
+      "sdkMethod": "iqnpool.pools.create",
+      "operationId": "CreateIqnpoolPool",
+      "resource": "iqnpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ]
+    },
+    "iqnpool.pools.post": {
+      "sdkMethod": "iqnpool.pools.post",
+      "operationId": "UpdateIqnpoolPool",
+      "resource": "iqnpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ]
+    },
+    "iqnpool.pools.update": {
+      "sdkMethod": "iqnpool.pools.update",
+      "operationId": "PatchIqnpoolPool",
+      "resource": "iqnpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ]
+    },
+    "iqnpool.reservations.create": {
+      "sdkMethod": "iqnpool.reservations.create",
+      "operationId": "CreateIqnpoolReservation",
+      "resource": "iqnpool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "iqnpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
+    "macpool.reservations.create": {
+      "sdkMethod": "macpool.reservations.create",
+      "operationId": "CreateMacpoolReservation",
+      "resource": "macpool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
+    "macpool.reservations.post": {
+      "sdkMethod": "macpool.reservations.post",
+      "operationId": "UpdateMacpoolReservation",
+      "resource": "macpool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
+          ]
+        }
+      ]
+    },
+    "macpool.reservations.update": {
+      "sdkMethod": "macpool.reservations.update",
+      "operationId": "PatchMacpoolReservation",
+      "resource": "macpool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "macpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
           ]
         }
       ]
@@ -1046,6 +1562,51 @@
         }
       ]
     },
+    "recovery.onDemandBackups.create": {
+      "sdkMethod": "recovery.onDemandBackups.create",
+      "operationId": "CreateRecoveryOnDemandBackup",
+      "resource": "recovery.OnDemandBackup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.onDemandBackups.post": {
+      "sdkMethod": "recovery.onDemandBackups.post",
+      "operationId": "UpdateRecoveryOnDemandBackup",
+      "resource": "recovery.OnDemandBackup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery.onDemandBackups.update": {
+      "sdkMethod": "recovery.onDemandBackups.update",
+      "operationId": "PatchRecoveryOnDemandBackup",
+      "resource": "recovery.OnDemandBackup",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "FileNamePrefix"
+            }
+          ]
+        }
+      ]
+    },
     "recovery.scheduleConfigPolicies.create": {
       "sdkMethod": "recovery.scheduleConfigPolicies.create",
       "operationId": "CreateRecoveryScheduleConfigPolicy",
@@ -1232,6 +1793,54 @@
             {
               "field": "ScheduleParams",
               "target": "scheduler.BaseScheduleParams",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "server.diagnostics.create": {
+      "sdkMethod": "server.diagnostics.create",
+      "operationId": "CreateServerDiagnostics",
+      "resource": "server.Diagnostics",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ComponentList",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "server.diagnostics.post": {
+      "sdkMethod": "server.diagnostics.post",
+      "operationId": "UpdateServerDiagnostics",
+      "resource": "server.Diagnostics",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ComponentList",
+              "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "server.diagnostics.update": {
+      "sdkMethod": "server.diagnostics.update",
+      "operationId": "PatchServerDiagnostics",
+      "resource": "server.Diagnostics",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "ComponentList",
               "minCount": 1
             }
           ]
@@ -1645,6 +2254,92 @@
               "target": "syslog.LocalClientBase",
               "minCount": 1
             }
+          ]
+        }
+      ]
+    },
+    "uuidpool.pools.create": {
+      "sdkMethod": "uuidpool.pools.create",
+      "operationId": "CreateUuidpoolPool",
+      "resource": "uuidpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ]
+    },
+    "uuidpool.pools.post": {
+      "sdkMethod": "uuidpool.pools.post",
+      "operationId": "UpdateUuidpoolPool",
+      "resource": "uuidpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ]
+    },
+    "uuidpool.pools.update": {
+      "sdkMethod": "uuidpool.pools.update",
+      "operationId": "PatchUuidpoolPool",
+      "resource": "uuidpool.Pool",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Prefix"
+            }
+          ]
+        }
+      ]
+    },
+    "uuidpool.reservations.create": {
+      "sdkMethod": "uuidpool.reservations.create",
+      "operationId": "CreateUuidpoolReservation",
+      "resource": "uuidpool.Reservation",
+      "rules": [
+        {
+          "kind": "one_of",
+          "requireAny": [
+            {
+              "field": "AllocationType"
+            },
+            {
+              "field": "Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "dynamic"
+          },
+          "require": [
+            {
+              "field": "Pool",
+              "target": "uuidpool.Pool"
+            }
+          ]
+        },
+        {
+          "kind": "conditional",
+          "when": {
+            "field": "AllocationType",
+            "equals": "static"
+          },
+          "forbid": [
+            "Pool"
           ]
         }
       ]
