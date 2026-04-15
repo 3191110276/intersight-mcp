@@ -3265,6 +3265,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -3308,6 +3319,17 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -9791,6 +9813,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Key"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -9840,6 +9872,16 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Key"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -10053,7 +10095,12 @@
         "PcieZones": {
           "type": "array",
           "items": "compute.PcieZone",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cpcieZone-moid\u003e"
+            }
+          ]
         },
         "Profiles": {
           "type": "array",
@@ -10072,6 +10119,7 @@
           "require": [
             {
               "field": "PcieZones",
+              "target": "compute.PcieZone",
               "minCount": 1
             }
           ]
@@ -10104,7 +10152,12 @@
         "PcieZones": {
           "type": "array",
           "items": "compute.PcieZone",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cpcieZone-moid\u003e"
+            }
+          ]
         },
         "Profiles": {
           "type": "array",
@@ -10123,6 +10176,7 @@
           "require": [
             {
               "field": "PcieZones",
+              "target": "compute.PcieZone",
               "minCount": 1
             }
           ]
@@ -14923,6 +14977,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -14962,6 +15035,25 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -26803,6 +26895,14 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Enabled"
             }
           ]
@@ -26877,6 +26977,14 @@
         }
       },
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
         {
           "kind": "required",
           "require": [
@@ -27634,6 +27742,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -27663,6 +27781,16 @@
           "nullable": true
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -30207,7 +30335,12 @@
         "ScheduleParams": {
           "type": "array",
           "items": "scheduler.BaseScheduleParams",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cbaseScheduleParams-moid\u003e"
+            }
+          ]
         },
         "Tags": {
           "type": "array",
@@ -30221,6 +30354,7 @@
           "require": [
             {
               "field": "ScheduleParams",
+              "target": "scheduler.BaseScheduleParams",
               "minCount": 1
             }
           ]
@@ -30261,7 +30395,12 @@
         "ScheduleParams": {
           "type": "array",
           "items": "scheduler.BaseScheduleParams",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cbaseScheduleParams-moid\u003e"
+            }
+          ]
         },
         "Tags": {
           "type": "array",
@@ -30275,6 +30414,7 @@
           "require": [
             {
               "field": "ScheduleParams",
+              "target": "scheduler.BaseScheduleParams",
               "minCount": 1
             }
           ]
@@ -31197,6 +31337,25 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -31686,6 +31845,25 @@
           }
         }
       },
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ],
       "operations": [
         "create",
         "delete",
@@ -37309,7 +37487,12 @@
         "LocalClients": {
           "type": "array",
           "items": "syslog.LocalClientBase",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003clocalClientBase-moid\u003e"
+            }
+          ]
         },
         "Name": {
           "type": "string"
@@ -37342,6 +37525,7 @@
           "require": [
             {
               "field": "LocalClients",
+              "target": "syslog.LocalClientBase",
               "minCount": 1
             }
           ]
@@ -37365,7 +37549,12 @@
         "LocalClients": {
           "type": "array",
           "items": "syslog.LocalClientBase",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003clocalClientBase-moid\u003e"
+            }
+          ]
         },
         "Name": {
           "type": "string"
@@ -37398,6 +37587,7 @@
           "require": [
             {
               "field": "LocalClients",
+              "target": "syslog.LocalClientBase",
               "minCount": 1
             }
           ]
@@ -40674,7 +40864,12 @@
         "FabricEthNetworkGroupPolicy": {
           "type": "array",
           "items": "fabric.EthNetworkGroupPolicy.Relationship",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cethNetworkGroupPolicy-moid\u003e"
+            }
+          ]
         },
         "FailoverEnabled": {
           "type": "boolean"
@@ -40989,7 +41184,12 @@
         "FabricEthNetworkGroupPolicy": {
           "type": "array",
           "items": "fabric.EthNetworkGroupPolicy.Relationship",
-          "nullable": true
+          "nullable": true,
+          "example": [
+            {
+              "Moid": "\u003cethNetworkGroupPolicy-moid\u003e"
+            }
+          ]
         },
         "FailoverEnabled": {
           "type": "boolean"

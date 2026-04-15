@@ -2,6 +2,7 @@ package contracts
 
 import (
 	"cmp"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"slices"
@@ -204,9 +205,25 @@ func normalizeSearchFields(fields map[string]SearchField) map[string]SearchField
 		field.Items = strings.TrimSpace(field.Items)
 		field.Ref = strings.TrimSpace(field.Ref)
 		field.OneOf = uniqueSortedStrings(field.OneOf)
+		field.Example = normalizeSearchExample(field.Example)
 		fields[key] = field
 	}
 	return fields
+}
+
+func normalizeSearchExample(example any) any {
+	if example == nil {
+		return nil
+	}
+	raw, err := json.Marshal(example)
+	if err != nil {
+		return example
+	}
+	var normalized any
+	if err := json.Unmarshal(raw, &normalized); err != nil {
+		return example
+	}
+	return normalized
 }
 
 func searchMetricsCatalogIsEmpty(catalog SearchMetricsCatalog) bool {
@@ -272,8 +289,8 @@ func summarizeSearchField(schema *NormalizedSchema) SearchField {
 	if item := searchFieldItem(schema.Items); item != "" {
 		field.Items = item
 	}
-	if schema.Relationship || field.Ref != "" {
-		field.Example = searchFieldExample(schema)
+	if example := searchFieldExample(schema); example != nil && (schema.Relationship || field.Ref != "" ) {
+		field.Example = example
 	}
 	return field
 }
@@ -315,6 +332,14 @@ func mergeRuleAnnotations(fields map[string]SearchField, rules []SemanticRule) {
 	for _, rule := range rules {
 		if rule.When != nil {
 			continue
+		}
+		for _, requirement := range rule.Require {
+			field, ok := fields[requirement.Field]
+			if !ok || field.Example != nil || strings.TrimSpace(requirement.Target) == "" {
+				continue
+			}
+			field.Example = searchRuleExample(requirement.Target, requirement.MinCount > 0 || field.Type == "array")
+			fields[requirement.Field] = field
 		}
 		if strings.TrimSpace(rule.Kind) == "one_of" && len(rule.RequireAny) > 1 {
 			names := make([]string, 0, len(rule.RequireAny))
@@ -390,15 +415,19 @@ func searchFieldExample(schema *NormalizedSchema) any {
 	if target == "" {
 		return nil
 	}
-	if schema.Items != nil {
-		if example, ok := searchFieldExample(schema.Items).(map[string]any); ok {
-			return []map[string]any{example}
-		}
-		return nil
-	}
 	return map[string]any{
 		"Moid": fmt.Sprintf("<%s-moid>", relationshipExampleName(target)),
 	}
+}
+
+func searchRuleExample(target string, asArray bool) any {
+	example := map[string]any{
+		"Moid": fmt.Sprintf("<%s-moid>", relationshipExampleName(target)),
+	}
+	if asArray {
+		return []any{example}
+	}
+	return example
 }
 
 func relationshipExampleName(target string) string {

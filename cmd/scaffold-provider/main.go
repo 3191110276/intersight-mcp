@@ -249,7 +249,7 @@ func embedTemplate(provider string) string {
 
 import _ "embed"
 
-//go:generate sh -c "mkdir -p ../../../.cache/go-build ../../../.tmp && GOCACHE=$(cd ../../.. && pwd)/.cache/go-build GOTMPDIR=$(cd ../../.. && pwd)/.tmp go -C ../../.. run ./cmd/generate --provider %[1]s"
+%[2]s sh -c "mkdir -p ../../../.cache/go-build ../../../.tmp && GOCACHE=$(cd ../../.. && pwd)/.cache/go-build GOTMPDIR=$(cd ../../.. && pwd)/.tmp go -C ../../.. run ./cmd/generate --provider %[1]s"
 
 //go:embed spec_resolved.json
 var specResolvedJSON []byte
@@ -278,7 +278,7 @@ func RulesBytes() []byte {
 func SearchCatalogBytes() []byte {
 	return append([]byte(nil), searchCatalogJSON...)
 }
-`, provider)
+`, provider, "//go:"+"generate")
 }
 
 func manifestTemplate() string {

@@ -157,24 +157,52 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
+			SDKMethod: "comm.tagDefinition.create",
+			Resource:  "comm.TagDefinition",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Key", ""),
+			},
+		},
+		{
+			SDKMethod: "comm.tagDefinition.post",
+			Resource:  "comm.TagDefinition",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Key", ""),
+			},
+		},
+		{
+			SDKMethod: "comm.tagDefinition.update",
+			Resource:  "comm.TagDefinition",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Key", ""),
+			},
+		},
+		{
 			SDKMethod: "compute.pcieConnectivityPolicy.create",
 			Resource:  "compute.PcieConnectivityPolicy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("PcieZones", "", 1),
+				contracts.NewRequiredRule("PcieZones", "compute.PcieZone", 1),
 			},
 		},
 		{
 			SDKMethod: "compute.pcieConnectivityPolicy.post",
 			Resource:  "compute.PcieConnectivityPolicy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("PcieZones", "", 1),
+				contracts.NewRequiredRule("PcieZones", "compute.PcieZone", 1),
 			},
 		},
 		{
 			SDKMethod: "compute.pcieConnectivityPolicy.update",
 			Resource:  "compute.PcieConnectivityPolicy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("PcieZones", "", 1),
+				contracts.NewRequiredRule("PcieZones", "compute.PcieZone", 1),
+			},
+		},
+		{
+			SDKMethod: "auditd.policy.create",
+			Resource:  "auditd.Policy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 			},
 		},
 		{
@@ -630,6 +658,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "ntp.policy.create",
 			Resource:  "ntp.Policy",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
 				contracts.NewRequiredRule("Enabled", ""),
 				contracts.NewRequiredRule("Timezone", ""),
 				contracts.NewOneOfRule("NtpServers", "AuthenticatedNtpServers"),
@@ -639,6 +668,7 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "ntp.policy.post",
 			Resource:  "ntp.Policy",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
 				contracts.NewRequiredRule("Enabled", ""),
 				contracts.NewRequiredRule("Timezone", ""),
 				contracts.NewOneOfRule("NtpServers", "AuthenticatedNtpServers"),
@@ -648,9 +678,79 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "ntp.policy.update",
 			Resource:  "ntp.Policy",
 			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
 				contracts.NewRequiredRule("Enabled", ""),
 				contracts.NewRequiredRule("Timezone", ""),
 				contracts.NewOneOfRule("NtpServers", "AuthenticatedNtpServers"),
+			},
+		},
+		{
+			SDKMethod: "organization.organization.create",
+			Resource:  "organization.Organization",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+			},
+		},
+		{
+			SDKMethod: "organization.organization.post",
+			Resource:  "organization.Organization",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+			},
+		},
+		{
+			SDKMethod: "organization.organization.update",
+			Resource:  "organization.Organization",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+			},
+		},
+		{
+			SDKMethod: "fabric.portPolicy.create",
+			Resource:  "fabric.PortPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.portPolicy.post",
+			Resource:  "fabric.PortPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "fabric.portPolicy.update",
+			Resource:  "fabric.PortPolicy",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "server.profile.create",
+			Resource:  "server.Profile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "server.profile.post",
+			Resource:  "server.Profile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "server.profile.update",
+			Resource:  "server.Profile",
+			Rules: []SemanticRule{
+				contracts.NewRequiredRule("Name", ""),
+				contracts.NewRequiredRule("Organization", "organization.Organization"),
 			},
 		},
 		{
@@ -762,42 +862,42 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "syslog.policy.create",
 			Resource:  "syslog.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("LocalClients", "", 1),
+				contracts.NewRequiredRule("LocalClients", "syslog.LocalClientBase", 1),
 			},
 		},
 		{
 			SDKMethod: "syslog.policy.post",
 			Resource:  "syslog.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("LocalClients", "", 1),
+				contracts.NewRequiredRule("LocalClients", "syslog.LocalClientBase", 1),
 			},
 		},
 		{
 			SDKMethod: "syslog.policy.update",
 			Resource:  "syslog.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("LocalClients", "", 1),
+				contracts.NewRequiredRule("LocalClients", "syslog.LocalClientBase", 1),
 			},
 		},
 		{
 			SDKMethod: "scheduler.schedulePolicy.create",
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("ScheduleParams", "", 1),
+				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
 			},
 		},
 		{
 			SDKMethod: "scheduler.schedulePolicy.post",
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("ScheduleParams", "", 1),
+				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
 			},
 		},
 		{
 			SDKMethod: "scheduler.schedulePolicy.update",
 			Resource:  "scheduler.SchedulePolicy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("ScheduleParams", "", 1),
+				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
 			},
 		},
 		{

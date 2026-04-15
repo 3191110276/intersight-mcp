@@ -141,9 +141,33 @@ func testIntersightRuleTemplates() []RuleTemplate {
 			SDKMethod: "ntp.policy.create",
 			Resource:  "ntp.Policy",
 			Rules: []SemanticRule{
+				NewRequiredRule("Name", ""),
 				NewRequiredRule("Enabled", ""),
 				NewRequiredRule("Timezone", ""),
 				NewOneOfRule("NtpServers", "AuthenticatedNtpServers"),
+			},
+		},
+		{
+			SDKMethod: "organization.organization.create",
+			Resource:  "organization.Organization",
+			Rules: []SemanticRule{
+				NewRequiredRule("Name", ""),
+			},
+		},
+		{
+			SDKMethod: "fabric.portPolicy.create",
+			Resource:  "fabric.PortPolicy",
+			Rules: []SemanticRule{
+				NewRequiredRule("Name", ""),
+				NewRequiredRule("Organization", "organization.Organization"),
+			},
+		},
+		{
+			SDKMethod: "server.profile.create",
+			Resource:  "server.Profile",
+			Rules: []SemanticRule{
+				NewRequiredRule("Name", ""),
+				NewRequiredRule("Organization", "organization.Organization"),
 			},
 		},
 		{
@@ -214,6 +238,88 @@ func TestBuildRuleCatalogIncludesPostWriteMethodsForPhaseFourResources(t *testin
 			SourceURL:        "https://example.com/spec",
 			SHA256:           "abc123",
 			RetrievalDate:    "2026-04-08",
+		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/ntp/Policies": {
+				"post": {
+					OperationID: "CreateNtpPolicy",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Name":                   {Type: "string"},
+										"Enabled":                {Type: "boolean"},
+										"Timezone":               {Type: "string"},
+										"NtpServers":             {Type: "array", Items: &NormalizedSchema{Type: "string"}},
+										"AuthenticatedNtpServers": {Type: "array", Items: &NormalizedSchema{Type: "object"}},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/organization/Organizations": {
+				"post": {
+					OperationID: "CreateOrganizationOrganization",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Name": {Type: "string"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/fabric/PortPolicies": {
+				"post": {
+					OperationID: "CreateFabricPortPolicy",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Name":         {Type: "string"},
+										"Organization": {Relationship: true, RelationshipTarget: "organization.Organization"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			"/api/v1/server/Profiles": {
+				"post": {
+					OperationID: "CreateServerProfile",
+					RequestBody: &NormalizedRequestBody{
+						Content: map[string]NormalizedMediaContent{
+							"application/json": {
+								Schema: &NormalizedSchema{
+									Type: "object",
+									Properties: map[string]*NormalizedSchema{
+										"Name":         {Type: "string"},
+										"Organization": {Relationship: true, RelationshipTarget: "organization.Organization"},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"organization.Organization": {Type: "object"},
+			"fabric.PortPolicy":         {Type: "object"},
+			"server.Profile":            {Type: "object"},
+			"ntp.Policy":                {Type: "object"},
 		},
 	}
 
@@ -482,9 +588,12 @@ func TestBuildRuleCatalogIncludesPolicyCreateRulesFromProbeFindings(t *testing.T
 			"hyperflex.sysConfigPolicy.create":       {SDKMethod: "hyperflex.sysConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexSysConfigPolicy", Method: "POST"}},
 			"hyperflex.vcenterConfigPolicy.create":   {SDKMethod: "hyperflex.vcenterConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateHyperflexVcenterConfigPolicy", Method: "POST"}},
 			"iam.ldapPolicy.create":                  {SDKMethod: "iam.ldapPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateIamLdapPolicy", Method: "POST"}},
-			"ntp.policy.create":                      {SDKMethod: "ntp.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateNtpPolicy", Method: "POST"}},
+			"ntp.policy.create":                      {SDKMethod: "ntp.policy.create", Resource: "ntp.Policy", Descriptor: OperationDescriptor{OperationID: "CreateNtpPolicy", Method: "POST", PathTemplate: "/api/v1/ntp/Policies"}},
+			"organization.organization.create":       {SDKMethod: "organization.organization.create", Resource: "organization.Organization", Descriptor: OperationDescriptor{OperationID: "CreateOrganizationOrganization", Method: "POST", PathTemplate: "/api/v1/organization/Organizations"}},
+			"fabric.portPolicy.create":               {SDKMethod: "fabric.portPolicy.create", Resource: "fabric.PortPolicy", Descriptor: OperationDescriptor{OperationID: "CreateFabricPortPolicy", Method: "POST", PathTemplate: "/api/v1/fabric/PortPolicies"}},
 			"recovery.scheduleConfigPolicy.create":   {SDKMethod: "recovery.scheduleConfigPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateRecoveryScheduleConfigPolicy", Method: "POST"}},
 			"scheduler.schedulePolicy.create":        {SDKMethod: "scheduler.schedulePolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateSchedulerSchedulePolicy", Method: "POST"}},
+			"server.profile.create":                  {SDKMethod: "server.profile.create", Resource: "server.Profile", Descriptor: OperationDescriptor{OperationID: "CreateServerProfile", Method: "POST", PathTemplate: "/api/v1/server/Profiles"}},
 			"smtp.policy.create":                     {SDKMethod: "smtp.policy.create", Descriptor: OperationDescriptor{OperationID: "CreateSmtpPolicy", Method: "POST"}},
 			"smtp.policyTest.create":                 {SDKMethod: "smtp.policyTest.create", Descriptor: OperationDescriptor{OperationID: "CreateSmtpPolicyTest", Method: "POST"}},
 			"storage.driveSecurityPolicy.create":     {SDKMethod: "storage.driveSecurityPolicy.create", Descriptor: OperationDescriptor{OperationID: "CreateStorageDriveSecurityPolicy", Method: "POST"}},

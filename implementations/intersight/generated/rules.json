@@ -312,6 +312,22 @@
         }
       ]
     },
+    "auditd.policies.create": {
+      "sdkMethod": "auditd.policies.create",
+      "operationId": "CreateAuditdPolicy",
+      "resource": "auditd.Policy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
     "comm.httpProxyPolicies.create": {
       "sdkMethod": "comm.httpProxyPolicies.create",
       "operationId": "CreateCommHttpProxyPolicy",
@@ -357,6 +373,51 @@
         }
       ]
     },
+    "comm.tagDefinitions.create": {
+      "sdkMethod": "comm.tagDefinitions.create",
+      "operationId": "CreateCommTagDefinition",
+      "resource": "comm.TagDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Key"
+            }
+          ]
+        }
+      ]
+    },
+    "comm.tagDefinitions.post": {
+      "sdkMethod": "comm.tagDefinitions.post",
+      "operationId": "UpdateCommTagDefinition",
+      "resource": "comm.TagDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Key"
+            }
+          ]
+        }
+      ]
+    },
+    "comm.tagDefinitions.update": {
+      "sdkMethod": "comm.tagDefinitions.update",
+      "operationId": "PatchCommTagDefinition",
+      "resource": "comm.TagDefinition",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Key"
+            }
+          ]
+        }
+      ]
+    },
     "compute.pcieConnectivityPolicies.create": {
       "sdkMethod": "compute.pcieConnectivityPolicies.create",
       "operationId": "CreateComputePcieConnectivityPolicy",
@@ -367,6 +428,7 @@
           "require": [
             {
               "field": "PcieZones",
+              "target": "compute.PcieZone",
               "minCount": 1
             }
           ]
@@ -383,6 +445,7 @@
           "require": [
             {
               "field": "PcieZones",
+              "target": "compute.PcieZone",
               "minCount": 1
             }
           ]
@@ -399,6 +462,7 @@
           "require": [
             {
               "field": "PcieZones",
+              "target": "compute.PcieZone",
               "minCount": 1
             }
           ]
@@ -625,6 +689,78 @@
         }
       ]
     },
+    "fabric.portPolicies.create": {
+      "sdkMethod": "fabric.portPolicies.create",
+      "operationId": "CreateFabricPortPolicy",
+      "resource": "fabric.PortPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.portPolicies.post": {
+      "sdkMethod": "fabric.portPolicies.post",
+      "operationId": "UpdateFabricPortPolicy",
+      "resource": "fabric.PortPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "fabric.portPolicies.update": {
+      "sdkMethod": "fabric.portPolicies.update",
+      "operationId": "PatchFabricPortPolicy",
+      "resource": "fabric.PortPolicy",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
     "iam.ldapPolicies.create": {
       "sdkMethod": "iam.ldapPolicies.create",
       "operationId": "CreateIamLdapPolicy",
@@ -703,6 +839,14 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Enabled"
             }
           ]
@@ -733,6 +877,14 @@
       "operationId": "UpdateNtpPolicy",
       "resource": "ntp.Policy",
       "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
         {
           "kind": "required",
           "require": [
@@ -771,6 +923,14 @@
           "kind": "required",
           "require": [
             {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
               "field": "Enabled"
             }
           ]
@@ -791,6 +951,51 @@
             },
             {
               "field": "NtpServers"
+            }
+          ]
+        }
+      ]
+    },
+    "organization.organizations.create": {
+      "sdkMethod": "organization.organizations.create",
+      "operationId": "CreateOrganizationOrganization",
+      "resource": "organization.Organization",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ]
+    },
+    "organization.organizations.post": {
+      "sdkMethod": "organization.organizations.post",
+      "operationId": "UpdateOrganizationOrganization",
+      "resource": "organization.Organization",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        }
+      ]
+    },
+    "organization.organizations.update": {
+      "sdkMethod": "organization.organizations.update",
+      "operationId": "PatchOrganizationOrganization",
+      "resource": "organization.Organization",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
             }
           ]
         }
@@ -992,6 +1197,7 @@
           "require": [
             {
               "field": "ScheduleParams",
+              "target": "scheduler.BaseScheduleParams",
               "minCount": 1
             }
           ]
@@ -1008,6 +1214,7 @@
           "require": [
             {
               "field": "ScheduleParams",
+              "target": "scheduler.BaseScheduleParams",
               "minCount": 1
             }
           ]
@@ -1024,7 +1231,80 @@
           "require": [
             {
               "field": "ScheduleParams",
+              "target": "scheduler.BaseScheduleParams",
               "minCount": 1
+            }
+          ]
+        }
+      ]
+    },
+    "server.profiles.create": {
+      "sdkMethod": "server.profiles.create",
+      "operationId": "CreateServerProfile",
+      "resource": "server.Profile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "server.profiles.post": {
+      "sdkMethod": "server.profiles.post",
+      "operationId": "UpdateServerProfile",
+      "resource": "server.Profile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
+            }
+          ]
+        }
+      ]
+    },
+    "server.profiles.update": {
+      "sdkMethod": "server.profiles.update",
+      "operationId": "PatchServerProfile",
+      "resource": "server.Profile",
+      "rules": [
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Name"
+            }
+          ]
+        },
+        {
+          "kind": "required",
+          "require": [
+            {
+              "field": "Organization",
+              "target": "organization.Organization"
             }
           ]
         }
@@ -1328,6 +1608,7 @@
           "require": [
             {
               "field": "LocalClients",
+              "target": "syslog.LocalClientBase",
               "minCount": 1
             }
           ]
@@ -1344,6 +1625,7 @@
           "require": [
             {
               "field": "LocalClients",
+              "target": "syslog.LocalClientBase",
               "minCount": 1
             }
           ]
@@ -1360,6 +1642,7 @@
           "require": [
             {
               "field": "LocalClients",
+              "target": "syslog.LocalClientBase",
               "minCount": 1
             }
           ]

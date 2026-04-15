@@ -106,6 +106,79 @@ func TestBuildSearchCatalogGroupsOperationsUnderResources(t *testing.T) {
 	assertSearchPathIndex(t, search.Paths, "/example/widgets", "example.widget")
 }
 
+func TestBuildSearchCatalogAddsExampleForArrayItemRefs(t *testing.T) {
+	t.Parallel()
+
+	meta := ArtifactSourceMetadata{
+		PublishedVersion: "1.0.0-test",
+		SourceURL:        "https://example.com/spec",
+		SHA256:           "abc123",
+		RetrievalDate:    "2026-04-08",
+	}
+	spec := NormalizedSpec{
+		Metadata: meta,
+		Paths: map[string]map[string]NormalizedOperation{
+			"/api/v1/example/Widgets": {
+				"post": {OperationID: "CreateExampleWidget"},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"example.Widget": {
+				Type: "object",
+				Properties: map[string]*NormalizedSchema{
+					"Zones": {
+						Type: "array",
+						Items: &NormalizedSchema{Circular: "example.Zone"},
+					},
+				},
+			},
+			"example.Zone": {
+				Type: "object",
+			},
+		},
+	}
+	catalog := SDKCatalog{
+		Metadata: meta,
+		Methods: map[string]SDKMethod{
+			"example.widget.create": {
+				SDKMethod:           "example.widget.create",
+				Resource:            "example.Widget",
+				RequestBodyRequired: true,
+				RequestBodyFields:   []string{"Zones"},
+				Descriptor: OperationDescriptor{
+					OperationID:  "CreateExampleWidget",
+					Method:       "POST",
+					PathTemplate: "/api/v1/example/Widgets",
+				},
+			},
+		},
+	}
+	rules := RuleCatalog{
+		Metadata: meta,
+		Methods: map[string]MethodRules{
+			"example.widget.create": {
+				SDKMethod:   "example.widget.create",
+				OperationID: "CreateExampleWidget",
+				Resource:    "example.Widget",
+				Rules: []SemanticRule{
+					NewRequiredRule("Zones", "example.Zone", 1),
+				},
+			},
+		},
+	}
+
+	search, err := BuildSearchCatalog(spec, catalog, rules, SearchMetricsCatalog{})
+	if err != nil {
+		t.Fatalf("BuildSearchCatalog() error = %v", err)
+	}
+
+	got := search.Resources["example.widget"].CreateFields["Zones"].Example
+	want := []any{map[string]any{"Moid": "<zone-moid>"}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("createFields[Zones].Example = %#v, want %#v", got, want)
+	}
+}
+
 func TestValidateSearchCatalogAgainstArtifactsRejectsMismatch(t *testing.T) {
 	t.Parallel()
 
