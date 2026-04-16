@@ -71,6 +71,7 @@ func TestLoadRuntimePrecedenceCLIOverEnv(t *testing.T) {
 			"INTERSIGHT_MAX_CODE_SIZE=32KB",
 			"INTERSIGHT_WASM_MEMORY=32MB",
 			"INTERSIGHT_LOG_LEVEL=info",
+			"INTERSIGHT_READ_ONLY=false",
 		},
 		"INTERSIGHT",
 	)
@@ -116,6 +117,30 @@ func TestLoadRuntimePrecedenceCLIOverEnv(t *testing.T) {
 	}
 }
 
+func TestLoadRuntimeReadOnlyFromEnv(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := LoadRuntime(nil, []string{"INTERSIGHT_READ_ONLY=true"}, "INTERSIGHT")
+	if err != nil {
+		t.Fatalf("LoadRuntime() error = %v", err)
+	}
+
+	if !cfg.ReadOnly {
+		t.Fatalf("expected read-only mode to be enabled from env")
+	}
+}
+
+func TestLoadRuntimeInvalidReadOnly(t *testing.T) {
+	t.Parallel()
+
+	_, err := LoadRuntime(nil, []string{"INTERSIGHT_READ_ONLY=maybe"}, "INTERSIGHT")
+	if err == nil {
+		t.Fatalf("expected invalid read-only error")
+	}
+	if !strings.Contains(err.Error(), "invalid read-only") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
 func TestLoadRuntimeInvalidMaxOutput(t *testing.T) {
 	t.Parallel()
 

@@ -34,9 +34,10 @@ Configuration variables:
 | Endpoint origin | `--endpoint` | `INTERSIGHT_ENDPOINT` | No | `https://intersight.com` |
 | Proxy URL | `--proxy` | `INTERSIGHT_PROXY_URL` | No | disabled |
 | Max serialized tool payload | `--max-output` | `INTERSIGHT_MAX_OUTPUT` | No | `512KB` |
-| Read-only mode | `--read-only` | — | No | `false` |
+| Read-only mode | `--read-only` | `INTERSIGHT_READ_ONLY` | No | `false` |
 
 Note: The server does not inherit proxy settings from the host. Proxying is enabled only through `--proxy` or `INTERSIGHT_PROXY_URL`.
+For settings that support both forms, command-line flags override environment variables.
 
 ## Usage
 
@@ -46,7 +47,7 @@ By default the server registers three tools:
 - `query` for read-shaped SDK calls and offline validation of write-shaped SDK calls
 - `mutate` for persistent write-shaped SDK calls against the Intersight API
 
-With `--read-only`, it registers only `search` and `query`.
+With `--read-only` or `INTERSIGHT_READ_ONLY=true`, it registers only `search` and `query`.
 
 The MCP client will thus usually call `search` first to understand the API, then either `query` or `mutate` to read or perform changes respectively.
 

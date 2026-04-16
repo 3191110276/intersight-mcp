@@ -195,8 +195,16 @@ func LoadRuntime(args []string, environ []string, envPrefix string) (RuntimeConf
 		}
 	}
 
+	readOnlyRaw := env[envKey(envPrefix, "READ_ONLY")]
 	if setFlags["read-only"] {
-		cfg.ReadOnly = readOnlyFlag
+		readOnlyRaw = strconv.FormatBool(readOnlyFlag)
+	}
+	if strings.TrimSpace(readOnlyRaw) != "" {
+		value, err := strconv.ParseBool(strings.TrimSpace(readOnlyRaw))
+		if err != nil {
+			return RuntimeConfig{}, fmt.Errorf("invalid read-only %q: must be true or false", readOnlyRaw)
+		}
+		cfg.ReadOnly = value
 	}
 
 	unsafeLogFullCodeRaw := env[envKey(envPrefix, "UNSAFE_LOG_FULL_CODE")]
