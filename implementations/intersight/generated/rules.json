@@ -8062,20 +8062,6 @@
           "forbid": [
             "IqnPool"
           ]
-        },
-        {
-          "kind": "conditional",
-          "when": {
-            "field": "PlacementMode",
-            "equals": "custom"
-          },
-          "require": [
-            {
-              "field": "EthIfs",
-              "target": "vnic.EthIf",
-              "minCount": 1
-            }
-          ]
         }
       ]
     },
@@ -8128,20 +8114,6 @@
           "forbid": [
             "IqnPool"
           ]
-        },
-        {
-          "kind": "conditional",
-          "when": {
-            "field": "PlacementMode",
-            "equals": "custom"
-          },
-          "require": [
-            {
-              "field": "EthIfs",
-              "target": "vnic.EthIf",
-              "minCount": 1
-            }
-          ]
         }
       ]
     },
@@ -8193,20 +8165,6 @@
           },
           "forbid": [
             "IqnPool"
-          ]
-        },
-        {
-          "kind": "conditional",
-          "when": {
-            "field": "PlacementMode",
-            "equals": "custom"
-          },
-          "require": [
-            {
-              "field": "EthIfs",
-              "target": "vnic.EthIf",
-              "minCount": 1
-            }
           ]
         }
       ]

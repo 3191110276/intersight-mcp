@@ -41,7 +41,6 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "access.policy.create",
 			Resource:  "access.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("AddressType", ""),
 				contracts.NewRequiredRule("ConfigurationType", ""),
 				contracts.NewConditionalRequireRule("ConfigurationType.ConfigureInband", true, FieldRule{Field: "InbandIpPool", Target: "ippool.Pool"}),
 				contracts.NewConditionalMinimumRule("ConfigurationType.ConfigureInband", true, MinimumRule{Field: "InbandVlan", Value: 4}),
@@ -51,7 +50,6 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "access.policy.post",
 			Resource:  "access.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("AddressType", ""),
 				contracts.NewRequiredRule("ConfigurationType", ""),
 				contracts.NewConditionalRequireRule("ConfigurationType.ConfigureInband", true, FieldRule{Field: "InbandIpPool", Target: "ippool.Pool"}),
 				contracts.NewConditionalMinimumRule("ConfigurationType.ConfigureInband", true, MinimumRule{Field: "InbandVlan", Value: 4}),
@@ -61,7 +59,6 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "access.policy.update",
 			Resource:  "access.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("AddressType", ""),
 				contracts.NewRequiredRule("ConfigurationType", ""),
 				contracts.NewConditionalRequireRule("ConfigurationType.ConfigureInband", true, FieldRule{Field: "InbandIpPool", Target: "ippool.Pool"}),
 				contracts.NewConditionalMinimumRule("ConfigurationType.ConfigureInband", true, MinimumRule{Field: "InbandVlan", Value: 4}),
@@ -636,7 +633,6 @@ func RuleTemplates() []RuleTemplate {
 				contracts.NewConditionalForbidRule("IqnAllocationType", "Pool", "StaticIqnName"),
 				contracts.NewConditionalRequireRule("IqnAllocationType", "Static", FieldRule{Field: "StaticIqnName"}),
 				contracts.NewConditionalForbidRule("IqnAllocationType", "Static", "IqnPool"),
-				contracts.NewConditionalRequireRule("PlacementMode", "custom", FieldRule{Field: "EthIfs", MinCount: 1, Target: "vnic.EthIf"}),
 			},
 		},
 		{
@@ -647,7 +643,6 @@ func RuleTemplates() []RuleTemplate {
 				contracts.NewConditionalForbidRule("IqnAllocationType", "Pool", "StaticIqnName"),
 				contracts.NewConditionalRequireRule("IqnAllocationType", "Static", FieldRule{Field: "StaticIqnName"}),
 				contracts.NewConditionalForbidRule("IqnAllocationType", "Static", "IqnPool"),
-				contracts.NewConditionalRequireRule("PlacementMode", "custom", FieldRule{Field: "EthIfs", MinCount: 1, Target: "vnic.EthIf"}),
 			},
 		},
 		{
@@ -658,7 +653,6 @@ func RuleTemplates() []RuleTemplate {
 				contracts.NewConditionalForbidRule("IqnAllocationType", "Pool", "StaticIqnName"),
 				contracts.NewConditionalRequireRule("IqnAllocationType", "Static", FieldRule{Field: "StaticIqnName"}),
 				contracts.NewConditionalForbidRule("IqnAllocationType", "Static", "IqnPool"),
-				contracts.NewConditionalRequireRule("PlacementMode", "custom", FieldRule{Field: "EthIfs", MinCount: 1, Target: "vnic.EthIf"}),
 			},
 		},
 		{
@@ -669,7 +663,6 @@ func RuleTemplates() []RuleTemplate {
 				contracts.NewConditionalForbidRule("IqnAllocationType", "Pool", "StaticIqnName"),
 				contracts.NewConditionalRequireRule("IqnAllocationType", "Static", FieldRule{Field: "StaticIqnName"}),
 				contracts.NewConditionalForbidRule("IqnAllocationType", "Static", "IqnPool"),
-				contracts.NewConditionalRequireRule("PlacementMode", "custom", FieldRule{Field: "EthIfs", MinCount: 1, Target: "vnic.EthIf"}),
 			},
 		},
 		{
@@ -677,10 +670,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "vnic.EthNetworkPolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Organization", "organization.Organization"),
-				contracts.NewRequiredRule("VlanSettings", ""),
-				contracts.NewConditionalRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
-				contracts.NewConditionalRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
-				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
 			},
 		},
 		{
@@ -688,10 +677,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "vnic.EthNetworkPolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Organization", "organization.Organization"),
-				contracts.NewRequiredRule("VlanSettings", ""),
-				contracts.NewConditionalRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
-				contracts.NewConditionalRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
-				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
 			},
 		},
 		{
@@ -699,10 +684,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "vnic.EthNetworkPolicy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Organization", "organization.Organization"),
-				contracts.NewRequiredRule("VlanSettings", ""),
-				contracts.NewConditionalRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
-				contracts.NewConditionalRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
-				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
 			},
 		},
 		{
@@ -751,17 +732,12 @@ func RuleTemplates() []RuleTemplate {
 		{
 			SDKMethod: "vnic.ethNetworkPolicy.patch",
 			Resource:  "vnic.EthNetworkPolicy",
-			Rules: []SemanticRule{
-				contracts.NewConditionalRequireRule("VlanSettings.Mode", "ACCESS", FieldRule{Field: "VlanSettings.DefaultVlan"}),
-				contracts.NewConditionalRequireRule("VlanSettings.Mode", "TRUNK", FieldRule{Field: "VlanSettings.AllowedVlans"}),
-				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
+			Rules:     []SemanticRule{},
 		},
 		{
 			SDKMethod: "vnic.ethAdapterPolicy.create",
 			Resource:  "vnic.EthAdapterPolicy",
 			Rules: []SemanticRule{
-				contracts.NewConditionalRequireRule("RssSettings", true, FieldRule{Field: "RssHashSettings"}),
 				contracts.NewConditionalRequireRule("EtherChannelPinningEnabled", true, FieldRule{Field: "TxQueueSettings"}),
 				contracts.NewConditionalMinimumRule("EtherChannelPinningEnabled", true, MinimumRule{Field: "TxQueueSettings.Count", Value: 2}),
 			},
@@ -770,7 +746,6 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "vnic.ethAdapterPolicy.post",
 			Resource:  "vnic.EthAdapterPolicy",
 			Rules: []SemanticRule{
-				contracts.NewConditionalRequireRule("RssSettings", true, FieldRule{Field: "RssHashSettings"}),
 				contracts.NewConditionalRequireRule("EtherChannelPinningEnabled", true, FieldRule{Field: "TxQueueSettings"}),
 				contracts.NewConditionalMinimumRule("EtherChannelPinningEnabled", true, MinimumRule{Field: "TxQueueSettings.Count", Value: 2}),
 			},
@@ -779,7 +754,6 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "vnic.ethAdapterPolicy.update",
 			Resource:  "vnic.EthAdapterPolicy",
 			Rules: []SemanticRule{
-				contracts.NewConditionalRequireRule("RssSettings", true, FieldRule{Field: "RssHashSettings"}),
 				contracts.NewConditionalRequireRule("EtherChannelPinningEnabled", true, FieldRule{Field: "TxQueueSettings"}),
 				contracts.NewConditionalMinimumRule("EtherChannelPinningEnabled", true, MinimumRule{Field: "TxQueueSettings.Count", Value: 2}),
 			},
@@ -788,7 +762,6 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "vnic.ethAdapterPolicy.patch",
 			Resource:  "vnic.EthAdapterPolicy",
 			Rules: []SemanticRule{
-				contracts.NewConditionalRequireRule("RssSettings", true, FieldRule{Field: "RssHashSettings"}),
 				contracts.NewConditionalRequireRule("EtherChannelPinningEnabled", true, FieldRule{Field: "TxQueueSettings"}),
 				contracts.NewConditionalMinimumRule("EtherChannelPinningEnabled", true, MinimumRule{Field: "TxQueueSettings.Count", Value: 2}),
 			},
@@ -799,7 +772,6 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("VlanSettings", ""),
 				contracts.NewRequiredRule("VlanSettings.AllowedVlans", ""),
-				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
 				contracts.NewCustomRule(CustomRule{Field: "VlanSettings", Validator: "native_vlan_in_allowed_vlans"}),
 			},
 		},
@@ -809,7 +781,6 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("VlanSettings", ""),
 				contracts.NewRequiredRule("VlanSettings.AllowedVlans", ""),
-				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
 				contracts.NewCustomRule(CustomRule{Field: "VlanSettings", Validator: "native_vlan_in_allowed_vlans"}),
 			},
 		},
@@ -819,16 +790,13 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("VlanSettings", ""),
 				contracts.NewRequiredRule("VlanSettings.AllowedVlans", ""),
-				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
 				contracts.NewCustomRule(CustomRule{Field: "VlanSettings", Validator: "native_vlan_in_allowed_vlans"}),
 			},
 		},
 		{
 			SDKMethod: "fabric.ethNetworkGroupPolicy.patch",
 			Resource:  "fabric.EthNetworkGroupPolicy",
-			Rules: []SemanticRule{
-				contracts.NewConditionalRequireRule("VlanSettings.QinqEnabled", true, FieldRule{Field: "VlanSettings.QinqVlan"}),
-			},
+			Rules:     []SemanticRule{},
 		},
 		{
 			SDKMethod: "fabric.macSecPolicy.create",
@@ -1303,7 +1271,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "fabric.LanPinGroup",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
-				contracts.NewRequiredRule("PinTargetInterfaceRole", "fabric.AbstractInterfaceRole"),
 			},
 		},
 		{
@@ -1311,7 +1278,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "fabric.LanPinGroup",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
-				contracts.NewRequiredRule("PinTargetInterfaceRole", "fabric.AbstractInterfaceRole"),
 			},
 		},
 		{
@@ -1319,7 +1285,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "fabric.LanPinGroup",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("PortPolicy", "fabric.PortPolicy"),
-				contracts.NewRequiredRule("PinTargetInterfaceRole", "fabric.AbstractInterfaceRole"),
 			},
 		},
 		{
@@ -1919,8 +1884,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "ntp.Policy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Name", ""),
-				contracts.NewRequiredRule("Enabled", ""),
-				contracts.NewRequiredRule("Timezone", ""),
 				contracts.NewOneOfRule("NtpServers", "AuthenticatedNtpServers"),
 			},
 		},
@@ -1929,8 +1892,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "ntp.Policy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Name", ""),
-				contracts.NewRequiredRule("Enabled", ""),
-				contracts.NewRequiredRule("Timezone", ""),
 				contracts.NewOneOfRule("NtpServers", "AuthenticatedNtpServers"),
 			},
 		},
@@ -1939,8 +1900,6 @@ func RuleTemplates() []RuleTemplate {
 			Resource:  "ntp.Policy",
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Name", ""),
-				contracts.NewRequiredRule("Enabled", ""),
-				contracts.NewRequiredRule("Timezone", ""),
 				contracts.NewOneOfRule("NtpServers", "AuthenticatedNtpServers"),
 			},
 		},
@@ -2061,7 +2020,6 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Schedule", ""),
 				contracts.NewRequiredRule("Schedule.ExecutionTime", ""),
-				contracts.NewRequiredRule("Schedule.FrequencyUnit", ""),
 			},
 		},
 		{
@@ -2070,7 +2028,6 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Schedule", ""),
 				contracts.NewRequiredRule("Schedule.ExecutionTime", ""),
-				contracts.NewRequiredRule("Schedule.FrequencyUnit", ""),
 			},
 		},
 		{
@@ -2079,7 +2036,6 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Schedule", ""),
 				contracts.NewRequiredRule("Schedule.ExecutionTime", ""),
-				contracts.NewRequiredRule("Schedule.FrequencyUnit", ""),
 			},
 		},
 		{
@@ -2152,36 +2108,21 @@ func RuleTemplates() []RuleTemplate {
 			SDKMethod: "smtp.policy.create",
 			Resource:  "smtp.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("Enabled", ""),
-				contracts.NewRequiredRule("SenderEmail", ""),
-				contracts.NewRequiredRule("SmtpPort", ""),
-				contracts.NewRequiredRule("SmtpRecipients", "", 1),
 				contracts.NewRequiredRule("SmtpServer", ""),
-				contracts.NewRequiredRule("MinSeverity", ""),
 			},
 		},
 		{
 			SDKMethod: "smtp.policy.post",
 			Resource:  "smtp.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("Enabled", ""),
-				contracts.NewRequiredRule("SenderEmail", ""),
-				contracts.NewRequiredRule("SmtpPort", ""),
-				contracts.NewRequiredRule("SmtpRecipients", "", 1),
 				contracts.NewRequiredRule("SmtpServer", ""),
-				contracts.NewRequiredRule("MinSeverity", ""),
 			},
 		},
 		{
 			SDKMethod: "smtp.policy.update",
 			Resource:  "smtp.Policy",
 			Rules: []SemanticRule{
-				contracts.NewRequiredRule("Enabled", ""),
-				contracts.NewRequiredRule("SenderEmail", ""),
-				contracts.NewRequiredRule("SmtpPort", ""),
-				contracts.NewRequiredRule("SmtpRecipients", "", 1),
 				contracts.NewRequiredRule("SmtpServer", ""),
-				contracts.NewRequiredRule("MinSeverity", ""),
 			},
 		},
 		{
@@ -3410,7 +3351,6 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Schedule", ""),
 				contracts.NewRequiredRule("Schedule.ExecutionTime", ""),
-				contracts.NewRequiredRule("Schedule.FrequencyUnit", ""),
 				contracts.NewFutureRule("Schedule.ExecutionTime"),
 			},
 		},
@@ -3420,7 +3360,6 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Schedule", ""),
 				contracts.NewRequiredRule("Schedule.ExecutionTime", ""),
-				contracts.NewRequiredRule("Schedule.FrequencyUnit", ""),
 				contracts.NewFutureRule("Schedule.ExecutionTime"),
 			},
 		},
@@ -3430,7 +3369,6 @@ func RuleTemplates() []RuleTemplate {
 			Rules: []SemanticRule{
 				contracts.NewRequiredRule("Schedule", ""),
 				contracts.NewRequiredRule("Schedule.ExecutionTime", ""),
-				contracts.NewRequiredRule("Schedule.FrequencyUnit", ""),
 				contracts.NewFutureRule("Schedule.ExecutionTime"),
 			},
 		},
