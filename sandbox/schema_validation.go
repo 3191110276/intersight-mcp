@@ -288,10 +288,17 @@ func validateValueAgainstSchema(spec *dryRunSpecIndex, schema *dryRunSchema, val
 
 	if len(schema.OneOf) > 0 {
 		matches := 0
+		specificMatches := 0
 		for _, option := range schema.OneOf {
 			if len(validateValueAgainstSchema(spec, option, value, fieldPath, &schemaValidationState{visiting: copyVisiting(state.visiting)})) == 0 {
 				matches++
+				if !isPermissiveObjectSchema(option) {
+					specificMatches++
+				}
 			}
+		}
+		if specificMatches == 1 {
+			matches = 1
 		}
 		if matches != 1 {
 			return []dryRunValidationError{newOpenAPIIssue(fieldPath, "one_of", "oneOf", fmt.Sprintf("Value must match exactly one schema option, matched %d.", matches))}
@@ -445,6 +452,9 @@ func relationshipWriteFormAllowed(schema *dryRunSchema, form string) bool {
 func validateObject(spec *dryRunSpecIndex, schema *dryRunSchema, obj map[string]any, fieldPath string, state *schemaValidationState) []dryRunValidationError {
 	var errs []dryRunValidationError
 	for _, required := range schema.Required {
+		if shouldRelaxMissingDiscriminator(schema, required, obj) {
+			continue
+		}
 		if _, ok := obj[required]; !ok {
 			errs = append(errs, newOpenAPIIssue(joinFieldPath(fieldPath, required), "required", "required", "Required field is missing."))
 		}
@@ -457,7 +467,7 @@ func validateObject(spec *dryRunSpecIndex, schema *dryRunSchema, obj map[string]
 			continue
 		}
 
-		allowed, additionalSchema, err := decodeAdditionalProperties(schema.AdditionalProperties)
+		allowed, additionalSchema, err := decodeAdditionalProperties(schema)
 		if err != nil {
 			errs = append(errs, newOpenAPIIssue(childPath, "unknown_field", "additionalProperties", err.Error()))
 			continue
@@ -506,9 +516,13 @@ func validateArray(spec *dryRunSpecIndex, schema *dryRunSchema, items []any, fie
 	return errs
 }
 
-func decodeAdditionalProperties(raw json.RawMessage) (bool, *dryRunSchema, error) {
-	if len(bytes.TrimSpace(raw)) == 0 {
+func decodeAdditionalProperties(schema *dryRunSchema) (bool, *dryRunSchema, error) {
+	if schema == nil {
 		return true, nil, nil
+	}
+	raw := schema.AdditionalProperties
+	if len(bytes.TrimSpace(raw)) == 0 {
+		return defaultAllowsAdditionalProperties(schema), nil, nil
 	}
 
 	var allowed bool
@@ -516,12 +530,50 @@ func decodeAdditionalProperties(raw json.RawMessage) (bool, *dryRunSchema, error
 		return allowed, nil, nil
 	}
 
-	var schema dryRunSchema
-	if err := json.Unmarshal(raw, &schema); err == nil {
-		return true, &schema, nil
+	var additionalSchema dryRunSchema
+	if err := json.Unmarshal(raw, &additionalSchema); err == nil {
+		return true, &additionalSchema, nil
 	}
 
 	return false, nil, fmt.Errorf("could not decode additionalProperties schema")
+}
+
+func defaultAllowsAdditionalProperties(schema *dryRunSchema) bool {
+	if schema == nil {
+		return true
+	}
+	return len(schema.Properties) == 0 && len(schema.Required) == 0
+}
+
+func isPermissiveObjectSchema(schema *dryRunSchema) bool {
+	if schema == nil {
+		return false
+	}
+	if schema.Circular != "" || schema.Relationship || len(schema.Required) > 0 || len(schema.Properties) > 0 || len(schema.Enum) > 0 || len(schema.OneOf) > 0 || len(schema.AnyOf) > 0 || schema.Items != nil || strings.TrimSpace(schema.Pattern) != "" {
+		return false
+	}
+	return inferredSchemaType(schema) == "object"
+}
+
+func shouldRelaxMissingDiscriminator(schema *dryRunSchema, field string, obj map[string]any) bool {
+	if schema == nil || obj == nil {
+		return false
+	}
+	if _, ok := obj[field]; ok {
+		return false
+	}
+	if field != "ClassId" && field != "ObjectType" {
+		return false
+	}
+	classProp := schema.Properties["ClassId"]
+	objectProp := schema.Properties["ObjectType"]
+	if classProp == nil || objectProp == nil {
+		return false
+	}
+	if len(classProp.Enum) < 2 || len(objectProp.Enum) < 2 {
+		return false
+	}
+	return reflect.DeepEqual(classProp.Enum, objectProp.Enum)
 }
 
 func inferredSchemaType(schema *dryRunSchema) string {

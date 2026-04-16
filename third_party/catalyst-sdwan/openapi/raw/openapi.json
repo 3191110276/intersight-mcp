@@ -1,0 +1,477 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Cisco Catalyst SD-WAN Manager API (curated subset)",
+    "version": "20.18",
+    "description": "Curated subset of the Cisco Catalyst SD-WAN Manager API derived from Cisco DevNet's published OpenAPI-backed documentation."
+  },
+  "servers": [
+    {
+      "url": "https://{host}",
+      "variables": {
+        "host": {
+          "default": "sdwan.example.com"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/dataservice/device": {
+      "get": {
+        "summary": "List devices",
+        "description": "Return devices managed by Catalyst SD-WAN Manager.",
+        "operationId": "listDevices",
+        "tags": ["Devices"],
+        "responses": {
+          "200": {
+            "description": "Device inventory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dataservice/device/config": {
+      "get": {
+        "summary": "Get device running config",
+        "description": "Return the running configuration for one or more devices.",
+        "operationId": "getDeviceRunningConfig",
+        "tags": ["Devices"],
+        "parameters": [
+          {
+            "name": "deviceId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Running config",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dataservice/device/action/status/{processId}": {
+      "get": {
+        "summary": "Get device action status",
+        "description": "Return status for a previously started device action.",
+        "operationId": "getDeviceActionStatus",
+        "tags": ["Devices"],
+        "parameters": [
+          {
+            "name": "processId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Action status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dataservice/template/feature": {
+      "get": {
+        "summary": "List feature templates",
+        "description": "Return feature templates from the general template catalog.",
+        "operationId": "listFeatureTemplates",
+        "tags": ["Templates"],
+        "parameters": [
+          {
+            "name": "summary",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feature templates",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeatureTemplateListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dataservice/template/device/config/input": {
+      "post": {
+        "summary": "Generate device input variables",
+        "description": "Generate per-device variables for a CLI or feature template.",
+        "operationId": "generateDeviceInputVariables",
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTemplateInputRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated device variables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenericDataResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dataservice/template/device/config/config": {
+      "post": {
+        "summary": "Preview device configuration",
+        "description": "Preview the configuration rendered from a device template and device variable payload.",
+        "operationId": "previewDeviceConfiguration",
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceTemplatePreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rendered configuration",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dataservice/template/device/config/attachcli": {
+      "post": {
+        "summary": "Attach CLI template",
+        "description": "Start a CLI template attach workflow.",
+        "operationId": "attachCLIDeviceTemplate",
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskIDResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dataservice/template/device/config/attachfeature": {
+      "post": {
+        "summary": "Attach feature template",
+        "description": "Start a feature template attach workflow.",
+        "operationId": "attachFeatureDeviceTemplate",
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttachTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskIDResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dataservice/template/config/device/mode/cli": {
+      "post": {
+        "summary": "Detach device templates",
+        "description": "Move devices back to CLI mode.",
+        "operationId": "detachDeviceTemplates",
+        "tags": ["Templates"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DetachTemplateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskIDResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DeviceSummary": {
+        "type": "object",
+        "properties": {
+          "deviceId": { "type": "string" },
+          "host-name": { "type": "string" },
+          "system-ip": { "type": "string" },
+          "site-id": { "type": "string" },
+          "device-model": { "type": "string" },
+          "reachability": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      "DeviceListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceSummary"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "FeatureTemplate": {
+        "type": "object",
+        "properties": {
+          "templateId": { "type": "string" },
+          "templateName": { "type": "string" },
+          "templateDescription": { "type": "string" },
+          "templateType": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      "FeatureTemplateListResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeatureTemplate"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "DeviceTemplateInputRequest": {
+        "type": "object",
+        "required": ["templateId", "deviceIds"],
+        "properties": {
+          "templateId": { "type": "string" },
+          "deviceIds": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "isEdited": { "type": "boolean" },
+          "isMasterEdited": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      },
+      "DeviceTemplatePreviewRequest": {
+        "type": "object",
+        "required": ["templateId", "device"],
+        "properties": {
+          "templateId": { "type": "string" },
+          "device": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "isEdited": { "type": "boolean" },
+          "isMasterEdited": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      },
+      "DeviceTemplateAttachItem": {
+        "type": "object",
+        "required": ["templateId", "device"],
+        "properties": {
+          "templateId": { "type": "string" },
+          "device": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "isEdited": { "type": "boolean" },
+          "isMasterEdited": { "type": "boolean" }
+        },
+        "additionalProperties": true
+      },
+      "AttachTemplateRequest": {
+        "type": "object",
+        "required": ["deviceTemplateList"],
+        "properties": {
+          "deviceTemplateList": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeviceTemplateAttachItem"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "DetachDevice": {
+        "type": "object",
+        "properties": {
+          "deviceId": { "type": "string" },
+          "deviceIP": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      "DetachTemplateRequest": {
+        "type": "object",
+        "required": ["devices"],
+        "properties": {
+          "deviceType": { "type": "string" },
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetachDevice"
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "TaskIDResponse": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      "TaskResponse": {
+        "type": "object",
+        "properties": {
+          "summary": { "type": "string" },
+          "status": { "type": "string" }
+        },
+        "additionalProperties": true
+      },
+      "GenericDataResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

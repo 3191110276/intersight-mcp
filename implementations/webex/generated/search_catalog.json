@@ -1,0 +1,248 @@
+{
+  "metadata": {
+    "published_version": "postman-webex-messaging-curated-2026-04-16",
+    "source_url": "https://www.postman.com/webexdev/webex-public-workspace-beta/collection/pnt7z1b/webex-messaging",
+    "sha256": "65146b8fd96b51859cd0d5d28d179dd358f3b76a26cd51c6b4489706a70b536c",
+    "retrieval_date": "2026-04-16"
+  },
+  "resources": {
+    "memberships.memberships": {
+      "schema": "CreateMembershipRequest",
+      "createFields": {
+        "isModerator": {
+          "type": "boolean"
+        },
+        "personEmail": {
+          "type": "string",
+          "format": "email"
+        },
+        "personId": {
+          "type": "string"
+        },
+        "roomId": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v1/memberships/{membershipId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "messages.messages": {
+      "schema": "CreateMessageRequest",
+      "createFields": {
+        "files": {
+          "type": "array",
+          "items": "string"
+        },
+        "markdown": {
+          "type": "string"
+        },
+        "roomId": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "toPersonEmail": {
+          "type": "string",
+          "format": "email"
+        },
+        "toPersonId": {
+          "type": "string"
+        }
+      },
+      "path": "/v1/messages",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    "people.me": {
+      "schema": "Person",
+      "path": "/v1/people/me",
+      "operations": [
+        "list"
+      ]
+    },
+    "people.people": {
+      "schema": "Person",
+      "path": "/v1/people/{personId?}",
+      "operations": [
+        "get",
+        "list"
+      ]
+    },
+    "rooms.rooms": {
+      "schema": "CreateRoomRequest",
+      "createFields": {
+        "classificationId": {
+          "type": "string"
+        },
+        "teamId": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "path": "/v1/rooms/{roomId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "webhooks.webhooks": {
+      "schema": "CreateWebhookRequest",
+      "createFields": {
+        "event": {
+          "type": "string",
+          "required": true
+        },
+        "filter": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "resource": {
+          "type": "string",
+          "required": true
+        },
+        "secret": {
+          "type": "string"
+        },
+        "targetUrl": {
+          "type": "string",
+          "format": "uri",
+          "required": true
+        }
+      },
+      "path": "/v1/webhooks/{webhookId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    }
+  },
+  "resourceNames": [
+    "memberships.memberships",
+    "messages.messages",
+    "people.me",
+    "people.people",
+    "rooms.rooms",
+    "webhooks.webhooks"
+  ],
+  "paths": {
+    "/memberships": [
+      "memberships.memberships"
+    ],
+    "/memberships/{membershipId}": [
+      "memberships.memberships"
+    ],
+    "/memberships/{membershipid}": [
+      "memberships.memberships"
+    ],
+    "/messages": [
+      "messages.messages"
+    ],
+    "/messages/{messageId}": [
+      "messages.messages"
+    ],
+    "/messages/{messageid}": [
+      "messages.messages"
+    ],
+    "/people": [
+      "people.people"
+    ],
+    "/people/me": [
+      "people.me"
+    ],
+    "/people/{personId}": [
+      "people.people"
+    ],
+    "/people/{personid}": [
+      "people.people"
+    ],
+    "/rooms": [
+      "rooms.rooms"
+    ],
+    "/rooms/{roomId}": [
+      "rooms.rooms"
+    ],
+    "/rooms/{roomid}": [
+      "rooms.rooms"
+    ],
+    "/v1/memberships": [
+      "memberships.memberships"
+    ],
+    "/v1/memberships/{membershipId}": [
+      "memberships.memberships"
+    ],
+    "/v1/memberships/{membershipid}": [
+      "memberships.memberships"
+    ],
+    "/v1/messages": [
+      "messages.messages"
+    ],
+    "/v1/messages/{messageId}": [
+      "messages.messages"
+    ],
+    "/v1/messages/{messageid}": [
+      "messages.messages"
+    ],
+    "/v1/people": [
+      "people.people"
+    ],
+    "/v1/people/me": [
+      "people.me"
+    ],
+    "/v1/people/{personId}": [
+      "people.people"
+    ],
+    "/v1/people/{personid}": [
+      "people.people"
+    ],
+    "/v1/rooms": [
+      "rooms.rooms"
+    ],
+    "/v1/rooms/{roomId}": [
+      "rooms.rooms"
+    ],
+    "/v1/rooms/{roomid}": [
+      "rooms.rooms"
+    ],
+    "/v1/webhooks": [
+      "webhooks.webhooks"
+    ],
+    "/v1/webhooks/{webhookId}": [
+      "webhooks.webhooks"
+    ],
+    "/v1/webhooks/{webhookid}": [
+      "webhooks.webhooks"
+    ],
+    "/webhooks": [
+      "webhooks.webhooks"
+    ],
+    "/webhooks/{webhookId}": [
+      "webhooks.webhooks"
+    ],
+    "/webhooks/{webhookid}": [
+      "webhooks.webhooks"
+    ]
+  }
+}

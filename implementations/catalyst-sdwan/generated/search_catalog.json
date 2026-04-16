@@ -1,0 +1,173 @@
+{
+  "metadata": {
+    "published_version": "20.18",
+    "source_url": "https://developer.cisco.com/docs/sdwan/overview/",
+    "sha256": "c1e8477e3c30be72f7bcd4ce5a054f2d7964069586d32b808fa426997ba2dd1e",
+    "retrieval_date": "2026-04-16"
+  },
+  "resources": {
+    "dataservice.device": {
+      "schema": "DeviceListResponse",
+      "path": "/dataservice/device",
+      "operations": [
+        "list"
+      ]
+    },
+    "dataservice.deviceactionstatus": {
+      "schema": "TaskResponse",
+      "path": "/dataservice/device/action/status/{processId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "dataservice.deviceconfig": {
+      "schema": "inline.getDeviceRunningConfig.parameter.query.deviceId",
+      "path": "/dataservice/device/config",
+      "operations": [
+        "list"
+      ]
+    },
+    "dataservice.templateconfigdevicemodecli": {
+      "schema": "DetachTemplateRequest",
+      "createFields": {
+        "deviceType": {
+          "type": "string"
+        },
+        "devices": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        }
+      },
+      "path": "/dataservice/template/config/device/mode/cli",
+      "operations": [
+        "create"
+      ]
+    },
+    "dataservice.templatedeviceconfigattachcli": {
+      "schema": "AttachTemplateRequest",
+      "createFields": {
+        "deviceTemplateList": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        }
+      },
+      "path": "/dataservice/template/device/config/attachcli",
+      "operations": [
+        "create"
+      ]
+    },
+    "dataservice.templatedeviceconfigattachfeature": {
+      "schema": "AttachTemplateRequest",
+      "createFields": {
+        "deviceTemplateList": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        }
+      },
+      "path": "/dataservice/template/device/config/attachfeature",
+      "operations": [
+        "create"
+      ]
+    },
+    "dataservice.templatedeviceconfigconfig": {
+      "schema": "DeviceTemplatePreviewRequest",
+      "createFields": {
+        "device": {
+          "type": "object",
+          "required": true
+        },
+        "isEdited": {
+          "type": "boolean"
+        },
+        "isMasterEdited": {
+          "type": "boolean"
+        },
+        "templateId": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/dataservice/template/device/config/config",
+      "operations": [
+        "create"
+      ]
+    },
+    "dataservice.templatedeviceconfiginput": {
+      "schema": "DeviceTemplateInputRequest",
+      "createFields": {
+        "deviceIds": {
+          "type": "array",
+          "items": "string",
+          "required": true
+        },
+        "isEdited": {
+          "type": "boolean"
+        },
+        "isMasterEdited": {
+          "type": "boolean"
+        },
+        "templateId": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/dataservice/template/device/config/input",
+      "operations": [
+        "create"
+      ]
+    },
+    "dataservice.templatefeature": {
+      "schema": "FeatureTemplateListResponse",
+      "path": "/dataservice/template/feature",
+      "operations": [
+        "list"
+      ]
+    }
+  },
+  "resourceNames": [
+    "dataservice.device",
+    "dataservice.deviceactionstatus",
+    "dataservice.deviceconfig",
+    "dataservice.templateconfigdevicemodecli",
+    "dataservice.templatedeviceconfigattachcli",
+    "dataservice.templatedeviceconfigattachfeature",
+    "dataservice.templatedeviceconfigconfig",
+    "dataservice.templatedeviceconfiginput",
+    "dataservice.templatefeature"
+  ],
+  "paths": {
+    "/dataservice/device": [
+      "dataservice.device"
+    ],
+    "/dataservice/device/action/status/{processId}": [
+      "dataservice.deviceactionstatus"
+    ],
+    "/dataservice/device/action/status/{processid}": [
+      "dataservice.deviceactionstatus"
+    ],
+    "/dataservice/device/config": [
+      "dataservice.deviceconfig"
+    ],
+    "/dataservice/template/config/device/mode/cli": [
+      "dataservice.templateconfigdevicemodecli"
+    ],
+    "/dataservice/template/device/config/attachcli": [
+      "dataservice.templatedeviceconfigattachcli"
+    ],
+    "/dataservice/template/device/config/attachfeature": [
+      "dataservice.templatedeviceconfigattachfeature"
+    ],
+    "/dataservice/template/device/config/config": [
+      "dataservice.templatedeviceconfigconfig"
+    ],
+    "/dataservice/template/device/config/input": [
+      "dataservice.templatedeviceconfiginput"
+    ],
+    "/dataservice/template/feature": [
+      "dataservice.templatefeature"
+    ]
+  }
+}

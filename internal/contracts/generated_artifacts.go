@@ -135,6 +135,71 @@ func BuildSDKCatalog(spec NormalizedSpec) (SDKCatalog, error) {
 					if _, alternateExists := catalog.Methods[alternateID]; !alternateExists {
 						sdkMethodID = alternateID
 					} else {
+						alternateExistingByOperationID, existingOpErr := buildSDKMethodIDWithOperationID(existing.Descriptor.PathTemplate, existing.Descriptor.Method, existing.Descriptor.OperationID)
+						alternateByOperationID, alternateOpErr := buildSDKMethodIDWithOperationID(path, method, op.OperationID)
+						switch {
+						case existingOpErr == nil && alternateExistingByOperationID != sdkMethodID:
+							if _, opIDExists := catalog.Methods[alternateExistingByOperationID]; !opIDExists {
+								delete(catalog.Methods, sdkMethodID)
+								existing.SDKMethod = alternateExistingByOperationID
+								catalog.Methods[alternateExistingByOperationID] = existing
+							} else {
+								return SDKCatalog{}, fmt.Errorf(
+									"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
+									sdkMethodID,
+									existing.Descriptor.OperationID,
+									op.OperationID,
+								)
+							}
+						case alternateOpErr == nil && alternateByOperationID != sdkMethodID:
+							if _, opIDExists := catalog.Methods[alternateByOperationID]; !opIDExists {
+								sdkMethodID = alternateByOperationID
+							} else {
+								return SDKCatalog{}, fmt.Errorf(
+									"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
+									sdkMethodID,
+									existing.Descriptor.OperationID,
+									op.OperationID,
+								)
+							}
+						default:
+							return SDKCatalog{}, fmt.Errorf(
+								"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
+								sdkMethodID,
+								existing.Descriptor.OperationID,
+								op.OperationID,
+							)
+						}
+					}
+				default:
+					alternateExistingByOperationID, existingOpErr := buildSDKMethodIDWithOperationID(existing.Descriptor.PathTemplate, existing.Descriptor.Method, existing.Descriptor.OperationID)
+					alternateByOperationID, alternateOpErr := buildSDKMethodIDWithOperationID(path, method, op.OperationID)
+					switch {
+					case existingOpErr == nil && alternateExistingByOperationID != sdkMethodID:
+						if _, opIDExists := catalog.Methods[alternateExistingByOperationID]; !opIDExists {
+							delete(catalog.Methods, sdkMethodID)
+							existing.SDKMethod = alternateExistingByOperationID
+							catalog.Methods[alternateExistingByOperationID] = existing
+						} else {
+							return SDKCatalog{}, fmt.Errorf(
+								"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
+								sdkMethodID,
+								existing.Descriptor.OperationID,
+								op.OperationID,
+							)
+						}
+					case alternateOpErr == nil && alternateByOperationID != sdkMethodID:
+						if _, opIDExists := catalog.Methods[alternateByOperationID]; !opIDExists {
+							sdkMethodID = alternateByOperationID
+						} else {
+							return SDKCatalog{}, fmt.Errorf(
+								"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
+								sdkMethodID,
+								existing.Descriptor.OperationID,
+								op.OperationID,
+							)
+						}
+					default:
 						return SDKCatalog{}, fmt.Errorf(
 							"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
 							sdkMethodID,
@@ -142,13 +207,6 @@ func BuildSDKCatalog(spec NormalizedSpec) (SDKCatalog, error) {
 							op.OperationID,
 						)
 					}
-				default:
-					return SDKCatalog{}, fmt.Errorf(
-						"sdk catalog generation failed: duplicate sdk method %q for operations %q and %q",
-						sdkMethodID,
-						existing.Descriptor.OperationID,
-						op.OperationID,
-					)
 				}
 			}
 
@@ -333,6 +391,38 @@ func buildSDKMethodID(path, method, operationID string) (string, error) {
 
 func buildSDKMethodIDWithTerminalPathParam(path, method, operationID string) (string, error) {
 	return buildSDKMethodIDWithVerbStrategy(path, method, operationID, true)
+}
+
+func buildSDKMethodIDWithOperationID(path, method, operationID string) (string, error) {
+	base, err := buildSDKMethodID(path, method, operationID)
+	if err != nil {
+		return "", err
+	}
+	idx := strings.LastIndex(base, ".")
+	if idx < 0 || idx == len(base)-1 {
+		return "", fmt.Errorf("sdk catalog generation failed: cannot derive sdk method fallback for %s %s", strings.ToUpper(method), path)
+	}
+	suffix := sanitizeSDKMethodIdentifier(operationID)
+	if suffix == "" {
+		return "", fmt.Errorf("sdk catalog generation failed: cannot derive sdk method fallback from operationId %q", operationID)
+	}
+	return base[:idx+1] + suffix, nil
+}
+
+func sanitizeSDKMethodIdentifier(value string) string {
+	filtered := strings.Map(func(r rune) rune {
+		switch {
+		case r >= '0' && r <= '9':
+			return r
+		case r >= 'A' && r <= 'Z':
+			return r
+		case r >= 'a' && r <= 'z':
+			return r
+		default:
+			return -1
+		}
+	}, strings.TrimSpace(value))
+	return lowerCamelIdentifier(filtered)
 }
 
 func buildSDKMethodIDWithVerbStrategy(path, method, operationID string, useTerminalPathParam bool) (string, error) {

@@ -221,14 +221,6 @@
           "kind": "required",
           "require": [
             {
-              "field": "AddressType"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
               "field": "ConfigurationType"
             }
           ]
@@ -338,14 +330,6 @@
         }
       },
       "rules": [
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "AddressType"
-            }
-          ]
-        },
         {
           "kind": "required",
           "require": [
@@ -14182,15 +14166,6 @@
               "target": "fabric.PortPolicy"
             }
           ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "PinTargetInterfaceRole",
-              "target": "fabric.AbstractInterfaceRole"
-            }
-          ]
         }
       ],
       "operations": [
@@ -14233,15 +14208,6 @@
             {
               "field": "PortPolicy",
               "target": "fabric.PortPolicy"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "PinTargetInterfaceRole",
-              "target": "fabric.AbstractInterfaceRole"
             }
           ]
         }
@@ -29478,22 +29444,6 @@
               "field": "Name"
             }
           ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "Enabled"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "Timezone"
-            }
-          ]
         }
       ],
       "operations": [
@@ -29562,22 +29512,6 @@
           "require": [
             {
               "field": "Name"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "Enabled"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "Timezone"
             }
           ]
         }
@@ -32291,14 +32225,6 @@
           ]
         },
         {
-          "kind": "required",
-          "require": [
-            {
-              "field": "Schedule.FrequencyUnit"
-            }
-          ]
-        },
-        {
           "kind": "future",
           "future": [
             {
@@ -32363,14 +32289,6 @@
           "require": [
             {
               "field": "Schedule.ExecutionTime"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "Schedule.FrequencyUnit"
             }
           ]
         },
@@ -34932,48 +34850,7 @@
           "kind": "required",
           "require": [
             {
-              "field": "Enabled"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "SenderEmail"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "SmtpPort"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "SmtpRecipients",
-              "minCount": 1
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
               "field": "SmtpServer"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "MinSeverity"
             }
           ]
         }
@@ -35058,48 +34935,7 @@
           "kind": "required",
           "require": [
             {
-              "field": "Enabled"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "SenderEmail"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "SmtpPort"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "SmtpRecipients",
-              "minCount": 1
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
               "field": "SmtpServer"
-            }
-          ]
-        },
-        {
-          "kind": "required",
-          "require": [
-            {
-              "field": "MinSeverity"
             }
           ]
         }
@@ -43650,18 +43486,6 @@
         {
           "kind": "conditional",
           "when": {
-            "field": "RssSettings",
-            "equals": true
-          },
-          "require": [
-            {
-              "field": "RssHashSettings"
-            }
-          ]
-        },
-        {
-          "kind": "conditional",
-          "when": {
             "field": "EtherChannelPinningEnabled",
             "equals": true
           },
@@ -43812,18 +43636,6 @@
         }
       },
       "rules": [
-        {
-          "kind": "conditional",
-          "when": {
-            "field": "RssSettings",
-            "equals": true
-          },
-          "require": [
-            {
-              "field": "RssHashSettings"
-            }
-          ]
-        },
         {
           "kind": "conditional",
           "when": {

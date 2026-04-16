@@ -1,0 +1,260 @@
+{
+  "metadata": {
+    "published_version": "20.18",
+    "source_url": "https://developer.cisco.com/docs/sdwan/overview/",
+    "sha256": "c1e8477e3c30be72f7bcd4ce5a054f2d7964069586d32b808fa426997ba2dd1e",
+    "retrieval_date": "2026-04-16"
+  },
+  "methods": {
+    "dataservice.device.list": {
+      "sdkMethod": "dataservice.device.list",
+      "summary": "List devices",
+      "tags": [
+        "Devices"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listDevices",
+        "method": "GET",
+        "pathTemplate": "/dataservice/device",
+        "path": "/dataservice/device",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "relatedSchemas": [
+        "DeviceListResponse"
+      ],
+      "resource": "DeviceListResponse"
+    },
+    "dataservice.deviceactionstatus.get": {
+      "sdkMethod": "dataservice.deviceactionstatus.get",
+      "summary": "Get device action status",
+      "tags": [
+        "Devices"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getDeviceActionStatus",
+        "method": "GET",
+        "pathTemplate": "/dataservice/device/action/status/{processId}",
+        "path": "/dataservice/device/action/status/{processId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "processId"
+      ],
+      "relatedSchemas": [
+        "TaskResponse",
+        "inline.getDeviceActionStatus.parameter.path.processId"
+      ],
+      "resource": "TaskResponse"
+    },
+    "dataservice.deviceconfig.list": {
+      "sdkMethod": "dataservice.deviceconfig.list",
+      "summary": "Get device running config",
+      "tags": [
+        "Devices"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getDeviceRunningConfig",
+        "method": "GET",
+        "pathTemplate": "/dataservice/device/config",
+        "path": "/dataservice/device/config",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "deviceId"
+      ],
+      "relatedSchemas": [
+        "inline.getDeviceRunningConfig.parameter.query.deviceId"
+      ]
+    },
+    "dataservice.templateconfigdevicemodecli.create": {
+      "sdkMethod": "dataservice.templateconfigdevicemodecli.create",
+      "summary": "Detach device templates",
+      "tags": [
+        "Templates"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "detachDeviceTemplates",
+        "method": "POST",
+        "pathTemplate": "/dataservice/template/config/device/mode/cli",
+        "path": "/dataservice/template/config/device/mode/cli",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "DetachTemplateRequest",
+        "TaskIDResponse"
+      ],
+      "resource": "DetachTemplateRequest"
+    },
+    "dataservice.templatedeviceconfigattachcli.create": {
+      "sdkMethod": "dataservice.templatedeviceconfigattachcli.create",
+      "summary": "Attach CLI template",
+      "tags": [
+        "Templates"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "attachCLIDeviceTemplate",
+        "method": "POST",
+        "pathTemplate": "/dataservice/template/device/config/attachcli",
+        "path": "/dataservice/template/device/config/attachcli",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "AttachTemplateRequest",
+        "TaskIDResponse"
+      ],
+      "resource": "AttachTemplateRequest"
+    },
+    "dataservice.templatedeviceconfigattachfeature.create": {
+      "sdkMethod": "dataservice.templatedeviceconfigattachfeature.create",
+      "summary": "Attach feature template",
+      "tags": [
+        "Templates"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "attachFeatureDeviceTemplate",
+        "method": "POST",
+        "pathTemplate": "/dataservice/template/device/config/attachfeature",
+        "path": "/dataservice/template/device/config/attachfeature",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "AttachTemplateRequest",
+        "TaskIDResponse"
+      ],
+      "resource": "AttachTemplateRequest"
+    },
+    "dataservice.templatedeviceconfigconfig.create": {
+      "sdkMethod": "dataservice.templatedeviceconfigconfig.create",
+      "summary": "Preview device configuration",
+      "tags": [
+        "Templates"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "previewDeviceConfiguration",
+        "method": "POST",
+        "pathTemplate": "/dataservice/template/device/config/config",
+        "path": "/dataservice/template/device/config/config",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "DeviceTemplatePreviewRequest"
+      ],
+      "resource": "DeviceTemplatePreviewRequest"
+    },
+    "dataservice.templatedeviceconfiginput.create": {
+      "sdkMethod": "dataservice.templatedeviceconfiginput.create",
+      "summary": "Generate device input variables",
+      "tags": [
+        "Templates"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "generateDeviceInputVariables",
+        "method": "POST",
+        "pathTemplate": "/dataservice/template/device/config/input",
+        "path": "/dataservice/template/device/config/input",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "DeviceTemplateInputRequest",
+        "GenericDataResponse"
+      ],
+      "resource": "DeviceTemplateInputRequest"
+    },
+    "dataservice.templatefeature.list": {
+      "sdkMethod": "dataservice.templatefeature.list",
+      "summary": "List feature templates",
+      "tags": [
+        "Templates"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listFeatureTemplates",
+        "method": "GET",
+        "pathTemplate": "/dataservice/template/feature",
+        "path": "/dataservice/template/feature",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "limit",
+        "offset",
+        "summary",
+        "type"
+      ],
+      "relatedSchemas": [
+        "FeatureTemplateListResponse",
+        "inline.listFeatureTemplates.parameter.query.limit",
+        "inline.listFeatureTemplates.parameter.query.offset",
+        "inline.listFeatureTemplates.parameter.query.summary",
+        "inline.listFeatureTemplates.parameter.query.type"
+      ],
+      "resource": "FeatureTemplateListResponse"
+    }
+  }
+}

@@ -1,0 +1,174 @@
+{
+  "metadata": {
+    "published_version": "1.0.0",
+    "source_url": "https://developer.cisco.com/docs/cisco-xdr/automation-api-guide/",
+    "sha256": "2178346b4fbe619e5da100efc17db05c17d28e9d591c76d928b82a49ea08fb99",
+    "retrieval_date": "2026-04-16"
+  },
+  "resources": {
+    "targets.targets": {
+      "schema": "TargetCreateRequest",
+      "createFields": {
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "properties": {
+          "type": "object",
+          "required": true
+        },
+        "schema_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "unique_name": {
+          "type": "string"
+        }
+      },
+      "path": "/api/v1/targets",
+      "operations": [
+        "create",
+        "list"
+      ]
+    },
+    "targets.validate": {
+      "schema": "TargetValidateRequest",
+      "createFields": {
+        "target_ids": {
+          "type": "array",
+          "items": "string"
+        }
+      },
+      "path": "/api/v1/targets/validate",
+      "operations": [
+        "create"
+      ]
+    },
+    "workflows.start": {
+      "schema": "StartWorkflowRequest",
+      "createFields": {
+        "input_variables": {
+          "type": "array",
+          "items": "object"
+        },
+        "intent_config": {
+          "type": "object"
+        },
+        "runtime_user_id": {
+          "type": "string"
+        },
+        "start_point": {
+          "type": "string"
+        },
+        "target_id": {
+          "type": "string"
+        }
+      },
+      "path": "/api/v1/workflows/start",
+      "operations": [
+        "create"
+      ]
+    },
+    "workflows.summary": {
+      "schema": "inline.getWorkflowSummary.response.200",
+      "path": "/api/v1/workflows/summary",
+      "operations": [
+        "list"
+      ]
+    },
+    "workflows.workflows": {
+      "schema": "WorkflowCreateRequest",
+      "createFields": {
+        "categories": {
+          "type": "array",
+          "items": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "properties": {
+          "type": "object",
+          "required": true
+        },
+        "schema_id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "unique_name": {
+          "type": "string"
+        },
+        "valid": {
+          "type": "boolean"
+        },
+        "variables": {
+          "type": "array",
+          "items": "object"
+        }
+      },
+      "path": "/api/v1/workflows",
+      "operations": [
+        "create",
+        "list"
+      ]
+    }
+  },
+  "resourceNames": [
+    "targets.targets",
+    "targets.validate",
+    "workflows.start",
+    "workflows.summary",
+    "workflows.workflows"
+  ],
+  "paths": {
+    "/api/v1/targets": [
+      "targets.targets"
+    ],
+    "/api/v1/targets/validate": [
+      "targets.validate"
+    ],
+    "/api/v1/workflows": [
+      "workflows.workflows"
+    ],
+    "/api/v1/workflows/start": [
+      "workflows.start"
+    ],
+    "/api/v1/workflows/summary": [
+      "workflows.summary"
+    ],
+    "/targets": [
+      "targets.targets"
+    ],
+    "/targets/validate": [
+      "targets.validate"
+    ],
+    "/workflows": [
+      "workflows.workflows"
+    ],
+    "/workflows/start": [
+      "workflows.start"
+    ],
+    "/workflows/summary": [
+      "workflows.summary"
+    ]
+  }
+}

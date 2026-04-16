@@ -286,3 +286,41 @@ func TestBuildSDKCatalogResolvesNestedGETNameCollisions(t *testing.T) {
 		t.Fatalf("expected devices.sensorcommands.get, got %#v", catalog.Methods)
 	}
 }
+
+func TestBuildSDKCatalogFallsBackToOperationIDOnIrreducibleCollisions(t *testing.T) {
+	t.Parallel()
+
+	spec := NormalizedSpec{
+		Metadata: ArtifactSourceMetadata{
+			PublishedVersion: "1.0.0-test",
+			SourceURL:        "https://example.com/spec",
+			SHA256:           "abc123",
+			RetrievalDate:    "2026-04-16",
+		},
+		Paths: map[string]map[string]NormalizedOperation{
+			"/discovery": {
+				"delete": {OperationID: "deleteAllDiscovery"},
+			},
+			"/discovery/{id}": {
+				"delete": {OperationID: "deleteDiscoveryById"},
+			},
+		},
+		Schemas: map[string]NormalizedSchema{
+			"discovery.Item": {Type: "object"},
+		},
+	}
+
+	catalog, err := BuildSDKCatalog(spec)
+	if err != nil {
+		t.Fatalf("BuildSDKCatalog() error = %v", err)
+	}
+	if _, ok := catalog.Methods["discovery.discovery.delete"]; !ok {
+		t.Fatalf("expected discovery.discovery.delete, got %#v", catalog.Methods)
+	}
+	if got := catalog.Methods["discovery.discovery.delete"].Descriptor.OperationID; got != "deleteDiscoveryById" {
+		t.Fatalf("discovery.discovery.delete operationId = %q, want deleteDiscoveryById", got)
+	}
+	if _, ok := catalog.Methods["discovery.discovery.deleteAllDiscovery"]; !ok {
+		t.Fatalf("expected discovery.discovery.deleteAllDiscovery, got %#v", catalog.Methods)
+	}
+}

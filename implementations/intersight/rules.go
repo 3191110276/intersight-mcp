@@ -2147,30 +2147,6 @@ func RuleTemplates() []RuleTemplate {
 			},
 		},
 		{
-			SDKMethod: "scheduler.schedulePolicy.create",
-			Resource:  "scheduler.SchedulePolicy",
-			Rules: []SemanticRule{
-				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
-				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
-			},
-		},
-		{
-			SDKMethod: "scheduler.schedulePolicy.post",
-			Resource:  "scheduler.SchedulePolicy",
-			Rules: []SemanticRule{
-				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
-				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
-			},
-		},
-		{
-			SDKMethod: "scheduler.schedulePolicy.update",
-			Resource:  "scheduler.SchedulePolicy",
-			Rules: []SemanticRule{
-				contracts.NewRequiredRule("ScheduleParams", "scheduler.BaseScheduleParams", 1),
-				contracts.NewRequiredRule("ScheduleParams[].Name", ""),
-			},
-		},
-		{
 			SDKMethod: "scheduler.taskSchedule.create",
 			Resource:  "scheduler.TaskSchedule",
 			Rules: []SemanticRule{

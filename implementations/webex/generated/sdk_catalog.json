@@ -1,0 +1,662 @@
+{
+  "metadata": {
+    "published_version": "postman-webex-messaging-curated-2026-04-16",
+    "source_url": "https://www.postman.com/webexdev/webex-public-workspace-beta/collection/pnt7z1b/webex-messaging",
+    "sha256": "65146b8fd96b51859cd0d5d28d179dd358f3b76a26cd51c6b4489706a70b536c",
+    "retrieval_date": "2026-04-16"
+  },
+  "methods": {
+    "memberships.memberships.create": {
+      "sdkMethod": "memberships.memberships.create",
+      "summary": "Create a membership",
+      "tags": [
+        "Memberships"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "createMembership",
+        "method": "POST",
+        "pathTemplate": "/v1/memberships",
+        "path": "/v1/memberships",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "CreateMembershipRequest",
+        "Membership"
+      ],
+      "resource": "CreateMembershipRequest"
+    },
+    "memberships.memberships.delete": {
+      "sdkMethod": "memberships.memberships.delete",
+      "summary": "Delete a membership",
+      "tags": [
+        "Memberships"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "deleteMembership",
+        "method": "DELETE",
+        "pathTemplate": "/v1/memberships/{membershipId}",
+        "path": "/v1/memberships/{membershipId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "membershipId"
+      ],
+      "relatedSchemas": [
+        "inline.deleteMembership.parameter.path.membershipId"
+      ]
+    },
+    "memberships.memberships.get": {
+      "sdkMethod": "memberships.memberships.get",
+      "summary": "Get membership details",
+      "tags": [
+        "Memberships"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getMembershipDetails",
+        "method": "GET",
+        "pathTemplate": "/v1/memberships/{membershipId}",
+        "path": "/v1/memberships/{membershipId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "membershipId"
+      ],
+      "relatedSchemas": [
+        "Membership",
+        "inline.getMembershipDetails.parameter.path.membershipId"
+      ],
+      "resource": "Membership"
+    },
+    "memberships.memberships.list": {
+      "sdkMethod": "memberships.memberships.list",
+      "summary": "List memberships",
+      "tags": [
+        "Memberships"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listMemberships",
+        "method": "GET",
+        "pathTemplate": "/v1/memberships",
+        "path": "/v1/memberships",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "max",
+        "personEmail",
+        "personId",
+        "roomId"
+      ],
+      "relatedSchemas": [
+        "MembershipList",
+        "inline.listMemberships.parameter.query.max",
+        "inline.listMemberships.parameter.query.personEmail",
+        "inline.listMemberships.parameter.query.personId",
+        "inline.listMemberships.parameter.query.roomId"
+      ],
+      "resource": "MembershipList"
+    },
+    "memberships.memberships.replace": {
+      "sdkMethod": "memberships.memberships.replace",
+      "summary": "Update a membership",
+      "tags": [
+        "Memberships"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "updateMembership",
+        "method": "PUT",
+        "pathTemplate": "/v1/memberships/{membershipId}",
+        "path": "/v1/memberships/{membershipId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "membershipId"
+      ],
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "Membership",
+        "UpdateMembershipRequest",
+        "inline.updateMembership.parameter.path.membershipId"
+      ],
+      "resource": "UpdateMembershipRequest"
+    },
+    "messages.messages.create": {
+      "sdkMethod": "messages.messages.create",
+      "summary": "Create a message",
+      "tags": [
+        "Messages"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "createMessage",
+        "method": "POST",
+        "pathTemplate": "/v1/messages",
+        "path": "/v1/messages",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "CreateMessageRequest",
+        "Message"
+      ],
+      "resource": "CreateMessageRequest"
+    },
+    "messages.messages.delete": {
+      "sdkMethod": "messages.messages.delete",
+      "summary": "Delete a message",
+      "tags": [
+        "Messages"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "deleteMessage",
+        "method": "DELETE",
+        "pathTemplate": "/v1/messages/{messageId}",
+        "path": "/v1/messages/{messageId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "messageId"
+      ],
+      "relatedSchemas": [
+        "inline.deleteMessage.parameter.path.messageId"
+      ]
+    },
+    "messages.messages.get": {
+      "sdkMethod": "messages.messages.get",
+      "summary": "Get message details",
+      "tags": [
+        "Messages"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getMessageDetails",
+        "method": "GET",
+        "pathTemplate": "/v1/messages/{messageId}",
+        "path": "/v1/messages/{messageId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "messageId"
+      ],
+      "relatedSchemas": [
+        "Message",
+        "inline.getMessageDetails.parameter.path.messageId"
+      ],
+      "resource": "Message"
+    },
+    "messages.messages.list": {
+      "sdkMethod": "messages.messages.list",
+      "summary": "List messages",
+      "tags": [
+        "Messages"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listMessages",
+        "method": "GET",
+        "pathTemplate": "/v1/messages",
+        "path": "/v1/messages",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "before",
+        "beforeMessage",
+        "max",
+        "mentionedPeople",
+        "roomId"
+      ],
+      "relatedSchemas": [
+        "MessageList",
+        "inline.listMessages.parameter.query.before",
+        "inline.listMessages.parameter.query.beforeMessage",
+        "inline.listMessages.parameter.query.max",
+        "inline.listMessages.parameter.query.mentionedPeople",
+        "inline.listMessages.parameter.query.roomId"
+      ],
+      "resource": "MessageList"
+    },
+    "people.me.list": {
+      "sdkMethod": "people.me.list",
+      "summary": "Get my own details",
+      "tags": [
+        "People"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getMyOwnDetails",
+        "method": "GET",
+        "pathTemplate": "/v1/people/me",
+        "path": "/v1/people/me",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "relatedSchemas": [
+        "Person"
+      ],
+      "resource": "Person"
+    },
+    "people.people.get": {
+      "sdkMethod": "people.people.get",
+      "summary": "Get person details",
+      "tags": [
+        "People"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getPersonDetails",
+        "method": "GET",
+        "pathTemplate": "/v1/people/{personId}",
+        "path": "/v1/people/{personId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "personId"
+      ],
+      "relatedSchemas": [
+        "Person",
+        "inline.getPersonDetails.parameter.path.personId"
+      ],
+      "resource": "Person"
+    },
+    "people.people.list": {
+      "sdkMethod": "people.people.list",
+      "summary": "List people",
+      "tags": [
+        "People"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listPeople",
+        "method": "GET",
+        "pathTemplate": "/v1/people",
+        "path": "/v1/people",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "displayName",
+        "email",
+        "max",
+        "orgId"
+      ],
+      "relatedSchemas": [
+        "PersonList",
+        "inline.listPeople.parameter.query.displayName",
+        "inline.listPeople.parameter.query.email",
+        "inline.listPeople.parameter.query.max",
+        "inline.listPeople.parameter.query.orgId"
+      ],
+      "resource": "PersonList"
+    },
+    "rooms.rooms.create": {
+      "sdkMethod": "rooms.rooms.create",
+      "summary": "Create a room",
+      "tags": [
+        "Rooms"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "createRoom",
+        "method": "POST",
+        "pathTemplate": "/v1/rooms",
+        "path": "/v1/rooms",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "CreateRoomRequest",
+        "Room"
+      ],
+      "resource": "CreateRoomRequest"
+    },
+    "rooms.rooms.delete": {
+      "sdkMethod": "rooms.rooms.delete",
+      "summary": "Delete a room",
+      "tags": [
+        "Rooms"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "deleteRoom",
+        "method": "DELETE",
+        "pathTemplate": "/v1/rooms/{roomId}",
+        "path": "/v1/rooms/{roomId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "roomId"
+      ],
+      "relatedSchemas": [
+        "inline.deleteRoom.parameter.path.roomId"
+      ]
+    },
+    "rooms.rooms.get": {
+      "sdkMethod": "rooms.rooms.get",
+      "summary": "Get room details",
+      "tags": [
+        "Rooms"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getRoomDetails",
+        "method": "GET",
+        "pathTemplate": "/v1/rooms/{roomId}",
+        "path": "/v1/rooms/{roomId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "roomId"
+      ],
+      "relatedSchemas": [
+        "Room",
+        "inline.getRoomDetails.parameter.path.roomId"
+      ],
+      "resource": "Room"
+    },
+    "rooms.rooms.list": {
+      "sdkMethod": "rooms.rooms.list",
+      "summary": "List rooms",
+      "tags": [
+        "Rooms"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listRooms",
+        "method": "GET",
+        "pathTemplate": "/v1/rooms",
+        "path": "/v1/rooms",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "max",
+        "sortBy",
+        "teamId",
+        "type"
+      ],
+      "relatedSchemas": [
+        "RoomList",
+        "inline.listRooms.parameter.query.max",
+        "inline.listRooms.parameter.query.sortBy",
+        "inline.listRooms.parameter.query.teamId",
+        "inline.listRooms.parameter.query.type"
+      ],
+      "resource": "RoomList"
+    },
+    "rooms.rooms.replace": {
+      "sdkMethod": "rooms.rooms.replace",
+      "summary": "Update a room",
+      "tags": [
+        "Rooms"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "updateRoom",
+        "method": "PUT",
+        "pathTemplate": "/v1/rooms/{roomId}",
+        "path": "/v1/rooms/{roomId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "roomId"
+      ],
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "Room",
+        "UpdateRoomRequest",
+        "inline.updateRoom.parameter.path.roomId"
+      ],
+      "resource": "UpdateRoomRequest"
+    },
+    "webhooks.webhooks.create": {
+      "sdkMethod": "webhooks.webhooks.create",
+      "summary": "Create a webhook",
+      "tags": [
+        "Webhooks"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "createWebhook",
+        "method": "POST",
+        "pathTemplate": "/v1/webhooks",
+        "path": "/v1/webhooks",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "CreateWebhookRequest",
+        "Webhook"
+      ],
+      "resource": "CreateWebhookRequest"
+    },
+    "webhooks.webhooks.delete": {
+      "sdkMethod": "webhooks.webhooks.delete",
+      "summary": "Delete a webhook",
+      "tags": [
+        "Webhooks"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "deleteWebhook",
+        "method": "DELETE",
+        "pathTemplate": "/v1/webhooks/{webhookId}",
+        "path": "/v1/webhooks/{webhookId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "webhookId"
+      ],
+      "relatedSchemas": [
+        "inline.deleteWebhook.parameter.path.webhookId"
+      ]
+    },
+    "webhooks.webhooks.get": {
+      "sdkMethod": "webhooks.webhooks.get",
+      "summary": "Get webhook details",
+      "tags": [
+        "Webhooks"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getWebhookDetails",
+        "method": "GET",
+        "pathTemplate": "/v1/webhooks/{webhookId}",
+        "path": "/v1/webhooks/{webhookId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "webhookId"
+      ],
+      "relatedSchemas": [
+        "Webhook",
+        "inline.getWebhookDetails.parameter.path.webhookId"
+      ],
+      "resource": "Webhook"
+    },
+    "webhooks.webhooks.list": {
+      "sdkMethod": "webhooks.webhooks.list",
+      "summary": "List webhooks",
+      "tags": [
+        "Webhooks"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listWebhooks",
+        "method": "GET",
+        "pathTemplate": "/v1/webhooks",
+        "path": "/v1/webhooks",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "max",
+        "ownedBy"
+      ],
+      "relatedSchemas": [
+        "WebhookList",
+        "inline.listWebhooks.parameter.query.max",
+        "inline.listWebhooks.parameter.query.ownedBy"
+      ],
+      "resource": "WebhookList"
+    },
+    "webhooks.webhooks.replace": {
+      "sdkMethod": "webhooks.webhooks.replace",
+      "summary": "Update a webhook",
+      "tags": [
+        "Webhooks"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "updateWebhook",
+        "method": "PUT",
+        "pathTemplate": "/v1/webhooks/{webhookId}",
+        "path": "/v1/webhooks/{webhookId}",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "pathParameters": [
+        "webhookId"
+      ],
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "UpdateWebhookRequest",
+        "Webhook",
+        "inline.updateWebhook.parameter.path.webhookId"
+      ],
+      "resource": "UpdateWebhookRequest"
+    }
+  }
+}

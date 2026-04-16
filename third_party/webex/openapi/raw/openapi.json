@@ -1,0 +1,1165 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Webex Messaging API",
+    "version": "postman-webex-messaging-curated-2026-04-16",
+    "description": "Curated Webex Messaging OpenAPI seed derived from the public Webex Postman workspace. This first pass focuses on the core messaging surfaces exposed in that collection: people, rooms, messages, memberships, and webhooks."
+  },
+  "servers": [
+    {
+      "url": "https://webexapis.com/v1"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "People"
+    },
+    {
+      "name": "Rooms"
+    },
+    {
+      "name": "Messages"
+    },
+    {
+      "name": "Memberships"
+    },
+    {
+      "name": "Webhooks"
+    }
+  ],
+  "paths": {
+    "/people": {
+      "get": {
+        "operationId": "listPeople",
+        "tags": [
+          "People"
+        ],
+        "summary": "List people",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/max"
+          },
+          {
+            "name": "email",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "displayName",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of people",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/people/me": {
+      "get": {
+        "operationId": "getMyOwnDetails",
+        "tags": [
+          "People"
+        ],
+        "summary": "Get my own details",
+        "responses": {
+          "200": {
+            "description": "The authenticated person",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Person"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/people/{personId}": {
+      "get": {
+        "operationId": "getPersonDetails",
+        "tags": [
+          "People"
+        ],
+        "summary": "Get person details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/personId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A person record",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Person"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms": {
+      "get": {
+        "operationId": "listRooms",
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "List rooms",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/max"
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "group",
+                "direct"
+              ]
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "id",
+                "lastactivity",
+                "created"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of rooms",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createRoom",
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Create a room",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoomRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The created room",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rooms/{roomId}": {
+      "get": {
+        "operationId": "getRoomDetails",
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Get room details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/roomId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A room",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateRoom",
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Update a room",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/roomId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRoomRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated room",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Room"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteRoom",
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Delete a room",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/roomId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Room deleted"
+          }
+        }
+      }
+    },
+    "/messages": {
+      "get": {
+        "operationId": "listMessages",
+        "tags": [
+          "Messages"
+        ],
+        "summary": "List messages",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/max"
+          },
+          {
+            "name": "roomId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mentionedPeople",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "beforeMessage",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of messages",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createMessage",
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Create a message",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The created message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/messages/{messageId}": {
+      "get": {
+        "operationId": "getMessageDetails",
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Get message details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/messageId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Message"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMessage",
+        "tags": [
+          "Messages"
+        ],
+        "summary": "Delete a message",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/messageId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Message deleted"
+          }
+        }
+      }
+    },
+    "/memberships": {
+      "get": {
+        "operationId": "listMemberships",
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "List memberships",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/max"
+          },
+          {
+            "name": "roomId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "personId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "personEmail",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of memberships",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createMembership",
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Create a membership",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMembershipRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The created membership",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memberships/{membershipId}": {
+      "get": {
+        "operationId": "getMembershipDetails",
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Get membership details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/membershipId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A membership",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateMembership",
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Update a membership",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/membershipId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMembershipRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated membership",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Membership"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteMembership",
+        "tags": [
+          "Memberships"
+        ],
+        "summary": "Delete a membership",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/membershipId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Membership deleted"
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "get": {
+        "operationId": "listWebhooks",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "List webhooks",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/max"
+          },
+          {
+            "name": "ownedBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "creator",
+                "org"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createWebhook",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Create a webhook",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The created webhook",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/webhooks/{webhookId}": {
+      "get": {
+        "operationId": "getWebhookDetails",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Get webhook details",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/webhookId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A webhook",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateWebhook",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Update a webhook",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/webhookId"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWebhookRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated webhook",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWebhook",
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Delete a webhook",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/webhookId"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Webhook deleted"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "parameters": {
+      "max": {
+        "name": "max",
+        "in": "query",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "personId": {
+        "name": "personId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "roomId": {
+        "name": "roomId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "messageId": {
+        "name": "messageId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "membershipId": {
+        "name": "membershipId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      },
+      "webhookId": {
+        "name": "webhookId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "schemas": {
+      "PersonList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Person"
+            }
+          }
+        }
+      },
+      "RoomList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Room"
+            }
+          }
+        }
+      },
+      "MessageList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Message"
+            }
+          }
+        }
+      },
+      "MembershipList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Membership"
+            }
+          }
+        }
+      },
+      "WebhookList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Webhook"
+            }
+          }
+        }
+      },
+      "Person": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "emails": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "email"
+            }
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "nickName": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "avatar": {
+            "type": "string",
+            "format": "uri"
+          },
+          "orgId": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      },
+      "Room": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "lastActivity": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "creatorId": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Message": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "roomType": {
+            "type": "string"
+          },
+          "toPersonId": {
+            "type": "string"
+          },
+          "toPersonEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "text": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          },
+          "html": {
+            "type": "string"
+          },
+          "personId": {
+            "type": "string"
+          },
+          "personEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      },
+      "Membership": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "roomId": {
+            "type": "string"
+          },
+          "personId": {
+            "type": "string"
+          },
+          "personEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "personDisplayName": {
+            "type": "string"
+          },
+          "personOrgId": {
+            "type": "string"
+          },
+          "isModerator": {
+            "type": "boolean"
+          },
+          "isMonitor": {
+            "type": "boolean"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "targetUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "event": {
+            "type": "string"
+          },
+          "filter": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "ownedBy": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "appId": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateRoomRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "teamId": {
+            "type": "string"
+          },
+          "classificationId": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateRoomRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "classificationId": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateMessageRequest": {
+        "type": "object",
+        "properties": {
+          "roomId": {
+            "type": "string"
+          },
+          "toPersonId": {
+            "type": "string"
+          },
+          "toPersonEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "text": {
+            "type": "string"
+          },
+          "markdown": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      },
+      "CreateMembershipRequest": {
+        "type": "object",
+        "required": [
+          "roomId"
+        ],
+        "properties": {
+          "roomId": {
+            "type": "string"
+          },
+          "personId": {
+            "type": "string"
+          },
+          "personEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "isModerator": {
+            "type": "boolean"
+          }
+        }
+      },
+      "UpdateMembershipRequest": {
+        "type": "object",
+        "properties": {
+          "isModerator": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateWebhookRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "targetUrl",
+          "resource",
+          "event"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "targetUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "resource": {
+            "type": "string"
+          },
+          "event": {
+            "type": "string"
+          },
+          "filter": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateWebhookRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "targetUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

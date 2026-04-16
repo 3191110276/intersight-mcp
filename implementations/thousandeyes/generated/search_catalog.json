@@ -1,0 +1,6300 @@
+{
+  "metadata": {
+    "published_version": "7.0.82",
+    "source_url": "https://pubhub.devnetcloud.com/media/000-v7-apis/docs/reference/unified-oas/api.yaml",
+    "sha256": "a8b8aa1a5f3342891069477f8c129cd622d10efeb86f44d90ceea0bbdc6afd1d",
+    "retrieval_date": "2026-04-16"
+  },
+  "resources": {
+    "account-groups.account-groups": {
+      "schema": "AccountGroupRequest",
+      "createFields": {
+        "accountGroupName": {
+          "type": "string",
+          "required": true
+        },
+        "agents": {
+          "type": "array",
+          "items": "string"
+        }
+      },
+      "path": "/v7/account-groups/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "agents.agents": {
+      "schema": "inline.deleteAgent.parameter.path.agentId",
+      "operations": [
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "agents.clusterassign": {
+      "schema": "AgentClusterAssignRequest",
+      "path": "/v7/agents/{agentId}/cluster/assign",
+      "operations": [
+        "post"
+      ]
+    },
+    "agents.clusterunassign": {
+      "schema": "AgentClusterUnassignRequest",
+      "path": "/v7/agents/{agentId}/cluster/unassign",
+      "operations": [
+        "post"
+      ]
+    },
+    "agents.notification-rules": {
+      "schema": "inline.getAgentsNotificationRule.parameter.path.notificationRuleId",
+      "path": "/v7/agents/notification-rules/{notificationRuleId?}",
+      "operations": [
+        "get",
+        "list"
+      ]
+    },
+    "agents.proxies": {
+      "schema": "inline.getAgentsProxies.parameter.query.aid",
+      "path": "/v7/agents/proxies",
+      "operations": [
+        "list"
+      ]
+    },
+    "agents.testsassign": {
+      "schema": "AgentTestsAssignRequest",
+      "path": "/v7/agents/{agentId}/tests/assign",
+      "operations": [
+        "post"
+      ]
+    },
+    "agents.testsoverride": {
+      "schema": "AgentTestsAssignRequest",
+      "path": "/v7/agents/{agentId}/tests/override",
+      "operations": [
+        "post"
+      ]
+    },
+    "agents.testsunassign": {
+      "schema": "AgentTestsAssignRequest",
+      "path": "/v7/agents/{agentId}/tests/unassign",
+      "operations": [
+        "post"
+      ]
+    },
+    "alert-suppression-windows.alert-suppression-windows": {
+      "schema": "AlertSuppressionWindowRequest",
+      "createFields": {
+        "duration": {
+          "type": "integer"
+        },
+        "endRepeat": {
+          "type": "object"
+        },
+        "isEnabled": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "repeat": {
+          "type": "object"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "testIds": {
+          "type": "array",
+          "items": "string"
+        }
+      },
+      "path": "/v7/alert-suppression-windows/{windowId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "alerts.alerts": {
+      "schema": "inline.getAlert.parameter.path.alertId",
+      "path": "/v7/alerts/{alertId?}",
+      "operations": [
+        "get",
+        "list"
+      ]
+    },
+    "alerts.rules": {
+      "schema": "RuleDetailUpdate",
+      "createFields": {
+        "alertGroupType": {
+          "type": "string"
+        },
+        "alertType": {
+          "type": "string",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "endpointAgentIds": {
+          "type": "array",
+          "items": "string"
+        },
+        "endpointLabelIds": {
+          "type": "array",
+          "items": "string"
+        },
+        "expression": {
+          "type": "string",
+          "required": true
+        },
+        "includeCoveredPrefixes": {
+          "type": "boolean"
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "minimumSources": {
+          "type": "integer"
+        },
+        "minimumSourcesPct": {
+          "type": "integer"
+        },
+        "notifications": {
+          "type": "object"
+        },
+        "notifyOnClear": {
+          "type": "boolean"
+        },
+        "roundsViolatingOutOf": {
+          "type": "integer",
+          "required": true
+        },
+        "roundsViolatingRequired": {
+          "type": "integer"
+        },
+        "ruleName": {
+          "type": "string",
+          "required": true
+        },
+        "severity": {
+          "type": "string"
+        },
+        "testIds": {
+          "type": "array"
+        },
+        "visitedSitesFilter": {
+          "type": "array",
+          "items": "string"
+        }
+      },
+      "path": "/v7/alerts/rules/{ruleId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "api-tokens.api-tokens": {
+      "path": "/v7/api-tokens",
+      "operations": [
+        "create"
+      ]
+    },
+    "audit-user-events.audit-user-events": {
+      "schema": "inline.getUserEvents.parameter.query.aid",
+      "path": "/v7/audit-user-events",
+      "operations": [
+        "list"
+      ]
+    },
+    "autonomous-systems.prefixes": {
+      "schema": "AutonomousSystemPrefixesExpand",
+      "path": "/v7/autonomous-systems/{asn}/prefixes",
+      "operations": [
+        "get"
+      ]
+    },
+    "cloud-insights.integrationaws": {
+      "schema": "inline.deleteAwsMonitoringIntegration.parameter.path.integrationId",
+      "path": "/v7/cloud-insights/integration/aws/{integrationId?}",
+      "operations": [
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    "cloud-insights.integrationawsflow-logs": {
+      "schema": "AwsFlowLogsIntegrationRequest",
+      "createFields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "roleArn": {
+          "type": "string",
+          "required": true
+        },
+        "snsTopicsArns": {
+          "type": "array",
+          "items": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/cloud-insights/integration/aws/flow-logs",
+      "operations": [
+        "create"
+      ]
+    },
+    "cloud-insights.integrationawsflow-logspolicies": {
+      "schema": "AwsMonitoringPoliciesJsonString",
+      "path": "/v7/cloud-insights/integration/aws/flow-logs/policies",
+      "operations": [
+        "list"
+      ]
+    },
+    "cloud-insights.integrationawsinventory": {
+      "schema": "AwsInventoryIntegrationRequest",
+      "createFields": {
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "roleArn": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/cloud-insights/integration/aws/inventory",
+      "operations": [
+        "create"
+      ]
+    },
+    "cloud-insights.integrationawsinventorypolicies": {
+      "schema": "AwsMonitoringPoliciesJsonString",
+      "path": "/v7/cloud-insights/integration/aws/inventory/policies",
+      "operations": [
+        "list"
+      ]
+    },
+    "cloud-insights.integrationawspolicysettings": {
+      "schema": "inline.getAWSIntegrationPolicySettings.parameter.query.aid",
+      "path": "/v7/cloud-insights/integration/aws/policy/settings",
+      "operations": [
+        "list",
+        "replace"
+      ]
+    },
+    "cloud-insights.integrationazure": {
+      "schema": "inline.deleteAzureMonitoringIntegration.parameter.path.integrationId",
+      "path": "/v7/cloud-insights/integration/azure/{integrationId?}",
+      "operations": [
+        "delete",
+        "get",
+        "list"
+      ]
+    },
+    "cloud-insights.integrationazureflow-logs": {
+      "schema": "AzureFlowLogsIntegrationRequest",
+      "createFields": {
+        "appId": {
+          "type": "string",
+          "required": true
+        },
+        "azureTenantId": {
+          "type": "string",
+          "required": true
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "password": {
+          "type": "string",
+          "required": true
+        },
+        "serviceBusQueueUrl": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/cloud-insights/integration/azure/flow-logs",
+      "operations": [
+        "create"
+      ]
+    },
+    "cloud-insights.integrationazureinventory": {
+      "schema": "AzureInventoryIntegrationRequest",
+      "createFields": {
+        "appId": {
+          "type": "string",
+          "required": true
+        },
+        "azureTenantId": {
+          "type": "string",
+          "required": true
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "password": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/cloud-insights/integration/azure/inventory",
+      "operations": [
+        "create"
+      ]
+    },
+    "cloud-insights.integrationazurepolicysettings": {
+      "schema": "inline.getAzureIntegrationPolicySettings.parameter.query.aid",
+      "path": "/v7/cloud-insights/integration/azure/policy/settings",
+      "operations": [
+        "list",
+        "replace"
+      ]
+    },
+    "connectors.generic": {
+      "schema": "GenericConnector",
+      "createFields": {
+        "authentication": {
+          "type": "object"
+        },
+        "headers": {
+          "type": "array",
+          "items": "object"
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "target": {
+          "type": "string",
+          "required": true
+        },
+        "type": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/connectors/generic/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "connectors.genericoperations": {
+      "schema": "inline.listGenericConnectorOperations.parameter.path.id",
+      "path": "/v7/connectors/generic/{id}/operations",
+      "operations": [
+        "get",
+        "replace"
+      ]
+    },
+    "credentials.credentials": {
+      "schema": "CredentialRequest",
+      "createFields": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/credentials/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "dashboard-snapshots.dashboard-snapshots": {
+      "schema": "GenerateDashboardSnapshotRequest",
+      "createFields": {
+        "anonymizeData": {
+          "type": "boolean"
+        },
+        "dashboardId": {
+          "type": "string"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expirationDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "timezone": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/dashboard-snapshots/{snapshotId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    "dashboard-snapshots.widgets": {
+      "schema": "inline.getDashboardSnapshotWidgetData.parameter.path.snapshotId",
+      "path": "/v7/dashboard-snapshots/{snapshotId}/widgets/{widgetId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "dashboards.dashboards": {
+      "schema": "Dashboard",
+      "createFields": {
+        "defaultTimespan": {
+          "ref": "DefaultTimespan",
+          "example": {
+            "Moid": "\u003cdefaultTimespan-moid\u003e"
+          }
+        },
+        "description": {
+          "type": "string"
+        },
+        "globalFilterId": {
+          "type": "string"
+        },
+        "isGlobalOverride": {
+          "type": "boolean"
+        },
+        "isPrivate": {
+          "type": "boolean"
+        },
+        "layout": {
+          "type": "object"
+        },
+        "title": {
+          "type": "string"
+        },
+        "widgets": {
+          "type": "array",
+          "items": "ApiWidget"
+        }
+      },
+      "path": "/v7/dashboards/{dashboardId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "dashboards.filters": {
+      "schema": "ApiContextFilterRequest",
+      "createFields": {
+        "context": {
+          "type": "array",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/dashboards/filters/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "dashboards.widgets": {
+      "schema": "DashboardOrder",
+      "path": "/v7/dashboards/{dashboardId}/widgets/{widgetId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "dashboards.widgetscards": {
+      "schema": "inline.getIndividualCardData.parameter.path.cardId",
+      "path": "/v7/dashboards/{dashboardId}/widgets/{widgetId}/cards/{cardId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "dashboards.widgetscolumns": {
+      "schema": "inline.getIndividualColumnData.parameter.path.columnId",
+      "path": "/v7/dashboards/{dashboardId}/widgets/{widgetId}/columns/{columnId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "emulated-devices.emulated-devices": {
+      "schema": "EmulatedDevice",
+      "createFields": {
+        "category": {
+          "type": "string",
+          "required": true
+        },
+        "height": {
+          "type": "integer",
+          "required": true
+        },
+        "width": {
+          "type": "integer",
+          "required": true
+        }
+      },
+      "path": "/v7/emulated-devices",
+      "operations": [
+        "create",
+        "list"
+      ]
+    },
+    "endpoint.agents": {
+      "schema": "EndpointAgentId",
+      "operations": [
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    "endpoint.agentsconnection-string": {
+      "schema": "inline.getEndpointAgentsConnectionString.parameter.query.aid",
+      "path": "/v7/endpoint/agents/connection-string",
+      "operations": [
+        "list"
+      ]
+    },
+    "endpoint.agentsdisable": {
+      "schema": "EndpointAgentId",
+      "path": "/v7/endpoint/agents/{agentId}/disable",
+      "operations": [
+        "post"
+      ]
+    },
+    "endpoint.agentsenable": {
+      "schema": "EndpointAgentId",
+      "path": "/v7/endpoint/agents/{agentId}/enable",
+      "operations": [
+        "post"
+      ]
+    },
+    "endpoint.agentsfilter": {
+      "schema": "AgentSearchRequest",
+      "createFields": {
+        "searchFilters": {
+          "type": "object"
+        },
+        "searchSort": {
+          "type": "array",
+          "items": "object"
+        },
+        "thresholdFilter": {
+          "type": "object"
+        }
+      },
+      "path": "/v7/endpoint/agents/filter",
+      "operations": [
+        "create"
+      ]
+    },
+    "endpoint.agentstransfer": {
+      "schema": "AgentTransferRequest",
+      "path": "/v7/endpoint/agents/{agentId}/transfer",
+      "operations": [
+        "post"
+      ]
+    },
+    "endpoint.agentstransferbulk": {
+      "schema": "BulkAgentTransferRequest",
+      "createFields": {
+        "transfers": {
+          "type": "array",
+          "items": "AgentTransfer"
+        }
+      },
+      "path": "/v7/endpoint/agents/transfer/bulk",
+      "operations": [
+        "create"
+      ]
+    },
+    "endpoint.labels": {
+      "schema": "LabelRequest",
+      "createFields": {
+        "color": {
+          "type": "string"
+        },
+        "filters": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "matchType": {
+          "type": "string",
+          "required": true
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/endpoint/labels/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    "endpoint.test-resultsdynamic-testsnetworkfilter": {
+      "schema": "DynamicEndpointTestsDataRoundSearch",
+      "path": "/v7/endpoint/test-results/dynamic-tests/{testId}/network/filter",
+      "operations": [
+        "post"
+      ]
+    },
+    "endpoint.test-resultsdynamic-testspath-vis": {
+      "schema": "inline.getDynamicTestPathVisResults.parameter.path.testId",
+      "path": "/v7/endpoint/test-results/dynamic-tests/{testId}/path-vis",
+      "operations": [
+        "get"
+      ]
+    },
+    "endpoint.test-resultsdynamic-testspath-visagentround": {
+      "schema": "inline.getDynamicTestPathVisAgentRoundResults.parameter.path.agentId",
+      "path": "/v7/endpoint/test-results/dynamic-tests/{testId}/path-vis/agent/{agentId}/round/{roundId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "endpoint.test-resultslocal-networks": {
+      "schema": "inline.getLocalNetworksTestResults.parameter.query.aid",
+      "path": "/v7/endpoint/test-results/local-networks",
+      "operations": [
+        "list"
+      ]
+    },
+    "endpoint.test-resultslocal-networkstopologies": {
+      "schema": "inline.getLocalNetworksTestResultsTopology.parameter.path.networkTopologyId",
+      "path": "/v7/endpoint/test-results/local-networks/topologies/{networkTopologyId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "endpoint.test-resultslocal-networkstopologiesfilter": {
+      "schema": "EndpointNetworkTopologyResultRequest",
+      "createFields": {
+        "searchFilters": {
+          "ref": "EndpointNetworkTopologyResultRequestFilter",
+          "example": {
+            "Moid": "\u003cendpointNetworkTopologyResultRequestFilter-moid\u003e"
+          }
+        },
+        "thresholdFilter": {
+          "type": "object"
+        }
+      },
+      "path": "/v7/endpoint/test-results/local-networks/topologies/filter",
+      "operations": [
+        "create"
+      ]
+    },
+    "endpoint.test-resultsreal-user-tests": {
+      "schema": "inline.getRealUserTestResults.parameter.path.id",
+      "path": "/v7/endpoint/test-results/real-user-tests/{id}",
+      "operations": [
+        "get"
+      ]
+    },
+    "endpoint.test-resultsreal-user-testsfilter": {
+      "schema": "RealUserEndpointTestResultsRequest",
+      "createFields": {
+        "searchFilters": {
+          "ref": "RealUserEndpointTestResultRequestFilter",
+          "example": {
+            "Moid": "\u003crealUserEndpointTestResultRequestFilter-moid\u003e"
+          }
+        }
+      },
+      "path": "/v7/endpoint/test-results/real-user-tests/filter",
+      "operations": [
+        "create"
+      ]
+    },
+    "endpoint.test-resultsreal-user-testsnetworksfilter": {
+      "schema": "RealUserEndpointTestResultsRequest",
+      "createFields": {
+        "searchFilters": {
+          "ref": "RealUserEndpointTestResultRequestFilter",
+          "example": {
+            "Moid": "\u003crealUserEndpointTestResultRequestFilter-moid\u003e"
+          }
+        }
+      },
+      "path": "/v7/endpoint/test-results/real-user-tests/networks/filter",
+      "operations": [
+        "create"
+      ]
+    },
+    "endpoint.test-resultsreal-user-testspages": {
+      "schema": "inline.getRealUserTestPageResults.parameter.path.id",
+      "path": "/v7/endpoint/test-results/real-user-tests/{id}/pages/{pageId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "endpoint.test-resultsreal-user-testspagesfilter": {
+      "schema": "RealUserEndpointTestResultRequestFilter",
+      "createFields": {
+        "agentId": {
+          "type": "array",
+          "items": "string"
+        },
+        "bssid": {
+          "type": "array",
+          "items": "string"
+        },
+        "connection": {
+          "type": "array",
+          "items": "string"
+        },
+        "destinationIp": {
+          "type": "array",
+          "items": "string"
+        },
+        "domain": {
+          "type": "array",
+          "items": "string"
+        },
+        "gateway": {
+          "type": "array",
+          "items": "string"
+        },
+        "location": {
+          "type": "array",
+          "items": "string"
+        },
+        "networkId": {
+          "type": "array",
+          "items": "string"
+        },
+        "platform": {
+          "type": "array",
+          "items": "string"
+        },
+        "proxyTarget": {
+          "type": "array",
+          "items": "string"
+        },
+        "ssid": {
+          "type": "array",
+          "items": "string"
+        },
+        "trigger": {
+          "type": "array",
+          "items": "string"
+        },
+        "visitedSite": {
+          "type": "array",
+          "items": "string"
+        },
+        "vpnTarget": {
+          "type": "array",
+          "items": "string"
+        }
+      },
+      "path": "/v7/endpoint/test-results/real-user-tests/pages/filter",
+      "operations": [
+        "create"
+      ]
+    },
+    "endpoint.test-resultsscheduled-testshttp-server": {
+      "schema": "inline.getHttpServerScheduledTestResults.parameter.path.testId",
+      "path": "/v7/endpoint/test-results/scheduled-tests/{testId}/http-server",
+      "operations": [
+        "get"
+      ]
+    },
+    "endpoint.test-resultsscheduled-testshttp-serverfilter": {
+      "schema": "HttpEndpointTestsDataRoundsSearch",
+      "createFields": {
+        "searchFilters": {
+          "type": "object"
+        },
+        "searchSort": {
+          "type": "array",
+          "items": "object"
+        },
+        "thresholdFilter": {
+          "type": "object"
+        }
+      },
+      "operations": [
+        "create",
+        "post"
+      ]
+    },
+    "endpoint.test-resultsscheduled-testsnetworkfilter": {
+      "schema": "MultiTestIdEndpointTestsDataRoundsSearch",
+      "createFields": {
+        "searchFilters": {
+          "type": "object"
+        },
+        "searchSort": {
+          "type": "array",
+          "items": "object"
+        },
+        "thresholdFilter": {
+          "type": "object"
+        }
+      },
+      "operations": [
+        "create",
+        "post"
+      ]
+    },
+    "endpoint.test-resultsscheduled-testspath-vis": {
+      "schema": "inline.getScheduledTestPathVisResults.parameter.path.testId",
+      "path": "/v7/endpoint/test-results/scheduled-tests/{testId}/path-vis",
+      "operations": [
+        "get"
+      ]
+    },
+    "endpoint.test-resultsscheduled-testspath-visagentround": {
+      "schema": "inline.getScheduledTestPathVisAgentRoundResults.parameter.path.agentId",
+      "path": "/v7/endpoint/test-results/scheduled-tests/{testId}/path-vis/agent/{agentId}/round/{roundId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "endpoint.testsdynamic-testsagent-to-server": {
+      "schema": "DynamicTestRequest",
+      "createFields": {
+        "agentSelectorType": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "array"
+        },
+        "application": {
+          "type": "string",
+          "required": true
+        },
+        "endpointAgentLabels": {
+          "type": "array"
+        },
+        "hasPathTraceInSession": {
+          "type": "boolean"
+        },
+        "interval": {
+          "type": "integer"
+        },
+        "ipVersion": {
+          "type": "string"
+        },
+        "isPrioritized": {
+          "type": "boolean"
+        },
+        "maxMachines": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "tcpProbeMode": {
+          "type": "string"
+        },
+        "testName": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/endpoint/tests/dynamic-tests/agent-to-server/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    "endpoint.testsscheduled-tests": {
+      "schema": "inline.getEndpointScheduledTests.parameter.query.aid",
+      "path": "/v7/endpoint/tests/scheduled-tests",
+      "operations": [
+        "list"
+      ]
+    },
+    "endpoint.testsscheduled-testsagent-to-server": {
+      "schema": "EndpointAgentToServerTestRequest",
+      "createFields": {
+        "agentSelectorType": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "array"
+        },
+        "endpointAgentLabels": {
+          "type": "array"
+        },
+        "interval": {
+          "type": "integer"
+        },
+        "ipVersion": {
+          "type": "string"
+        },
+        "isPrioritized": {
+          "type": "boolean"
+        },
+        "maxMachines": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "server": {
+          "type": "string",
+          "required": true
+        },
+        "serverName": {
+          "type": "string"
+        },
+        "testName": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/endpoint/tests/scheduled-tests/agent-to-server/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    "endpoint.testsscheduled-testsagent-to-serverinstant": {
+      "schema": "EndpointAgentToServerInstantTest",
+      "createFields": {
+        "agentSelectorType": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "array"
+        },
+        "endpointAgentLabels": {
+          "type": "array"
+        },
+        "ipVersion": {
+          "type": "string"
+        },
+        "maxMachines": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "server": {
+          "type": "string",
+          "required": true
+        },
+        "serverName": {
+          "type": "string"
+        },
+        "testName": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/endpoint/tests/scheduled-tests/agent-to-server/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "endpoint.testsscheduled-testshttp-server": {
+      "schema": "EndpointHttpServerTestRequest",
+      "createFields": {
+        "agentSelectorType": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "array"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "endpointAgentLabels": {
+          "type": "array"
+        },
+        "hasPathTraceInSession": {
+          "type": "boolean"
+        },
+        "hasPing": {
+          "type": "boolean"
+        },
+        "hasTraceroute": {
+          "type": "boolean"
+        },
+        "httpTimeLimit": {
+          "type": "integer"
+        },
+        "interval": {
+          "type": "integer"
+        },
+        "ipVersion": {
+          "type": "string"
+        },
+        "isPrioritized": {
+          "type": "boolean"
+        },
+        "maxMachines": {
+          "type": "integer"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "password": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "targetResponseTime": {
+          "type": "integer"
+        },
+        "tcpProbeMode": {
+          "type": "string"
+        },
+        "testName": {
+          "type": "string",
+          "required": true
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "username": {
+          "type": "string"
+        },
+        "verifyCertificate": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/endpoint/tests/scheduled-tests/http-server/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "update"
+      ]
+    },
+    "endpoint.testsscheduled-testshttp-serverinstant": {
+      "schema": "EndpointHttpServerInstantTest",
+      "createFields": {
+        "agentSelectorType": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "array"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "endpointAgentLabels": {
+          "type": "array"
+        },
+        "hasPathTraceInSession": {
+          "type": "boolean"
+        },
+        "hasPing": {
+          "type": "boolean"
+        },
+        "hasTraceroute": {
+          "type": "boolean"
+        },
+        "httpTimeLimit": {
+          "type": "integer"
+        },
+        "ipVersion": {
+          "type": "string"
+        },
+        "maxMachines": {
+          "type": "integer"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "password": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "targetResponseTime": {
+          "type": "integer"
+        },
+        "tcpProbeMode": {
+          "type": "string"
+        },
+        "testName": {
+          "type": "string",
+          "required": true
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "username": {
+          "type": "string"
+        },
+        "verifyCertificate": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/endpoint/tests/scheduled-tests/http-server/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "endpoint.testsscheduled-testsrun": {
+      "schema": "EndpointRunScheduledInstantTestResult",
+      "path": "/v7/endpoint/tests/scheduled-tests/{testId}/run",
+      "operations": [
+        "post"
+      ]
+    },
+    "events.events": {
+      "schema": "inline.getEvent.parameter.path.id",
+      "path": "/v7/events/{id?}",
+      "operations": [
+        "get",
+        "list"
+      ]
+    },
+    "internet-insights.catalogproviders": {
+      "schema": "inline.getCatalogProvider.parameter.path.providerId",
+      "path": "/v7/internet-insights/catalog/providers/{providerId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "internet-insights.catalogprovidersfilter": {
+      "schema": "ApiCatalogProviderFilter",
+      "createFields": {
+        "asn": {
+          "type": "string"
+        },
+        "included": {
+          "type": "boolean"
+        },
+        "location": {
+          "type": "string"
+        },
+        "providerName": {
+          "type": "string"
+        },
+        "providerType": {
+          "type": "string"
+        },
+        "region": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/internet-insights/catalog/providers/filter",
+      "operations": [
+        "create"
+      ]
+    },
+    "internet-insights.outagesapp": {
+      "schema": "inline.getAppOutage.parameter.path.outageId",
+      "path": "/v7/internet-insights/outages/app/{outageId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "internet-insights.outagesfilter": {
+      "schema": "ApiOutageFilter",
+      "createFields": {
+        "applicationName": {
+          "type": "array",
+          "items": "string"
+        },
+        "endDate": {
+          "type": "string",
+          "format": "yyyy-MM-ddTHH:mm[:ss]Z"
+        },
+        "interfaceNetwork": {
+          "type": "array",
+          "items": "string"
+        },
+        "outageScope": {
+          "type": "string"
+        },
+        "providerName": {
+          "type": "array",
+          "items": "string"
+        },
+        "startDate": {
+          "type": "string",
+          "format": "yyyy-MM-ddTHH:mm[:ss]Z"
+        },
+        "window": {
+          "type": "string",
+          "format": "^[0-9]+[smhdw]?"
+        }
+      },
+      "path": "/v7/internet-insights/outages/filter",
+      "operations": [
+        "create"
+      ]
+    },
+    "internet-insights.outagesnet": {
+      "schema": "inline.getNetworkOutage.parameter.path.outageId",
+      "path": "/v7/internet-insights/outages/net/{outageId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "monitors.monitors": {
+      "schema": "inline.getBgpMonitors.parameter.query.aid",
+      "path": "/v7/monitors",
+      "operations": [
+        "list"
+      ]
+    },
+    "network.path-visinterface-groups": {
+      "schema": "InterfaceGroup",
+      "createFields": {
+        "groupName": {
+          "type": "string"
+        },
+        "ipAddresses": {
+          "type": "array",
+          "items": "string"
+        }
+      },
+      "operations": [
+        "create",
+        "delete",
+        "list",
+        "replace"
+      ]
+    },
+    "operations.connectors": {
+      "schema": "inline.getOperationConnectors.parameter.path.id",
+      "path": "/v7/operations/{type}/{id}/connectors",
+      "operations": [
+        "get",
+        "replace"
+      ]
+    },
+    "operations.webhooks": {
+      "schema": "WebhookOperation",
+      "createFields": {
+        "category": {
+          "type": "string",
+          "required": true
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "headers": {
+          "type": "array",
+          "items": "object"
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "path": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "string"
+        },
+        "queryParams": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "required": true
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/operations/webhooks/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "permissions.permissions": {
+      "schema": "inline.getPermissions.parameter.query.aid",
+      "path": "/v7/permissions",
+      "operations": [
+        "list"
+      ]
+    },
+    "quotas.account-groupsassign": {
+      "schema": "OrganizationsQuotasAssign",
+      "createFields": {
+        "organizations": {
+          "type": "array",
+          "items": "object"
+        }
+      },
+      "path": "/v7/quotas/account-groups/assign",
+      "operations": [
+        "create"
+      ]
+    },
+    "quotas.account-groupsunassign": {
+      "schema": "OrganizationsQuotasUnassign",
+      "createFields": {
+        "organizations": {
+          "type": "array",
+          "items": "object"
+        }
+      },
+      "path": "/v7/quotas/account-groups/unassign",
+      "operations": [
+        "create"
+      ]
+    },
+    "quotas.assign": {
+      "schema": "QuotasAssignRequest",
+      "createFields": {
+        "organizations": {
+          "type": "array",
+          "items": "object"
+        }
+      },
+      "path": "/v7/quotas/assign",
+      "operations": [
+        "create"
+      ]
+    },
+    "quotas.quotas": {
+      "path": "/v7/quotas",
+      "operations": [
+        "list"
+      ]
+    },
+    "quotas.unassign": {
+      "schema": "QuotasUnassign",
+      "createFields": {
+        "organizations": {
+          "type": "array",
+          "items": "string"
+        }
+      },
+      "path": "/v7/quotas/unassign",
+      "operations": [
+        "create"
+      ]
+    },
+    "roles.roles": {
+      "schema": "RoleRequestBody",
+      "createFields": {
+        "name": {
+          "type": "string"
+        },
+        "permissions": {
+          "type": "array",
+          "items": "string"
+        }
+      },
+      "path": "/v7/roles/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "streams.streams": {
+      "schema": "Stream",
+      "createFields": {
+        "customHeaders": {
+          "type": "object"
+        },
+        "dataModelVersion": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "endpointAgentLabel": {
+          "type": "array",
+          "items": "object"
+        },
+        "endpointType": {
+          "type": "string"
+        },
+        "exporterConfig": {
+          "type": "object"
+        },
+        "filters": {
+          "type": "object"
+        },
+        "signal": {
+          "type": "string"
+        },
+        "streamEndpointUrl": {
+          "type": "string"
+        },
+        "tagMatch": {
+          "type": "array",
+          "items": "object"
+        },
+        "testMatch": {
+          "type": "array",
+          "items": "object"
+        },
+        "type": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/streams/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tags.assign": {
+      "schema": "BulkTagAssignments",
+      "createFields": {
+        "tags": {
+          "type": "array",
+          "items": "BulkTagAssignment"
+        }
+      },
+      "operations": [
+        "create",
+        "post"
+      ]
+    },
+    "tags.bulk": {
+      "schema": "BulkTagResponse",
+      "createFields": {
+        "tags": {
+          "type": "array",
+          "items": "Tag"
+        }
+      },
+      "path": "/v7/tags/bulk",
+      "operations": [
+        "create"
+      ]
+    },
+    "tags.tags": {
+      "schema": "TagInfo",
+      "createFields": {
+        "accessType": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string",
+          "nullable": true
+        },
+        "filters": {
+          "type": "array",
+          "items": "object"
+        },
+        "icon": {
+          "type": "string",
+          "nullable": true
+        },
+        "key": {
+          "type": "string"
+        },
+        "matchType": {
+          "type": "string"
+        },
+        "objectType": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tags/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tags.unassign": {
+      "schema": "BulkTagAssignments",
+      "createFields": {
+        "tags": {
+          "type": "array",
+          "items": "BulkTagAssignment"
+        }
+      },
+      "operations": [
+        "create",
+        "post"
+      ]
+    },
+    "templates.deploy": {
+      "schema": "DeployTemplate",
+      "path": "/v7/templates/{id}/deploy",
+      "operations": [
+        "post"
+      ]
+    },
+    "templates.sharing-settings": {
+      "schema": "inline.getSharingSettings.parameter.path.id",
+      "path": "/v7/templates/{id}/sharing-settings",
+      "operations": [
+        "get",
+        "replace"
+      ]
+    },
+    "templates.templates": {
+      "schema": "Template",
+      "createFields": {
+        "alertRules": {
+          "type": "object"
+        },
+        "certificationLevel": {
+          "type": "string"
+        },
+        "dashboardFilters": {
+          "type": "object"
+        },
+        "dashboards": {
+          "type": "object"
+        },
+        "deploymentStrategy": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "endpointTests": {
+          "type": "object"
+        },
+        "groupings": {
+          "type": "array",
+          "items": "object"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "isBuiltIn": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "object"
+        },
+        "modules": {
+          "type": "array",
+          "items": "string"
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "resourceInclusion": {
+          "type": "object"
+        },
+        "schemaVersion": {
+          "type": "object"
+        },
+        "tags": {
+          "type": "object"
+        },
+        "tests": {
+          "type": "object",
+          "ref": "TestConfigurationTemplate",
+          "example": {
+            "Moid": "\u003ctestConfigurationTemplate-moid\u003e"
+          }
+        },
+        "userInputs": {
+          "type": "object"
+        }
+      },
+      "path": "/v7/templates/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "test-results.api": {
+      "schema": "inline.getTestApiResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/api",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.apiagentround": {
+      "schema": "inline.getTestApiAgentRoundResults.parameter.path.agentId",
+      "path": "/v7/test-results/{testId}/api/agent/{agentId}/round/{roundId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.bgp": {
+      "schema": "inline.getTestBgpResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/bgp",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.bgproutesprefixround": {
+      "schema": "inline.getTestBgpRoutesPrefixRoundResults.parameter.path.prefixId",
+      "path": "/v7/test-results/{testId}/bgp/routes/prefix/{prefixId}/round/{roundId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.dns-server": {
+      "schema": "inline.getTestDnsServerResult.parameter.path.serverId",
+      "path": "/v7/test-results/{testId}/dns-server/{serverId?}",
+      "operations": [
+        "get",
+        "list"
+      ]
+    },
+    "test-results.dns-trace": {
+      "schema": "inline.getTestDnsTraceResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/dns-trace",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.dnssec": {
+      "schema": "inline.getTestDnsSecResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/dnssec",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.ftp-server": {
+      "schema": "inline.getTestFtpServerResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/ftp-server",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.http-server": {
+      "schema": "inline.getTestHttpServerResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/http-server",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.network": {
+      "schema": "TestDirection",
+      "path": "/v7/test-results/{testId}/network",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.page-load": {
+      "schema": "inline.getTestPageLoadResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/page-load",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.page-loadagentround": {
+      "schema": "inline.getTestPageLoadAgentRoundResults.parameter.path.agentId",
+      "path": "/v7/test-results/{testId}/page-load/agent/{agentId}/round/{roundId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.path-vis": {
+      "schema": "PathVisDirection",
+      "path": "/v7/test-results/{testId}/path-vis",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.path-visagentround": {
+      "schema": "PathVisDirection",
+      "path": "/v7/test-results/{testId}/path-vis/agent/{agentId}/round/{roundId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.rtp-server": {
+      "schema": "inline.getTestRtpServerResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/rtp-server",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.sip-server": {
+      "schema": "inline.getTestSipServerResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/sip-server",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.web-transactions": {
+      "schema": "inline.getTestWebTransactionResults.parameter.path.testId",
+      "path": "/v7/test-results/{testId}/web-transactions",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.web-transactionsagentround": {
+      "schema": "inline.getTestWebTransactionAgentRoundResults.parameter.path.agentId",
+      "path": "/v7/test-results/{testId}/web-transactions/agent/{agentId}/round/{roundId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "test-results.web-transactionsagentroundpage": {
+      "schema": "inline.getTestWebTransactionAgentRoundPageResults.parameter.path.agentId",
+      "path": "/v7/test-results/{testId}/web-transactions/agent/{agentId}/round/{roundId}/page/{pageId}",
+      "operations": [
+        "get"
+      ]
+    },
+    "tests.agent-to-agent": {
+      "schema": "AgentToAgentTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "dscpId": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "monitors": {
+          "type": "array",
+          "items": "string"
+        },
+        "mss": {
+          "type": "integer"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetAgentId": {
+          "type": "string",
+          "required": true
+        },
+        "testName": {
+          "type": "string"
+        },
+        "throughputDuration": {
+          "type": "integer"
+        },
+        "throughputMeasurements": {
+          "type": "boolean"
+        },
+        "throughputRate": {
+          "type": "integer"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/agent-to-agent/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.agent-to-agentinstant": {
+      "schema": "AgentToAgentInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "direction": {
+          "type": "string"
+        },
+        "dscpId": {
+          "type": "string"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mss": {
+          "type": "integer"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetAgentId": {
+          "type": "string",
+          "required": true
+        },
+        "testName": {
+          "type": "string"
+        },
+        "throughputDuration": {
+          "type": "integer"
+        },
+        "throughputMeasurements": {
+          "type": "boolean"
+        },
+        "throughputRate": {
+          "type": "integer"
+        }
+      },
+      "path": "/v7/tests/agent-to-agent/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.agent-to-server": {
+      "schema": "AgentToServerTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "continuousMode": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dscpId": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "monitors": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "pingPayloadSize": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "server": {
+          "type": "string",
+          "required": true
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/agent-to-server/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.agent-to-serverinstant": {
+      "schema": "AgentToServerInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "continuousMode": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dscpId": {
+          "type": "string"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "pingPayloadSize": {
+          "type": "integer"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "server": {
+          "type": "string",
+          "required": true
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tests/agent-to-server/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.api": {
+      "schema": "ApiTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "clientCertDomainsAllowList": {
+          "type": "string"
+        },
+        "clientCertificate": {
+          "type": "string"
+        },
+        "collectProxyNetworkData": {
+          "type": "boolean"
+        },
+        "credentials": {
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "distributedTracing": {
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "overrideAgentProxy": {
+          "type": "boolean"
+        },
+        "overrideProxyId": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "predefinedVariables": {
+          "type": "array",
+          "items": "object"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "requests": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetTime": {
+          "type": "integer"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "timeLimit": {
+          "type": "integer"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/api/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.apiinstant": {
+      "schema": "ApiInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "clientCertDomainsAllowList": {
+          "type": "string"
+        },
+        "clientCertificate": {
+          "type": "string"
+        },
+        "collectProxyNetworkData": {
+          "type": "boolean"
+        },
+        "credentials": {
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "distributedTracing": {
+          "type": "boolean"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "overrideAgentProxy": {
+          "type": "boolean"
+        },
+        "overrideProxyId": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "predefinedVariables": {
+          "type": "array",
+          "items": "object"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "requests": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetTime": {
+          "type": "integer"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "timeLimit": {
+          "type": "integer"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/tests/api/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.bgp": {
+      "schema": "BgpTestRequest",
+      "createFields": {
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "includeCoveredPrefixes": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "monitors": {
+          "type": "array",
+          "items": "string"
+        },
+        "prefix": {
+          "type": "string",
+          "required": true
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/bgp/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.dns-server": {
+      "schema": "DnsServerTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dnsQueryClass": {
+          "type": "string"
+        },
+        "dnsServers": {
+          "type": "array",
+          "items": "string",
+          "required": true
+        },
+        "dnsTransportProtocol": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string",
+          "required": true
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "monitors": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "recursiveQueries": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/dns-server/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.dns-serverinstant": {
+      "schema": "DnsServerInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dnsQueryClass": {
+          "type": "string"
+        },
+        "dnsServers": {
+          "type": "array",
+          "items": "string",
+          "required": true
+        },
+        "dnsTransportProtocol": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string",
+          "required": true
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "recursiveQueries": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tests/dns-server/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.dns-trace": {
+      "schema": "DnsTraceTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dnsQueryClass": {
+          "type": "string"
+        },
+        "dnsTransportProtocol": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string",
+          "required": true
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tests/dns-trace/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.dns-traceinstant": {
+      "schema": "DnsTraceInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "dnsQueryClass": {
+          "type": "string"
+        },
+        "dnsTransportProtocol": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string",
+          "required": true
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tests/dns-trace/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.dnssec": {
+      "schema": "DnsSecTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dnsQueryClass": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string",
+          "required": true
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tests/dnssec/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.dnssecinstant": {
+      "schema": "DnsSecInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "dnsQueryClass": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string",
+          "required": true
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tests/dnssec/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.ftp-server": {
+      "schema": "FtpServerTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "downloadLimit": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "ftpTargetTime": {
+          "type": "integer"
+        },
+        "ftpTimeLimit": {
+          "type": "integer"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "monitors": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "password": {
+          "type": "string",
+          "required": true
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "requestType": {
+          "type": "string",
+          "required": true
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "useActiveFtp": {
+          "type": "boolean"
+        },
+        "useExplicitFtps": {
+          "type": "boolean"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        },
+        "username": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/tests/ftp-server/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.ftp-serverinstant": {
+      "schema": "FtpServerInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "downloadLimit": {
+          "type": "integer"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "ftpTargetTime": {
+          "type": "integer"
+        },
+        "ftpTimeLimit": {
+          "type": "integer"
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "password": {
+          "type": "string",
+          "required": true
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "requestType": {
+          "type": "string",
+          "required": true
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "useActiveFtp": {
+          "type": "boolean"
+        },
+        "useExplicitFtps": {
+          "type": "boolean"
+        },
+        "username": {
+          "type": "string",
+          "required": true
+        }
+      },
+      "path": "/v7/tests/ftp-server/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.history": {
+      "schema": "TestVersionHistoryResponse",
+      "path": "/v7/tests/{testId}/history",
+      "operations": [
+        "get"
+      ]
+    },
+    "tests.http-server": {
+      "schema": "HttpServerTestRequest",
+      "createFields": {
+        "agentInterfaces": {
+          "type": "object"
+        },
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "allowUnsafeLegacyRenegotiation": {
+          "type": "boolean"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "clientCertificate": {
+          "type": "string"
+        },
+        "collectProxyNetworkData": {
+          "type": "boolean"
+        },
+        "contentRegex": {
+          "type": "string"
+        },
+        "customHeaders": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "desiredStatusCode": {
+          "type": "string"
+        },
+        "distributedTracing": {
+          "type": "boolean"
+        },
+        "dnsOverride": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "downloadLimit": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "headers": {
+          "type": "array"
+        },
+        "httpTargetTime": {
+          "type": "integer"
+        },
+        "httpTimeLimit": {
+          "type": "integer"
+        },
+        "httpVersion": {
+          "type": "integer"
+        },
+        "includeHeaders": {
+          "type": "boolean"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "monitors": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "oAuth": {
+          "type": "object"
+        },
+        "overrideAgentProxy": {
+          "type": "boolean"
+        },
+        "overrideProxyId": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "postBody": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "useNtlm": {
+          "type": "boolean"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "verifyCertificate": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/http-server/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.http-serverinstant": {
+      "schema": "HttpServerInstantTestRequest",
+      "createFields": {
+        "agentInterfaces": {
+          "type": "object"
+        },
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "allowUnsafeLegacyRenegotiation": {
+          "type": "boolean"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "clientCertificate": {
+          "type": "string"
+        },
+        "collectProxyNetworkData": {
+          "type": "boolean"
+        },
+        "contentRegex": {
+          "type": "string"
+        },
+        "customHeaders": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "desiredStatusCode": {
+          "type": "string"
+        },
+        "distributedTracing": {
+          "type": "boolean"
+        },
+        "dnsOverride": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "downloadLimit": {
+          "type": "integer"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "headers": {
+          "type": "array"
+        },
+        "httpTargetTime": {
+          "type": "integer"
+        },
+        "httpTimeLimit": {
+          "type": "integer"
+        },
+        "httpVersion": {
+          "type": "integer"
+        },
+        "includeHeaders": {
+          "type": "boolean"
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "oAuth": {
+          "type": "object"
+        },
+        "overrideAgentProxy": {
+          "type": "boolean"
+        },
+        "overrideProxyId": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "postBody": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "useNtlm": {
+          "type": "boolean"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "verifyCertificate": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/http-server/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.page-load": {
+      "schema": "PageLoadTestRequest",
+      "createFields": {
+        "agentInterfaces": {
+          "type": "object"
+        },
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "allowGeolocation": {
+          "type": "boolean"
+        },
+        "allowMicAndCamera": {
+          "type": "boolean"
+        },
+        "allowUnsafeLegacyRenegotiation": {
+          "type": "boolean"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "blockDomains": {
+          "type": "string"
+        },
+        "browserLanguage": {
+          "type": "string"
+        },
+        "chromeOptions": {
+          "type": "string"
+        },
+        "chromePolicies": {
+          "type": "string"
+        },
+        "clientCertificate": {
+          "type": "string"
+        },
+        "collectProxyNetworkData": {
+          "type": "boolean"
+        },
+        "contentRegex": {
+          "type": "string"
+        },
+        "customHeaders": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "desiredStatusCode": {
+          "type": "string"
+        },
+        "disableScreenshot": {
+          "type": "boolean"
+        },
+        "distributedTracing": {
+          "type": "boolean"
+        },
+        "dnsOverride": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "downloadLimit": {
+          "type": "integer"
+        },
+        "emulatedDeviceId": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "httpInterval": {
+          "type": "integer"
+        },
+        "httpTargetTime": {
+          "type": "integer"
+        },
+        "httpTimeLimit": {
+          "type": "integer"
+        },
+        "httpVersion": {
+          "type": "integer"
+        },
+        "identifyAgentTrafficWithUserAgent": {
+          "type": "boolean"
+        },
+        "includeHeaders": {
+          "type": "boolean"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "monitors": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "oAuth": {
+          "type": "object"
+        },
+        "overrideAgentProxy": {
+          "type": "boolean"
+        },
+        "overrideProxyId": {
+          "type": "string"
+        },
+        "pageLoadTargetTime": {
+          "type": "integer"
+        },
+        "pageLoadTimeLimit": {
+          "type": "integer"
+        },
+        "pageLoadingStrategy": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "subinterval": {
+          "type": "integer"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "useNtlm": {
+          "type": "boolean"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "verifyCertificate": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/page-load/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.page-loadinstant": {
+      "schema": "PageLoadInstantTestRequest",
+      "createFields": {
+        "agentInterfaces": {
+          "type": "object"
+        },
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "allowGeolocation": {
+          "type": "boolean"
+        },
+        "allowMicAndCamera": {
+          "type": "boolean"
+        },
+        "allowUnsafeLegacyRenegotiation": {
+          "type": "boolean"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "blockDomains": {
+          "type": "string"
+        },
+        "browserLanguage": {
+          "type": "string"
+        },
+        "chromeOptions": {
+          "type": "string"
+        },
+        "chromePolicies": {
+          "type": "string"
+        },
+        "clientCertificate": {
+          "type": "string"
+        },
+        "collectProxyNetworkData": {
+          "type": "boolean"
+        },
+        "contentRegex": {
+          "type": "string"
+        },
+        "customHeaders": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "desiredStatusCode": {
+          "type": "string"
+        },
+        "disableScreenshot": {
+          "type": "boolean"
+        },
+        "distributedTracing": {
+          "type": "boolean"
+        },
+        "dnsOverride": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "downloadLimit": {
+          "type": "integer"
+        },
+        "emulatedDeviceId": {
+          "type": "string"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "httpTargetTime": {
+          "type": "integer"
+        },
+        "httpTimeLimit": {
+          "type": "integer"
+        },
+        "httpVersion": {
+          "type": "integer"
+        },
+        "identifyAgentTrafficWithUserAgent": {
+          "type": "boolean"
+        },
+        "includeHeaders": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "oAuth": {
+          "type": "object"
+        },
+        "overrideAgentProxy": {
+          "type": "boolean"
+        },
+        "overrideProxyId": {
+          "type": "string"
+        },
+        "pageLoadTargetTime": {
+          "type": "integer"
+        },
+        "pageLoadTimeLimit": {
+          "type": "integer"
+        },
+        "pageLoadingStrategy": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "useNtlm": {
+          "type": "boolean"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "verifyCertificate": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/page-load/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.run": {
+      "schema": "inline.runInstantTest.parameter.path.testId",
+      "path": "/v7/tests/{testId}/run",
+      "operations": [
+        "post"
+      ]
+    },
+    "tests.sip-server": {
+      "schema": "SipServerTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "optionsRegex": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "registerEnabled": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sipTargetTime": {
+          "type": "integer"
+        },
+        "sipTimeLimit": {
+          "type": "integer"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetSipCredentials": {
+          "type": "object",
+          "required": true
+        },
+        "testName": {
+          "type": "string"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/sip-server/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.sip-serverinstant": {
+      "schema": "SipServerInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "description": {
+          "type": "string"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "ipv6Policy": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "optionsRegex": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "registerEnabled": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sipTargetTime": {
+          "type": "integer"
+        },
+        "sipTimeLimit": {
+          "type": "integer"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetSipCredentials": {
+          "type": "object",
+          "required": true
+        },
+        "testName": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tests/sip-server/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.snapshot": {
+      "schema": "SnapshotRequest",
+      "path": "/v7/tests/{testId}/snapshot",
+      "operations": [
+        "post"
+      ]
+    },
+    "tests.tests": {
+      "schema": "inline.getTests.parameter.query.aid",
+      "path": "/v7/tests",
+      "operations": [
+        "list"
+      ]
+    },
+    "tests.voice": {
+      "schema": "VoiceTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "codecId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dscpId": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "jitterBuffer": {
+          "type": "integer"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetAgentId": {
+          "type": "string",
+          "required": true
+        },
+        "testName": {
+          "type": "string"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/voice/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.voiceinstant": {
+      "schema": "VoiceInstantTestRequest",
+      "createFields": {
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "codecId": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dscpId": {
+          "type": "string"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "jitterBuffer": {
+          "type": "integer"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetAgentId": {
+          "type": "string",
+          "required": true
+        },
+        "testName": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/tests/voice/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "tests.web-transactions": {
+      "schema": "WebTransactionTestRequest",
+      "createFields": {
+        "agentInterfaces": {
+          "type": "object"
+        },
+        "agents": {
+          "type": "array",
+          "required": true
+        },
+        "alertRules": {
+          "type": "array",
+          "items": "string"
+        },
+        "alertsEnabled": {
+          "type": "boolean"
+        },
+        "allowGeolocation": {
+          "type": "boolean"
+        },
+        "allowMicAndCamera": {
+          "type": "boolean"
+        },
+        "allowUnsafeLegacyRenegotiation": {
+          "type": "boolean"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "bgpMeasurements": {
+          "type": "boolean"
+        },
+        "blockDomains": {
+          "type": "string"
+        },
+        "browserLanguage": {
+          "type": "string"
+        },
+        "chromeOptions": {
+          "type": "string"
+        },
+        "chromePolicies": {
+          "type": "string"
+        },
+        "clientCertificate": {
+          "type": "string"
+        },
+        "collectProxyNetworkData": {
+          "type": "boolean"
+        },
+        "contentRegex": {
+          "type": "string"
+        },
+        "credentials": {
+          "type": "array"
+        },
+        "customHeaders": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "desiredStatusCode": {
+          "type": "string"
+        },
+        "disableScreenshot": {
+          "type": "boolean"
+        },
+        "distributedTracing": {
+          "type": "boolean"
+        },
+        "dnsOverride": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "downloadLimit": {
+          "type": "integer"
+        },
+        "emulatedDeviceId": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "httpTargetTime": {
+          "type": "integer"
+        },
+        "httpTimeLimit": {
+          "type": "integer"
+        },
+        "httpVersion": {
+          "type": "integer"
+        },
+        "identifyAgentTrafficWithUserAgent": {
+          "type": "boolean"
+        },
+        "includeHeaders": {
+          "type": "boolean"
+        },
+        "interval": {
+          "type": "integer",
+          "required": true
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "monitors": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "oAuth": {
+          "type": "object"
+        },
+        "overrideAgentProxy": {
+          "type": "boolean"
+        },
+        "overrideProxyId": {
+          "type": "string"
+        },
+        "pageLoadingStrategy": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "subinterval": {
+          "type": "integer"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetTime": {
+          "type": "integer"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "timeLimit": {
+          "type": "integer"
+        },
+        "transactionScript": {
+          "type": "string",
+          "required": true
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "useNtlm": {
+          "type": "boolean"
+        },
+        "usePublicBgp": {
+          "type": "boolean"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "verifyCertificate": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/web-transactions/{testId?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    },
+    "tests.web-transactionsinstant": {
+      "schema": "WebTransactionInstantTestRequest",
+      "createFields": {
+        "agentInterfaces": {
+          "type": "object"
+        },
+        "agents": {
+          "type": "array",
+          "items": "object",
+          "required": true
+        },
+        "allowGeolocation": {
+          "type": "boolean"
+        },
+        "allowMicAndCamera": {
+          "type": "boolean"
+        },
+        "allowUnsafeLegacyRenegotiation": {
+          "type": "boolean"
+        },
+        "authType": {
+          "type": "string"
+        },
+        "bandwidthMeasurements": {
+          "type": "boolean"
+        },
+        "blockDomains": {
+          "type": "string"
+        },
+        "browserLanguage": {
+          "type": "string"
+        },
+        "chromeOptions": {
+          "type": "string"
+        },
+        "chromePolicies": {
+          "type": "string"
+        },
+        "clientCertificate": {
+          "type": "string"
+        },
+        "collectProxyNetworkData": {
+          "type": "boolean"
+        },
+        "contentRegex": {
+          "type": "string"
+        },
+        "credentials": {
+          "type": "array"
+        },
+        "customHeaders": {
+          "type": "object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "desiredStatusCode": {
+          "type": "string"
+        },
+        "disableScreenshot": {
+          "type": "boolean"
+        },
+        "distributedTracing": {
+          "type": "boolean"
+        },
+        "dnsOverride": {
+          "type": "string",
+          "format": "ipv4"
+        },
+        "downloadLimit": {
+          "type": "integer"
+        },
+        "emulatedDeviceId": {
+          "type": "string"
+        },
+        "fixedPacketRate": {
+          "type": "integer"
+        },
+        "followRedirects": {
+          "type": "boolean"
+        },
+        "httpTargetTime": {
+          "type": "integer"
+        },
+        "httpTimeLimit": {
+          "type": "integer"
+        },
+        "httpVersion": {
+          "type": "integer"
+        },
+        "identifyAgentTrafficWithUserAgent": {
+          "type": "boolean"
+        },
+        "includeHeaders": {
+          "type": "boolean"
+        },
+        "labels": {
+          "type": "array",
+          "items": "string"
+        },
+        "mtuMeasurements": {
+          "type": "boolean"
+        },
+        "networkMeasurements": {
+          "type": "boolean"
+        },
+        "numPathTraces": {
+          "type": "integer"
+        },
+        "oAuth": {
+          "type": "object"
+        },
+        "overrideAgentProxy": {
+          "type": "boolean"
+        },
+        "overrideProxyId": {
+          "type": "string"
+        },
+        "pageLoadingStrategy": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "pathTraceMode": {
+          "type": "string"
+        },
+        "probeMode": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "randomizedStartTime": {
+          "type": "boolean"
+        },
+        "sharedWithAccounts": {
+          "type": "array",
+          "items": "string"
+        },
+        "sslVersionId": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": "string"
+        },
+        "targetTime": {
+          "type": "integer"
+        },
+        "testName": {
+          "type": "string"
+        },
+        "timeLimit": {
+          "type": "integer"
+        },
+        "transactionScript": {
+          "type": "string",
+          "required": true
+        },
+        "url": {
+          "type": "string",
+          "required": true
+        },
+        "useNtlm": {
+          "type": "boolean"
+        },
+        "userAgent": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "verifyCertificate": {
+          "type": "boolean"
+        }
+      },
+      "path": "/v7/tests/web-transactions/instant",
+      "operations": [
+        "create"
+      ]
+    },
+    "usage.unitsenterprise-agents": {
+      "schema": "inline.getEnterpriseAgentsUnitsUsage.parameter.query.cursor",
+      "path": "/v7/usage/units/enterprise-agents",
+      "operations": [
+        "list"
+      ]
+    },
+    "usage.unitstests": {
+      "schema": "inline.getTestsUnitsUsage.parameter.query.aid",
+      "path": "/v7/usage/units/tests",
+      "operations": [
+        "list"
+      ]
+    },
+    "usage.usage": {
+      "schema": "inline.getUsage.parameter.query.aid",
+      "path": "/v7/usage",
+      "operations": [
+        "list"
+      ]
+    },
+    "user-agents.user-agents": {
+      "schema": "inline.getUserAgents.parameter.query.aid",
+      "path": "/v7/user-agents",
+      "operations": [
+        "list"
+      ]
+    },
+    "users.current": {
+      "path": "/v7/users/current",
+      "operations": [
+        "list"
+      ]
+    },
+    "users.users": {
+      "schema": "UserRequest",
+      "createFields": {
+        "accountGroupRoles": {
+          "type": "array",
+          "items": "object"
+        },
+        "allAccountGroupRoleIds": {
+          "type": "array",
+          "items": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "loginAccountGroupId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "path": "/v7/users/{id?}",
+      "operations": [
+        "create",
+        "delete",
+        "get",
+        "list",
+        "replace"
+      ]
+    }
+  },
+  "resourceNames": [
+    "account-groups.account-groups",
+    "agents.agents",
+    "agents.clusterassign",
+    "agents.clusterunassign",
+    "agents.notification-rules",
+    "agents.proxies",
+    "agents.testsassign",
+    "agents.testsoverride",
+    "agents.testsunassign",
+    "alert-suppression-windows.alert-suppression-windows",
+    "alerts.alerts",
+    "alerts.rules",
+    "api-tokens.api-tokens",
+    "audit-user-events.audit-user-events",
+    "autonomous-systems.prefixes",
+    "cloud-insights.integrationaws",
+    "cloud-insights.integrationawsflow-logs",
+    "cloud-insights.integrationawsflow-logspolicies",
+    "cloud-insights.integrationawsinventory",
+    "cloud-insights.integrationawsinventorypolicies",
+    "cloud-insights.integrationawspolicysettings",
+    "cloud-insights.integrationazure",
+    "cloud-insights.integrationazureflow-logs",
+    "cloud-insights.integrationazureinventory",
+    "cloud-insights.integrationazurepolicysettings",
+    "connectors.generic",
+    "connectors.genericoperations",
+    "credentials.credentials",
+    "dashboard-snapshots.dashboard-snapshots",
+    "dashboard-snapshots.widgets",
+    "dashboards.dashboards",
+    "dashboards.filters",
+    "dashboards.widgets",
+    "dashboards.widgetscards",
+    "dashboards.widgetscolumns",
+    "emulated-devices.emulated-devices",
+    "endpoint.agents",
+    "endpoint.agentsconnection-string",
+    "endpoint.agentsdisable",
+    "endpoint.agentsenable",
+    "endpoint.agentsfilter",
+    "endpoint.agentstransfer",
+    "endpoint.agentstransferbulk",
+    "endpoint.labels",
+    "endpoint.test-resultsdynamic-testsnetworkfilter",
+    "endpoint.test-resultsdynamic-testspath-vis",
+    "endpoint.test-resultsdynamic-testspath-visagentround",
+    "endpoint.test-resultslocal-networks",
+    "endpoint.test-resultslocal-networkstopologies",
+    "endpoint.test-resultslocal-networkstopologiesfilter",
+    "endpoint.test-resultsreal-user-tests",
+    "endpoint.test-resultsreal-user-testsfilter",
+    "endpoint.test-resultsreal-user-testsnetworksfilter",
+    "endpoint.test-resultsreal-user-testspages",
+    "endpoint.test-resultsreal-user-testspagesfilter",
+    "endpoint.test-resultsscheduled-testshttp-server",
+    "endpoint.test-resultsscheduled-testshttp-serverfilter",
+    "endpoint.test-resultsscheduled-testsnetworkfilter",
+    "endpoint.test-resultsscheduled-testspath-vis",
+    "endpoint.test-resultsscheduled-testspath-visagentround",
+    "endpoint.testsdynamic-testsagent-to-server",
+    "endpoint.testsscheduled-tests",
+    "endpoint.testsscheduled-testsagent-to-server",
+    "endpoint.testsscheduled-testsagent-to-serverinstant",
+    "endpoint.testsscheduled-testshttp-server",
+    "endpoint.testsscheduled-testshttp-serverinstant",
+    "endpoint.testsscheduled-testsrun",
+    "events.events",
+    "internet-insights.catalogproviders",
+    "internet-insights.catalogprovidersfilter",
+    "internet-insights.outagesapp",
+    "internet-insights.outagesfilter",
+    "internet-insights.outagesnet",
+    "monitors.monitors",
+    "network.path-visinterface-groups",
+    "operations.connectors",
+    "operations.webhooks",
+    "permissions.permissions",
+    "quotas.account-groupsassign",
+    "quotas.account-groupsunassign",
+    "quotas.assign",
+    "quotas.quotas",
+    "quotas.unassign",
+    "roles.roles",
+    "streams.streams",
+    "tags.assign",
+    "tags.bulk",
+    "tags.tags",
+    "tags.unassign",
+    "templates.deploy",
+    "templates.sharing-settings",
+    "templates.templates",
+    "test-results.api",
+    "test-results.apiagentround",
+    "test-results.bgp",
+    "test-results.bgproutesprefixround",
+    "test-results.dns-server",
+    "test-results.dns-trace",
+    "test-results.dnssec",
+    "test-results.ftp-server",
+    "test-results.http-server",
+    "test-results.network",
+    "test-results.page-load",
+    "test-results.page-loadagentround",
+    "test-results.path-vis",
+    "test-results.path-visagentround",
+    "test-results.rtp-server",
+    "test-results.sip-server",
+    "test-results.web-transactions",
+    "test-results.web-transactionsagentround",
+    "test-results.web-transactionsagentroundpage",
+    "tests.agent-to-agent",
+    "tests.agent-to-agentinstant",
+    "tests.agent-to-server",
+    "tests.agent-to-serverinstant",
+    "tests.api",
+    "tests.apiinstant",
+    "tests.bgp",
+    "tests.dns-server",
+    "tests.dns-serverinstant",
+    "tests.dns-trace",
+    "tests.dns-traceinstant",
+    "tests.dnssec",
+    "tests.dnssecinstant",
+    "tests.ftp-server",
+    "tests.ftp-serverinstant",
+    "tests.history",
+    "tests.http-server",
+    "tests.http-serverinstant",
+    "tests.page-load",
+    "tests.page-loadinstant",
+    "tests.run",
+    "tests.sip-server",
+    "tests.sip-serverinstant",
+    "tests.snapshot",
+    "tests.tests",
+    "tests.voice",
+    "tests.voiceinstant",
+    "tests.web-transactions",
+    "tests.web-transactionsinstant",
+    "usage.unitsenterprise-agents",
+    "usage.unitstests",
+    "usage.usage",
+    "user-agents.user-agents",
+    "users.current",
+    "users.users"
+  ],
+  "paths": {
+    "/account-groups": [
+      "account-groups.account-groups"
+    ],
+    "/account-groups/{id}": [
+      "account-groups.account-groups"
+    ],
+    "/agents": [
+      "agents.agents"
+    ],
+    "/agents/notification-rules": [
+      "agents.notification-rules"
+    ],
+    "/agents/notification-rules/{notificationRuleId}": [
+      "agents.notification-rules"
+    ],
+    "/agents/notification-rules/{notificationruleid}": [
+      "agents.notification-rules"
+    ],
+    "/agents/proxies": [
+      "agents.proxies"
+    ],
+    "/agents/{agentId}": [
+      "agents.agents"
+    ],
+    "/agents/{agentId}/cluster/assign": [
+      "agents.clusterassign"
+    ],
+    "/agents/{agentId}/cluster/unassign": [
+      "agents.clusterunassign"
+    ],
+    "/agents/{agentId}/tests/assign": [
+      "agents.testsassign"
+    ],
+    "/agents/{agentId}/tests/override": [
+      "agents.testsoverride"
+    ],
+    "/agents/{agentId}/tests/unassign": [
+      "agents.testsunassign"
+    ],
+    "/agents/{agentid}": [
+      "agents.agents"
+    ],
+    "/agents/{agentid}/cluster/assign": [
+      "agents.clusterassign"
+    ],
+    "/agents/{agentid}/cluster/unassign": [
+      "agents.clusterunassign"
+    ],
+    "/agents/{agentid}/tests/assign": [
+      "agents.testsassign"
+    ],
+    "/agents/{agentid}/tests/override": [
+      "agents.testsoverride"
+    ],
+    "/agents/{agentid}/tests/unassign": [
+      "agents.testsunassign"
+    ],
+    "/alert-suppression-windows": [
+      "alert-suppression-windows.alert-suppression-windows"
+    ],
+    "/alert-suppression-windows/{windowId}": [
+      "alert-suppression-windows.alert-suppression-windows"
+    ],
+    "/alert-suppression-windows/{windowid}": [
+      "alert-suppression-windows.alert-suppression-windows"
+    ],
+    "/alerts": [
+      "alerts.alerts"
+    ],
+    "/alerts/rules": [
+      "alerts.rules"
+    ],
+    "/alerts/rules/{ruleId}": [
+      "alerts.rules"
+    ],
+    "/alerts/rules/{ruleid}": [
+      "alerts.rules"
+    ],
+    "/alerts/{alertId}": [
+      "alerts.alerts"
+    ],
+    "/alerts/{alertid}": [
+      "alerts.alerts"
+    ],
+    "/api-tokens": [
+      "api-tokens.api-tokens"
+    ],
+    "/audit-user-events": [
+      "audit-user-events.audit-user-events"
+    ],
+    "/autonomous-systems/{asn}/prefixes": [
+      "autonomous-systems.prefixes"
+    ],
+    "/cloud-insights/integration/aws": [
+      "cloud-insights.integrationaws"
+    ],
+    "/cloud-insights/integration/aws/flow-logs": [
+      "cloud-insights.integrationawsflow-logs"
+    ],
+    "/cloud-insights/integration/aws/flow-logs/policies": [
+      "cloud-insights.integrationawsflow-logspolicies"
+    ],
+    "/cloud-insights/integration/aws/inventory": [
+      "cloud-insights.integrationawsinventory"
+    ],
+    "/cloud-insights/integration/aws/inventory/policies": [
+      "cloud-insights.integrationawsinventorypolicies"
+    ],
+    "/cloud-insights/integration/aws/policy/settings": [
+      "cloud-insights.integrationawspolicysettings"
+    ],
+    "/cloud-insights/integration/aws/{integrationId}": [
+      "cloud-insights.integrationaws"
+    ],
+    "/cloud-insights/integration/aws/{integrationid}": [
+      "cloud-insights.integrationaws"
+    ],
+    "/cloud-insights/integration/azure": [
+      "cloud-insights.integrationazure"
+    ],
+    "/cloud-insights/integration/azure/flow-logs": [
+      "cloud-insights.integrationazureflow-logs"
+    ],
+    "/cloud-insights/integration/azure/inventory": [
+      "cloud-insights.integrationazureinventory"
+    ],
+    "/cloud-insights/integration/azure/policy/settings": [
+      "cloud-insights.integrationazurepolicysettings"
+    ],
+    "/cloud-insights/integration/azure/{integrationId}": [
+      "cloud-insights.integrationazure"
+    ],
+    "/cloud-insights/integration/azure/{integrationid}": [
+      "cloud-insights.integrationazure"
+    ],
+    "/connectors/generic": [
+      "connectors.generic"
+    ],
+    "/connectors/generic/{id}": [
+      "connectors.generic"
+    ],
+    "/connectors/generic/{id}/operations": [
+      "connectors.genericoperations"
+    ],
+    "/credentials": [
+      "credentials.credentials"
+    ],
+    "/credentials/{id}": [
+      "credentials.credentials"
+    ],
+    "/dashboard-snapshots": [
+      "dashboard-snapshots.dashboard-snapshots"
+    ],
+    "/dashboard-snapshots/{snapshotId}": [
+      "dashboard-snapshots.dashboard-snapshots"
+    ],
+    "/dashboard-snapshots/{snapshotId}/widgets/{widgetId}": [
+      "dashboard-snapshots.widgets"
+    ],
+    "/dashboard-snapshots/{snapshotid}": [
+      "dashboard-snapshots.dashboard-snapshots"
+    ],
+    "/dashboard-snapshots/{snapshotid}/widgets/{widgetid}": [
+      "dashboard-snapshots.widgets"
+    ],
+    "/dashboards": [
+      "dashboards.dashboards"
+    ],
+    "/dashboards/filters": [
+      "dashboards.filters"
+    ],
+    "/dashboards/filters/{id}": [
+      "dashboards.filters"
+    ],
+    "/dashboards/{dashboardId}": [
+      "dashboards.dashboards"
+    ],
+    "/dashboards/{dashboardId}/widgets/{widgetId}": [
+      "dashboards.widgets"
+    ],
+    "/dashboards/{dashboardId}/widgets/{widgetId}/cards/{cardId}": [
+      "dashboards.widgetscards"
+    ],
+    "/dashboards/{dashboardId}/widgets/{widgetId}/columns/{columnId}": [
+      "dashboards.widgetscolumns"
+    ],
+    "/dashboards/{dashboardid}": [
+      "dashboards.dashboards"
+    ],
+    "/dashboards/{dashboardid}/widgets/{widgetid}": [
+      "dashboards.widgets"
+    ],
+    "/dashboards/{dashboardid}/widgets/{widgetid}/cards/{cardid}": [
+      "dashboards.widgetscards"
+    ],
+    "/dashboards/{dashboardid}/widgets/{widgetid}/columns/{columnid}": [
+      "dashboards.widgetscolumns"
+    ],
+    "/emulated-devices": [
+      "emulated-devices.emulated-devices"
+    ],
+    "/endpoint/agents": [
+      "endpoint.agents"
+    ],
+    "/endpoint/agents/connection-string": [
+      "endpoint.agentsconnection-string"
+    ],
+    "/endpoint/agents/filter": [
+      "endpoint.agentsfilter"
+    ],
+    "/endpoint/agents/transfer/bulk": [
+      "endpoint.agentstransferbulk"
+    ],
+    "/endpoint/agents/{agentId}": [
+      "endpoint.agents"
+    ],
+    "/endpoint/agents/{agentId}/disable": [
+      "endpoint.agentsdisable"
+    ],
+    "/endpoint/agents/{agentId}/enable": [
+      "endpoint.agentsenable"
+    ],
+    "/endpoint/agents/{agentId}/transfer": [
+      "endpoint.agentstransfer"
+    ],
+    "/endpoint/agents/{agentid}": [
+      "endpoint.agents"
+    ],
+    "/endpoint/agents/{agentid}/disable": [
+      "endpoint.agentsdisable"
+    ],
+    "/endpoint/agents/{agentid}/enable": [
+      "endpoint.agentsenable"
+    ],
+    "/endpoint/agents/{agentid}/transfer": [
+      "endpoint.agentstransfer"
+    ],
+    "/endpoint/labels": [
+      "endpoint.labels"
+    ],
+    "/endpoint/labels/{id}": [
+      "endpoint.labels"
+    ],
+    "/endpoint/test-results/dynamic-tests/{testId}/network/filter": [
+      "endpoint.test-resultsdynamic-testsnetworkfilter"
+    ],
+    "/endpoint/test-results/dynamic-tests/{testId}/path-vis": [
+      "endpoint.test-resultsdynamic-testspath-vis"
+    ],
+    "/endpoint/test-results/dynamic-tests/{testId}/path-vis/agent/{agentId}/round/{roundId}": [
+      "endpoint.test-resultsdynamic-testspath-visagentround"
+    ],
+    "/endpoint/test-results/dynamic-tests/{testid}/network/filter": [
+      "endpoint.test-resultsdynamic-testsnetworkfilter"
+    ],
+    "/endpoint/test-results/dynamic-tests/{testid}/path-vis": [
+      "endpoint.test-resultsdynamic-testspath-vis"
+    ],
+    "/endpoint/test-results/dynamic-tests/{testid}/path-vis/agent/{agentid}/round/{roundid}": [
+      "endpoint.test-resultsdynamic-testspath-visagentround"
+    ],
+    "/endpoint/test-results/local-networks": [
+      "endpoint.test-resultslocal-networks"
+    ],
+    "/endpoint/test-results/local-networks/topologies/filter": [
+      "endpoint.test-resultslocal-networkstopologiesfilter"
+    ],
+    "/endpoint/test-results/local-networks/topologies/{networkTopologyId}": [
+      "endpoint.test-resultslocal-networkstopologies"
+    ],
+    "/endpoint/test-results/local-networks/topologies/{networktopologyid}": [
+      "endpoint.test-resultslocal-networkstopologies"
+    ],
+    "/endpoint/test-results/real-user-tests/filter": [
+      "endpoint.test-resultsreal-user-testsfilter"
+    ],
+    "/endpoint/test-results/real-user-tests/networks/filter": [
+      "endpoint.test-resultsreal-user-testsnetworksfilter"
+    ],
+    "/endpoint/test-results/real-user-tests/pages/filter": [
+      "endpoint.test-resultsreal-user-testspagesfilter"
+    ],
+    "/endpoint/test-results/real-user-tests/{id}": [
+      "endpoint.test-resultsreal-user-tests"
+    ],
+    "/endpoint/test-results/real-user-tests/{id}/pages/{pageId}": [
+      "endpoint.test-resultsreal-user-testspages"
+    ],
+    "/endpoint/test-results/real-user-tests/{id}/pages/{pageid}": [
+      "endpoint.test-resultsreal-user-testspages"
+    ],
+    "/endpoint/test-results/scheduled-tests/http-server/filter": [
+      "endpoint.test-resultsscheduled-testshttp-serverfilter"
+    ],
+    "/endpoint/test-results/scheduled-tests/network/filter": [
+      "endpoint.test-resultsscheduled-testsnetworkfilter"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testId}/http-server": [
+      "endpoint.test-resultsscheduled-testshttp-server"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testId}/http-server/filter": [
+      "endpoint.test-resultsscheduled-testshttp-serverfilter"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testId}/network/filter": [
+      "endpoint.test-resultsscheduled-testsnetworkfilter"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testId}/path-vis": [
+      "endpoint.test-resultsscheduled-testspath-vis"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testId}/path-vis/agent/{agentId}/round/{roundId}": [
+      "endpoint.test-resultsscheduled-testspath-visagentround"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testid}/http-server": [
+      "endpoint.test-resultsscheduled-testshttp-server"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testid}/http-server/filter": [
+      "endpoint.test-resultsscheduled-testshttp-serverfilter"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testid}/network/filter": [
+      "endpoint.test-resultsscheduled-testsnetworkfilter"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testid}/path-vis": [
+      "endpoint.test-resultsscheduled-testspath-vis"
+    ],
+    "/endpoint/test-results/scheduled-tests/{testid}/path-vis/agent/{agentid}/round/{roundid}": [
+      "endpoint.test-resultsscheduled-testspath-visagentround"
+    ],
+    "/endpoint/tests/dynamic-tests/agent-to-server": [
+      "endpoint.testsdynamic-testsagent-to-server"
+    ],
+    "/endpoint/tests/dynamic-tests/agent-to-server/{testId}": [
+      "endpoint.testsdynamic-testsagent-to-server"
+    ],
+    "/endpoint/tests/dynamic-tests/agent-to-server/{testid}": [
+      "endpoint.testsdynamic-testsagent-to-server"
+    ],
+    "/endpoint/tests/scheduled-tests": [
+      "endpoint.testsscheduled-tests"
+    ],
+    "/endpoint/tests/scheduled-tests/agent-to-server": [
+      "endpoint.testsscheduled-testsagent-to-server"
+    ],
+    "/endpoint/tests/scheduled-tests/agent-to-server/instant": [
+      "endpoint.testsscheduled-testsagent-to-serverinstant"
+    ],
+    "/endpoint/tests/scheduled-tests/agent-to-server/{testId}": [
+      "endpoint.testsscheduled-testsagent-to-server"
+    ],
+    "/endpoint/tests/scheduled-tests/agent-to-server/{testid}": [
+      "endpoint.testsscheduled-testsagent-to-server"
+    ],
+    "/endpoint/tests/scheduled-tests/http-server": [
+      "endpoint.testsscheduled-testshttp-server"
+    ],
+    "/endpoint/tests/scheduled-tests/http-server/instant": [
+      "endpoint.testsscheduled-testshttp-serverinstant"
+    ],
+    "/endpoint/tests/scheduled-tests/http-server/{testId}": [
+      "endpoint.testsscheduled-testshttp-server"
+    ],
+    "/endpoint/tests/scheduled-tests/http-server/{testid}": [
+      "endpoint.testsscheduled-testshttp-server"
+    ],
+    "/endpoint/tests/scheduled-tests/{testId}/run": [
+      "endpoint.testsscheduled-testsrun"
+    ],
+    "/endpoint/tests/scheduled-tests/{testid}/run": [
+      "endpoint.testsscheduled-testsrun"
+    ],
+    "/events": [
+      "events.events"
+    ],
+    "/events/{id}": [
+      "events.events"
+    ],
+    "/internet-insights/catalog/providers/filter": [
+      "internet-insights.catalogprovidersfilter"
+    ],
+    "/internet-insights/catalog/providers/{providerId}": [
+      "internet-insights.catalogproviders"
+    ],
+    "/internet-insights/catalog/providers/{providerid}": [
+      "internet-insights.catalogproviders"
+    ],
+    "/internet-insights/outages/app/{outageId}": [
+      "internet-insights.outagesapp"
+    ],
+    "/internet-insights/outages/app/{outageid}": [
+      "internet-insights.outagesapp"
+    ],
+    "/internet-insights/outages/filter": [
+      "internet-insights.outagesfilter"
+    ],
+    "/internet-insights/outages/net/{outageId}": [
+      "internet-insights.outagesnet"
+    ],
+    "/internet-insights/outages/net/{outageid}": [
+      "internet-insights.outagesnet"
+    ],
+    "/monitors": [
+      "monitors.monitors"
+    ],
+    "/network/path-vis/interface-groups": [
+      "network.path-visinterface-groups"
+    ],
+    "/network/path-vis/interface-groups/{interfaceGroupId}": [
+      "network.path-visinterface-groups"
+    ],
+    "/network/path-vis/interface-groups/{interfacegroupid}": [
+      "network.path-visinterface-groups"
+    ],
+    "/operations/webhooks": [
+      "operations.webhooks"
+    ],
+    "/operations/webhooks/{id}": [
+      "operations.webhooks"
+    ],
+    "/operations/{type}/{id}/connectors": [
+      "operations.connectors"
+    ],
+    "/permissions": [
+      "permissions.permissions"
+    ],
+    "/quotas": [
+      "quotas.quotas"
+    ],
+    "/quotas/account-groups/assign": [
+      "quotas.account-groupsassign"
+    ],
+    "/quotas/account-groups/unassign": [
+      "quotas.account-groupsunassign"
+    ],
+    "/quotas/assign": [
+      "quotas.assign"
+    ],
+    "/quotas/unassign": [
+      "quotas.unassign"
+    ],
+    "/roles": [
+      "roles.roles"
+    ],
+    "/roles/{id}": [
+      "roles.roles"
+    ],
+    "/streams": [
+      "streams.streams"
+    ],
+    "/streams/{id}": [
+      "streams.streams"
+    ],
+    "/tags": [
+      "tags.tags"
+    ],
+    "/tags/assign": [
+      "tags.assign"
+    ],
+    "/tags/bulk": [
+      "tags.bulk"
+    ],
+    "/tags/unassign": [
+      "tags.unassign"
+    ],
+    "/tags/{id}": [
+      "tags.tags"
+    ],
+    "/tags/{id}/assign": [
+      "tags.assign"
+    ],
+    "/tags/{id}/unassign": [
+      "tags.unassign"
+    ],
+    "/templates": [
+      "templates.templates"
+    ],
+    "/templates/{id}": [
+      "templates.templates"
+    ],
+    "/templates/{id}/deploy": [
+      "templates.deploy"
+    ],
+    "/templates/{id}/sharing-settings": [
+      "templates.sharing-settings"
+    ],
+    "/test-results/{testId}/api": [
+      "test-results.api"
+    ],
+    "/test-results/{testId}/api/agent/{agentId}/round/{roundId}": [
+      "test-results.apiagentround"
+    ],
+    "/test-results/{testId}/bgp": [
+      "test-results.bgp"
+    ],
+    "/test-results/{testId}/bgp/routes/prefix/{prefixId}/round/{roundId}": [
+      "test-results.bgproutesprefixround"
+    ],
+    "/test-results/{testId}/dns-server": [
+      "test-results.dns-server"
+    ],
+    "/test-results/{testId}/dns-server/{serverId}": [
+      "test-results.dns-server"
+    ],
+    "/test-results/{testId}/dns-trace": [
+      "test-results.dns-trace"
+    ],
+    "/test-results/{testId}/dnssec": [
+      "test-results.dnssec"
+    ],
+    "/test-results/{testId}/ftp-server": [
+      "test-results.ftp-server"
+    ],
+    "/test-results/{testId}/http-server": [
+      "test-results.http-server"
+    ],
+    "/test-results/{testId}/network": [
+      "test-results.network"
+    ],
+    "/test-results/{testId}/page-load": [
+      "test-results.page-load"
+    ],
+    "/test-results/{testId}/page-load/agent/{agentId}/round/{roundId}": [
+      "test-results.page-loadagentround"
+    ],
+    "/test-results/{testId}/path-vis": [
+      "test-results.path-vis"
+    ],
+    "/test-results/{testId}/path-vis/agent/{agentId}/round/{roundId}": [
+      "test-results.path-visagentround"
+    ],
+    "/test-results/{testId}/rtp-server": [
+      "test-results.rtp-server"
+    ],
+    "/test-results/{testId}/sip-server": [
+      "test-results.sip-server"
+    ],
+    "/test-results/{testId}/web-transactions": [
+      "test-results.web-transactions"
+    ],
+    "/test-results/{testId}/web-transactions/agent/{agentId}/round/{roundId}": [
+      "test-results.web-transactionsagentround"
+    ],
+    "/test-results/{testId}/web-transactions/agent/{agentId}/round/{roundId}/page/{pageId}": [
+      "test-results.web-transactionsagentroundpage"
+    ],
+    "/test-results/{testid}/api": [
+      "test-results.api"
+    ],
+    "/test-results/{testid}/api/agent/{agentid}/round/{roundid}": [
+      "test-results.apiagentround"
+    ],
+    "/test-results/{testid}/bgp": [
+      "test-results.bgp"
+    ],
+    "/test-results/{testid}/bgp/routes/prefix/{prefixid}/round/{roundid}": [
+      "test-results.bgproutesprefixround"
+    ],
+    "/test-results/{testid}/dns-server": [
+      "test-results.dns-server"
+    ],
+    "/test-results/{testid}/dns-server/{serverid}": [
+      "test-results.dns-server"
+    ],
+    "/test-results/{testid}/dns-trace": [
+      "test-results.dns-trace"
+    ],
+    "/test-results/{testid}/dnssec": [
+      "test-results.dnssec"
+    ],
+    "/test-results/{testid}/ftp-server": [
+      "test-results.ftp-server"
+    ],
+    "/test-results/{testid}/http-server": [
+      "test-results.http-server"
+    ],
+    "/test-results/{testid}/network": [
+      "test-results.network"
+    ],
+    "/test-results/{testid}/page-load": [
+      "test-results.page-load"
+    ],
+    "/test-results/{testid}/page-load/agent/{agentid}/round/{roundid}": [
+      "test-results.page-loadagentround"
+    ],
+    "/test-results/{testid}/path-vis": [
+      "test-results.path-vis"
+    ],
+    "/test-results/{testid}/path-vis/agent/{agentid}/round/{roundid}": [
+      "test-results.path-visagentround"
+    ],
+    "/test-results/{testid}/rtp-server": [
+      "test-results.rtp-server"
+    ],
+    "/test-results/{testid}/sip-server": [
+      "test-results.sip-server"
+    ],
+    "/test-results/{testid}/web-transactions": [
+      "test-results.web-transactions"
+    ],
+    "/test-results/{testid}/web-transactions/agent/{agentid}/round/{roundid}": [
+      "test-results.web-transactionsagentround"
+    ],
+    "/test-results/{testid}/web-transactions/agent/{agentid}/round/{roundid}/page/{pageid}": [
+      "test-results.web-transactionsagentroundpage"
+    ],
+    "/tests": [
+      "tests.tests"
+    ],
+    "/tests/agent-to-agent": [
+      "tests.agent-to-agent"
+    ],
+    "/tests/agent-to-agent/instant": [
+      "tests.agent-to-agentinstant"
+    ],
+    "/tests/agent-to-agent/{testId}": [
+      "tests.agent-to-agent"
+    ],
+    "/tests/agent-to-agent/{testid}": [
+      "tests.agent-to-agent"
+    ],
+    "/tests/agent-to-server": [
+      "tests.agent-to-server"
+    ],
+    "/tests/agent-to-server/instant": [
+      "tests.agent-to-serverinstant"
+    ],
+    "/tests/agent-to-server/{testId}": [
+      "tests.agent-to-server"
+    ],
+    "/tests/agent-to-server/{testid}": [
+      "tests.agent-to-server"
+    ],
+    "/tests/api": [
+      "tests.api"
+    ],
+    "/tests/api/instant": [
+      "tests.apiinstant"
+    ],
+    "/tests/api/{testId}": [
+      "tests.api"
+    ],
+    "/tests/api/{testid}": [
+      "tests.api"
+    ],
+    "/tests/bgp": [
+      "tests.bgp"
+    ],
+    "/tests/bgp/{testId}": [
+      "tests.bgp"
+    ],
+    "/tests/bgp/{testid}": [
+      "tests.bgp"
+    ],
+    "/tests/dns-server": [
+      "tests.dns-server"
+    ],
+    "/tests/dns-server/instant": [
+      "tests.dns-serverinstant"
+    ],
+    "/tests/dns-server/{testId}": [
+      "tests.dns-server"
+    ],
+    "/tests/dns-server/{testid}": [
+      "tests.dns-server"
+    ],
+    "/tests/dns-trace": [
+      "tests.dns-trace"
+    ],
+    "/tests/dns-trace/instant": [
+      "tests.dns-traceinstant"
+    ],
+    "/tests/dns-trace/{testId}": [
+      "tests.dns-trace"
+    ],
+    "/tests/dns-trace/{testid}": [
+      "tests.dns-trace"
+    ],
+    "/tests/dnssec": [
+      "tests.dnssec"
+    ],
+    "/tests/dnssec/instant": [
+      "tests.dnssecinstant"
+    ],
+    "/tests/dnssec/{testId}": [
+      "tests.dnssec"
+    ],
+    "/tests/dnssec/{testid}": [
+      "tests.dnssec"
+    ],
+    "/tests/ftp-server": [
+      "tests.ftp-server"
+    ],
+    "/tests/ftp-server/instant": [
+      "tests.ftp-serverinstant"
+    ],
+    "/tests/ftp-server/{testId}": [
+      "tests.ftp-server"
+    ],
+    "/tests/ftp-server/{testid}": [
+      "tests.ftp-server"
+    ],
+    "/tests/http-server": [
+      "tests.http-server"
+    ],
+    "/tests/http-server/instant": [
+      "tests.http-serverinstant"
+    ],
+    "/tests/http-server/{testId}": [
+      "tests.http-server"
+    ],
+    "/tests/http-server/{testid}": [
+      "tests.http-server"
+    ],
+    "/tests/page-load": [
+      "tests.page-load"
+    ],
+    "/tests/page-load/instant": [
+      "tests.page-loadinstant"
+    ],
+    "/tests/page-load/{testId}": [
+      "tests.page-load"
+    ],
+    "/tests/page-load/{testid}": [
+      "tests.page-load"
+    ],
+    "/tests/sip-server": [
+      "tests.sip-server"
+    ],
+    "/tests/sip-server/instant": [
+      "tests.sip-serverinstant"
+    ],
+    "/tests/sip-server/{testId}": [
+      "tests.sip-server"
+    ],
+    "/tests/sip-server/{testid}": [
+      "tests.sip-server"
+    ],
+    "/tests/voice": [
+      "tests.voice"
+    ],
+    "/tests/voice/instant": [
+      "tests.voiceinstant"
+    ],
+    "/tests/voice/{testId}": [
+      "tests.voice"
+    ],
+    "/tests/voice/{testid}": [
+      "tests.voice"
+    ],
+    "/tests/web-transactions": [
+      "tests.web-transactions"
+    ],
+    "/tests/web-transactions/instant": [
+      "tests.web-transactionsinstant"
+    ],
+    "/tests/web-transactions/{testId}": [
+      "tests.web-transactions"
+    ],
+    "/tests/web-transactions/{testid}": [
+      "tests.web-transactions"
+    ],
+    "/tests/{testId}/history": [
+      "tests.history"
+    ],
+    "/tests/{testId}/run": [
+      "tests.run"
+    ],
+    "/tests/{testId}/snapshot": [
+      "tests.snapshot"
+    ],
+    "/tests/{testid}/history": [
+      "tests.history"
+    ],
+    "/tests/{testid}/run": [
+      "tests.run"
+    ],
+    "/tests/{testid}/snapshot": [
+      "tests.snapshot"
+    ],
+    "/usage": [
+      "usage.usage"
+    ],
+    "/usage/units/enterprise-agents": [
+      "usage.unitsenterprise-agents"
+    ],
+    "/usage/units/tests": [
+      "usage.unitstests"
+    ],
+    "/user-agents": [
+      "user-agents.user-agents"
+    ],
+    "/users": [
+      "users.users"
+    ],
+    "/users/current": [
+      "users.current"
+    ],
+    "/users/{id}": [
+      "users.users"
+    ],
+    "/v7/account-groups": [
+      "account-groups.account-groups"
+    ],
+    "/v7/account-groups/{id}": [
+      "account-groups.account-groups"
+    ],
+    "/v7/agents": [
+      "agents.agents"
+    ],
+    "/v7/agents/notification-rules": [
+      "agents.notification-rules"
+    ],
+    "/v7/agents/notification-rules/{notificationRuleId}": [
+      "agents.notification-rules"
+    ],
+    "/v7/agents/notification-rules/{notificationruleid}": [
+      "agents.notification-rules"
+    ],
+    "/v7/agents/proxies": [
+      "agents.proxies"
+    ],
+    "/v7/agents/{agentId}": [
+      "agents.agents"
+    ],
+    "/v7/agents/{agentId}/cluster/assign": [
+      "agents.clusterassign"
+    ],
+    "/v7/agents/{agentId}/cluster/unassign": [
+      "agents.clusterunassign"
+    ],
+    "/v7/agents/{agentId}/tests/assign": [
+      "agents.testsassign"
+    ],
+    "/v7/agents/{agentId}/tests/override": [
+      "agents.testsoverride"
+    ],
+    "/v7/agents/{agentId}/tests/unassign": [
+      "agents.testsunassign"
+    ],
+    "/v7/agents/{agentid}": [
+      "agents.agents"
+    ],
+    "/v7/agents/{agentid}/cluster/assign": [
+      "agents.clusterassign"
+    ],
+    "/v7/agents/{agentid}/cluster/unassign": [
+      "agents.clusterunassign"
+    ],
+    "/v7/agents/{agentid}/tests/assign": [
+      "agents.testsassign"
+    ],
+    "/v7/agents/{agentid}/tests/override": [
+      "agents.testsoverride"
+    ],
+    "/v7/agents/{agentid}/tests/unassign": [
+      "agents.testsunassign"
+    ],
+    "/v7/alert-suppression-windows": [
+      "alert-suppression-windows.alert-suppression-windows"
+    ],
+    "/v7/alert-suppression-windows/{windowId}": [
+      "alert-suppression-windows.alert-suppression-windows"
+    ],
+    "/v7/alert-suppression-windows/{windowid}": [
+      "alert-suppression-windows.alert-suppression-windows"
+    ],
+    "/v7/alerts": [
+      "alerts.alerts"
+    ],
+    "/v7/alerts/rules": [
+      "alerts.rules"
+    ],
+    "/v7/alerts/rules/{ruleId}": [
+      "alerts.rules"
+    ],
+    "/v7/alerts/rules/{ruleid}": [
+      "alerts.rules"
+    ],
+    "/v7/alerts/{alertId}": [
+      "alerts.alerts"
+    ],
+    "/v7/alerts/{alertid}": [
+      "alerts.alerts"
+    ],
+    "/v7/api-tokens": [
+      "api-tokens.api-tokens"
+    ],
+    "/v7/audit-user-events": [
+      "audit-user-events.audit-user-events"
+    ],
+    "/v7/autonomous-systems/{asn}/prefixes": [
+      "autonomous-systems.prefixes"
+    ],
+    "/v7/cloud-insights/integration/aws": [
+      "cloud-insights.integrationaws"
+    ],
+    "/v7/cloud-insights/integration/aws/flow-logs": [
+      "cloud-insights.integrationawsflow-logs"
+    ],
+    "/v7/cloud-insights/integration/aws/flow-logs/policies": [
+      "cloud-insights.integrationawsflow-logspolicies"
+    ],
+    "/v7/cloud-insights/integration/aws/inventory": [
+      "cloud-insights.integrationawsinventory"
+    ],
+    "/v7/cloud-insights/integration/aws/inventory/policies": [
+      "cloud-insights.integrationawsinventorypolicies"
+    ],
+    "/v7/cloud-insights/integration/aws/policy/settings": [
+      "cloud-insights.integrationawspolicysettings"
+    ],
+    "/v7/cloud-insights/integration/aws/{integrationId}": [
+      "cloud-insights.integrationaws"
+    ],
+    "/v7/cloud-insights/integration/aws/{integrationid}": [
+      "cloud-insights.integrationaws"
+    ],
+    "/v7/cloud-insights/integration/azure": [
+      "cloud-insights.integrationazure"
+    ],
+    "/v7/cloud-insights/integration/azure/flow-logs": [
+      "cloud-insights.integrationazureflow-logs"
+    ],
+    "/v7/cloud-insights/integration/azure/inventory": [
+      "cloud-insights.integrationazureinventory"
+    ],
+    "/v7/cloud-insights/integration/azure/policy/settings": [
+      "cloud-insights.integrationazurepolicysettings"
+    ],
+    "/v7/cloud-insights/integration/azure/{integrationId}": [
+      "cloud-insights.integrationazure"
+    ],
+    "/v7/cloud-insights/integration/azure/{integrationid}": [
+      "cloud-insights.integrationazure"
+    ],
+    "/v7/connectors/generic": [
+      "connectors.generic"
+    ],
+    "/v7/connectors/generic/{id}": [
+      "connectors.generic"
+    ],
+    "/v7/connectors/generic/{id}/operations": [
+      "connectors.genericoperations"
+    ],
+    "/v7/credentials": [
+      "credentials.credentials"
+    ],
+    "/v7/credentials/{id}": [
+      "credentials.credentials"
+    ],
+    "/v7/dashboard-snapshots": [
+      "dashboard-snapshots.dashboard-snapshots"
+    ],
+    "/v7/dashboard-snapshots/{snapshotId}": [
+      "dashboard-snapshots.dashboard-snapshots"
+    ],
+    "/v7/dashboard-snapshots/{snapshotId}/widgets/{widgetId}": [
+      "dashboard-snapshots.widgets"
+    ],
+    "/v7/dashboard-snapshots/{snapshotid}": [
+      "dashboard-snapshots.dashboard-snapshots"
+    ],
+    "/v7/dashboard-snapshots/{snapshotid}/widgets/{widgetid}": [
+      "dashboard-snapshots.widgets"
+    ],
+    "/v7/dashboards": [
+      "dashboards.dashboards"
+    ],
+    "/v7/dashboards/filters": [
+      "dashboards.filters"
+    ],
+    "/v7/dashboards/filters/{id}": [
+      "dashboards.filters"
+    ],
+    "/v7/dashboards/{dashboardId}": [
+      "dashboards.dashboards"
+    ],
+    "/v7/dashboards/{dashboardId}/widgets/{widgetId}": [
+      "dashboards.widgets"
+    ],
+    "/v7/dashboards/{dashboardId}/widgets/{widgetId}/cards/{cardId}": [
+      "dashboards.widgetscards"
+    ],
+    "/v7/dashboards/{dashboardId}/widgets/{widgetId}/columns/{columnId}": [
+      "dashboards.widgetscolumns"
+    ],
+    "/v7/dashboards/{dashboardid}": [
+      "dashboards.dashboards"
+    ],
+    "/v7/dashboards/{dashboardid}/widgets/{widgetid}": [
+      "dashboards.widgets"
+    ],
+    "/v7/dashboards/{dashboardid}/widgets/{widgetid}/cards/{cardid}": [
+      "dashboards.widgetscards"
+    ],
+    "/v7/dashboards/{dashboardid}/widgets/{widgetid}/columns/{columnid}": [
+      "dashboards.widgetscolumns"
+    ],
+    "/v7/emulated-devices": [
+      "emulated-devices.emulated-devices"
+    ],
+    "/v7/endpoint/agents": [
+      "endpoint.agents"
+    ],
+    "/v7/endpoint/agents/connection-string": [
+      "endpoint.agentsconnection-string"
+    ],
+    "/v7/endpoint/agents/filter": [
+      "endpoint.agentsfilter"
+    ],
+    "/v7/endpoint/agents/transfer/bulk": [
+      "endpoint.agentstransferbulk"
+    ],
+    "/v7/endpoint/agents/{agentId}": [
+      "endpoint.agents"
+    ],
+    "/v7/endpoint/agents/{agentId}/disable": [
+      "endpoint.agentsdisable"
+    ],
+    "/v7/endpoint/agents/{agentId}/enable": [
+      "endpoint.agentsenable"
+    ],
+    "/v7/endpoint/agents/{agentId}/transfer": [
+      "endpoint.agentstransfer"
+    ],
+    "/v7/endpoint/agents/{agentid}": [
+      "endpoint.agents"
+    ],
+    "/v7/endpoint/agents/{agentid}/disable": [
+      "endpoint.agentsdisable"
+    ],
+    "/v7/endpoint/agents/{agentid}/enable": [
+      "endpoint.agentsenable"
+    ],
+    "/v7/endpoint/agents/{agentid}/transfer": [
+      "endpoint.agentstransfer"
+    ],
+    "/v7/endpoint/labels": [
+      "endpoint.labels"
+    ],
+    "/v7/endpoint/labels/{id}": [
+      "endpoint.labels"
+    ],
+    "/v7/endpoint/test-results/dynamic-tests/{testId}/network/filter": [
+      "endpoint.test-resultsdynamic-testsnetworkfilter"
+    ],
+    "/v7/endpoint/test-results/dynamic-tests/{testId}/path-vis": [
+      "endpoint.test-resultsdynamic-testspath-vis"
+    ],
+    "/v7/endpoint/test-results/dynamic-tests/{testId}/path-vis/agent/{agentId}/round/{roundId}": [
+      "endpoint.test-resultsdynamic-testspath-visagentround"
+    ],
+    "/v7/endpoint/test-results/dynamic-tests/{testid}/network/filter": [
+      "endpoint.test-resultsdynamic-testsnetworkfilter"
+    ],
+    "/v7/endpoint/test-results/dynamic-tests/{testid}/path-vis": [
+      "endpoint.test-resultsdynamic-testspath-vis"
+    ],
+    "/v7/endpoint/test-results/dynamic-tests/{testid}/path-vis/agent/{agentid}/round/{roundid}": [
+      "endpoint.test-resultsdynamic-testspath-visagentround"
+    ],
+    "/v7/endpoint/test-results/local-networks": [
+      "endpoint.test-resultslocal-networks"
+    ],
+    "/v7/endpoint/test-results/local-networks/topologies/filter": [
+      "endpoint.test-resultslocal-networkstopologiesfilter"
+    ],
+    "/v7/endpoint/test-results/local-networks/topologies/{networkTopologyId}": [
+      "endpoint.test-resultslocal-networkstopologies"
+    ],
+    "/v7/endpoint/test-results/local-networks/topologies/{networktopologyid}": [
+      "endpoint.test-resultslocal-networkstopologies"
+    ],
+    "/v7/endpoint/test-results/real-user-tests/filter": [
+      "endpoint.test-resultsreal-user-testsfilter"
+    ],
+    "/v7/endpoint/test-results/real-user-tests/networks/filter": [
+      "endpoint.test-resultsreal-user-testsnetworksfilter"
+    ],
+    "/v7/endpoint/test-results/real-user-tests/pages/filter": [
+      "endpoint.test-resultsreal-user-testspagesfilter"
+    ],
+    "/v7/endpoint/test-results/real-user-tests/{id}": [
+      "endpoint.test-resultsreal-user-tests"
+    ],
+    "/v7/endpoint/test-results/real-user-tests/{id}/pages/{pageId}": [
+      "endpoint.test-resultsreal-user-testspages"
+    ],
+    "/v7/endpoint/test-results/real-user-tests/{id}/pages/{pageid}": [
+      "endpoint.test-resultsreal-user-testspages"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/http-server/filter": [
+      "endpoint.test-resultsscheduled-testshttp-serverfilter"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/network/filter": [
+      "endpoint.test-resultsscheduled-testsnetworkfilter"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testId}/http-server": [
+      "endpoint.test-resultsscheduled-testshttp-server"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testId}/http-server/filter": [
+      "endpoint.test-resultsscheduled-testshttp-serverfilter"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testId}/network/filter": [
+      "endpoint.test-resultsscheduled-testsnetworkfilter"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testId}/path-vis": [
+      "endpoint.test-resultsscheduled-testspath-vis"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testId}/path-vis/agent/{agentId}/round/{roundId}": [
+      "endpoint.test-resultsscheduled-testspath-visagentround"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testid}/http-server": [
+      "endpoint.test-resultsscheduled-testshttp-server"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testid}/http-server/filter": [
+      "endpoint.test-resultsscheduled-testshttp-serverfilter"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testid}/network/filter": [
+      "endpoint.test-resultsscheduled-testsnetworkfilter"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testid}/path-vis": [
+      "endpoint.test-resultsscheduled-testspath-vis"
+    ],
+    "/v7/endpoint/test-results/scheduled-tests/{testid}/path-vis/agent/{agentid}/round/{roundid}": [
+      "endpoint.test-resultsscheduled-testspath-visagentround"
+    ],
+    "/v7/endpoint/tests/dynamic-tests/agent-to-server": [
+      "endpoint.testsdynamic-testsagent-to-server"
+    ],
+    "/v7/endpoint/tests/dynamic-tests/agent-to-server/{testId}": [
+      "endpoint.testsdynamic-testsagent-to-server"
+    ],
+    "/v7/endpoint/tests/dynamic-tests/agent-to-server/{testid}": [
+      "endpoint.testsdynamic-testsagent-to-server"
+    ],
+    "/v7/endpoint/tests/scheduled-tests": [
+      "endpoint.testsscheduled-tests"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/agent-to-server": [
+      "endpoint.testsscheduled-testsagent-to-server"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/agent-to-server/instant": [
+      "endpoint.testsscheduled-testsagent-to-serverinstant"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/agent-to-server/{testId}": [
+      "endpoint.testsscheduled-testsagent-to-server"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/agent-to-server/{testid}": [
+      "endpoint.testsscheduled-testsagent-to-server"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/http-server": [
+      "endpoint.testsscheduled-testshttp-server"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/http-server/instant": [
+      "endpoint.testsscheduled-testshttp-serverinstant"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/http-server/{testId}": [
+      "endpoint.testsscheduled-testshttp-server"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/http-server/{testid}": [
+      "endpoint.testsscheduled-testshttp-server"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/{testId}/run": [
+      "endpoint.testsscheduled-testsrun"
+    ],
+    "/v7/endpoint/tests/scheduled-tests/{testid}/run": [
+      "endpoint.testsscheduled-testsrun"
+    ],
+    "/v7/events": [
+      "events.events"
+    ],
+    "/v7/events/{id}": [
+      "events.events"
+    ],
+    "/v7/internet-insights/catalog/providers/filter": [
+      "internet-insights.catalogprovidersfilter"
+    ],
+    "/v7/internet-insights/catalog/providers/{providerId}": [
+      "internet-insights.catalogproviders"
+    ],
+    "/v7/internet-insights/catalog/providers/{providerid}": [
+      "internet-insights.catalogproviders"
+    ],
+    "/v7/internet-insights/outages/app/{outageId}": [
+      "internet-insights.outagesapp"
+    ],
+    "/v7/internet-insights/outages/app/{outageid}": [
+      "internet-insights.outagesapp"
+    ],
+    "/v7/internet-insights/outages/filter": [
+      "internet-insights.outagesfilter"
+    ],
+    "/v7/internet-insights/outages/net/{outageId}": [
+      "internet-insights.outagesnet"
+    ],
+    "/v7/internet-insights/outages/net/{outageid}": [
+      "internet-insights.outagesnet"
+    ],
+    "/v7/monitors": [
+      "monitors.monitors"
+    ],
+    "/v7/network/path-vis/interface-groups": [
+      "network.path-visinterface-groups"
+    ],
+    "/v7/network/path-vis/interface-groups/{interfaceGroupId}": [
+      "network.path-visinterface-groups"
+    ],
+    "/v7/network/path-vis/interface-groups/{interfacegroupid}": [
+      "network.path-visinterface-groups"
+    ],
+    "/v7/operations/webhooks": [
+      "operations.webhooks"
+    ],
+    "/v7/operations/webhooks/{id}": [
+      "operations.webhooks"
+    ],
+    "/v7/operations/{type}/{id}/connectors": [
+      "operations.connectors"
+    ],
+    "/v7/permissions": [
+      "permissions.permissions"
+    ],
+    "/v7/quotas": [
+      "quotas.quotas"
+    ],
+    "/v7/quotas/account-groups/assign": [
+      "quotas.account-groupsassign"
+    ],
+    "/v7/quotas/account-groups/unassign": [
+      "quotas.account-groupsunassign"
+    ],
+    "/v7/quotas/assign": [
+      "quotas.assign"
+    ],
+    "/v7/quotas/unassign": [
+      "quotas.unassign"
+    ],
+    "/v7/roles": [
+      "roles.roles"
+    ],
+    "/v7/roles/{id}": [
+      "roles.roles"
+    ],
+    "/v7/streams": [
+      "streams.streams"
+    ],
+    "/v7/streams/{id}": [
+      "streams.streams"
+    ],
+    "/v7/tags": [
+      "tags.tags"
+    ],
+    "/v7/tags/assign": [
+      "tags.assign"
+    ],
+    "/v7/tags/bulk": [
+      "tags.bulk"
+    ],
+    "/v7/tags/unassign": [
+      "tags.unassign"
+    ],
+    "/v7/tags/{id}": [
+      "tags.tags"
+    ],
+    "/v7/tags/{id}/assign": [
+      "tags.assign"
+    ],
+    "/v7/tags/{id}/unassign": [
+      "tags.unassign"
+    ],
+    "/v7/templates": [
+      "templates.templates"
+    ],
+    "/v7/templates/{id}": [
+      "templates.templates"
+    ],
+    "/v7/templates/{id}/deploy": [
+      "templates.deploy"
+    ],
+    "/v7/templates/{id}/sharing-settings": [
+      "templates.sharing-settings"
+    ],
+    "/v7/test-results/{testId}/api": [
+      "test-results.api"
+    ],
+    "/v7/test-results/{testId}/api/agent/{agentId}/round/{roundId}": [
+      "test-results.apiagentround"
+    ],
+    "/v7/test-results/{testId}/bgp": [
+      "test-results.bgp"
+    ],
+    "/v7/test-results/{testId}/bgp/routes/prefix/{prefixId}/round/{roundId}": [
+      "test-results.bgproutesprefixround"
+    ],
+    "/v7/test-results/{testId}/dns-server": [
+      "test-results.dns-server"
+    ],
+    "/v7/test-results/{testId}/dns-server/{serverId}": [
+      "test-results.dns-server"
+    ],
+    "/v7/test-results/{testId}/dns-trace": [
+      "test-results.dns-trace"
+    ],
+    "/v7/test-results/{testId}/dnssec": [
+      "test-results.dnssec"
+    ],
+    "/v7/test-results/{testId}/ftp-server": [
+      "test-results.ftp-server"
+    ],
+    "/v7/test-results/{testId}/http-server": [
+      "test-results.http-server"
+    ],
+    "/v7/test-results/{testId}/network": [
+      "test-results.network"
+    ],
+    "/v7/test-results/{testId}/page-load": [
+      "test-results.page-load"
+    ],
+    "/v7/test-results/{testId}/page-load/agent/{agentId}/round/{roundId}": [
+      "test-results.page-loadagentround"
+    ],
+    "/v7/test-results/{testId}/path-vis": [
+      "test-results.path-vis"
+    ],
+    "/v7/test-results/{testId}/path-vis/agent/{agentId}/round/{roundId}": [
+      "test-results.path-visagentround"
+    ],
+    "/v7/test-results/{testId}/rtp-server": [
+      "test-results.rtp-server"
+    ],
+    "/v7/test-results/{testId}/sip-server": [
+      "test-results.sip-server"
+    ],
+    "/v7/test-results/{testId}/web-transactions": [
+      "test-results.web-transactions"
+    ],
+    "/v7/test-results/{testId}/web-transactions/agent/{agentId}/round/{roundId}": [
+      "test-results.web-transactionsagentround"
+    ],
+    "/v7/test-results/{testId}/web-transactions/agent/{agentId}/round/{roundId}/page/{pageId}": [
+      "test-results.web-transactionsagentroundpage"
+    ],
+    "/v7/test-results/{testid}/api": [
+      "test-results.api"
+    ],
+    "/v7/test-results/{testid}/api/agent/{agentid}/round/{roundid}": [
+      "test-results.apiagentround"
+    ],
+    "/v7/test-results/{testid}/bgp": [
+      "test-results.bgp"
+    ],
+    "/v7/test-results/{testid}/bgp/routes/prefix/{prefixid}/round/{roundid}": [
+      "test-results.bgproutesprefixround"
+    ],
+    "/v7/test-results/{testid}/dns-server": [
+      "test-results.dns-server"
+    ],
+    "/v7/test-results/{testid}/dns-server/{serverid}": [
+      "test-results.dns-server"
+    ],
+    "/v7/test-results/{testid}/dns-trace": [
+      "test-results.dns-trace"
+    ],
+    "/v7/test-results/{testid}/dnssec": [
+      "test-results.dnssec"
+    ],
+    "/v7/test-results/{testid}/ftp-server": [
+      "test-results.ftp-server"
+    ],
+    "/v7/test-results/{testid}/http-server": [
+      "test-results.http-server"
+    ],
+    "/v7/test-results/{testid}/network": [
+      "test-results.network"
+    ],
+    "/v7/test-results/{testid}/page-load": [
+      "test-results.page-load"
+    ],
+    "/v7/test-results/{testid}/page-load/agent/{agentid}/round/{roundid}": [
+      "test-results.page-loadagentround"
+    ],
+    "/v7/test-results/{testid}/path-vis": [
+      "test-results.path-vis"
+    ],
+    "/v7/test-results/{testid}/path-vis/agent/{agentid}/round/{roundid}": [
+      "test-results.path-visagentround"
+    ],
+    "/v7/test-results/{testid}/rtp-server": [
+      "test-results.rtp-server"
+    ],
+    "/v7/test-results/{testid}/sip-server": [
+      "test-results.sip-server"
+    ],
+    "/v7/test-results/{testid}/web-transactions": [
+      "test-results.web-transactions"
+    ],
+    "/v7/test-results/{testid}/web-transactions/agent/{agentid}/round/{roundid}": [
+      "test-results.web-transactionsagentround"
+    ],
+    "/v7/test-results/{testid}/web-transactions/agent/{agentid}/round/{roundid}/page/{pageid}": [
+      "test-results.web-transactionsagentroundpage"
+    ],
+    "/v7/tests": [
+      "tests.tests"
+    ],
+    "/v7/tests/agent-to-agent": [
+      "tests.agent-to-agent"
+    ],
+    "/v7/tests/agent-to-agent/instant": [
+      "tests.agent-to-agentinstant"
+    ],
+    "/v7/tests/agent-to-agent/{testId}": [
+      "tests.agent-to-agent"
+    ],
+    "/v7/tests/agent-to-agent/{testid}": [
+      "tests.agent-to-agent"
+    ],
+    "/v7/tests/agent-to-server": [
+      "tests.agent-to-server"
+    ],
+    "/v7/tests/agent-to-server/instant": [
+      "tests.agent-to-serverinstant"
+    ],
+    "/v7/tests/agent-to-server/{testId}": [
+      "tests.agent-to-server"
+    ],
+    "/v7/tests/agent-to-server/{testid}": [
+      "tests.agent-to-server"
+    ],
+    "/v7/tests/api": [
+      "tests.api"
+    ],
+    "/v7/tests/api/instant": [
+      "tests.apiinstant"
+    ],
+    "/v7/tests/api/{testId}": [
+      "tests.api"
+    ],
+    "/v7/tests/api/{testid}": [
+      "tests.api"
+    ],
+    "/v7/tests/bgp": [
+      "tests.bgp"
+    ],
+    "/v7/tests/bgp/{testId}": [
+      "tests.bgp"
+    ],
+    "/v7/tests/bgp/{testid}": [
+      "tests.bgp"
+    ],
+    "/v7/tests/dns-server": [
+      "tests.dns-server"
+    ],
+    "/v7/tests/dns-server/instant": [
+      "tests.dns-serverinstant"
+    ],
+    "/v7/tests/dns-server/{testId}": [
+      "tests.dns-server"
+    ],
+    "/v7/tests/dns-server/{testid}": [
+      "tests.dns-server"
+    ],
+    "/v7/tests/dns-trace": [
+      "tests.dns-trace"
+    ],
+    "/v7/tests/dns-trace/instant": [
+      "tests.dns-traceinstant"
+    ],
+    "/v7/tests/dns-trace/{testId}": [
+      "tests.dns-trace"
+    ],
+    "/v7/tests/dns-trace/{testid}": [
+      "tests.dns-trace"
+    ],
+    "/v7/tests/dnssec": [
+      "tests.dnssec"
+    ],
+    "/v7/tests/dnssec/instant": [
+      "tests.dnssecinstant"
+    ],
+    "/v7/tests/dnssec/{testId}": [
+      "tests.dnssec"
+    ],
+    "/v7/tests/dnssec/{testid}": [
+      "tests.dnssec"
+    ],
+    "/v7/tests/ftp-server": [
+      "tests.ftp-server"
+    ],
+    "/v7/tests/ftp-server/instant": [
+      "tests.ftp-serverinstant"
+    ],
+    "/v7/tests/ftp-server/{testId}": [
+      "tests.ftp-server"
+    ],
+    "/v7/tests/ftp-server/{testid}": [
+      "tests.ftp-server"
+    ],
+    "/v7/tests/http-server": [
+      "tests.http-server"
+    ],
+    "/v7/tests/http-server/instant": [
+      "tests.http-serverinstant"
+    ],
+    "/v7/tests/http-server/{testId}": [
+      "tests.http-server"
+    ],
+    "/v7/tests/http-server/{testid}": [
+      "tests.http-server"
+    ],
+    "/v7/tests/page-load": [
+      "tests.page-load"
+    ],
+    "/v7/tests/page-load/instant": [
+      "tests.page-loadinstant"
+    ],
+    "/v7/tests/page-load/{testId}": [
+      "tests.page-load"
+    ],
+    "/v7/tests/page-load/{testid}": [
+      "tests.page-load"
+    ],
+    "/v7/tests/sip-server": [
+      "tests.sip-server"
+    ],
+    "/v7/tests/sip-server/instant": [
+      "tests.sip-serverinstant"
+    ],
+    "/v7/tests/sip-server/{testId}": [
+      "tests.sip-server"
+    ],
+    "/v7/tests/sip-server/{testid}": [
+      "tests.sip-server"
+    ],
+    "/v7/tests/voice": [
+      "tests.voice"
+    ],
+    "/v7/tests/voice/instant": [
+      "tests.voiceinstant"
+    ],
+    "/v7/tests/voice/{testId}": [
+      "tests.voice"
+    ],
+    "/v7/tests/voice/{testid}": [
+      "tests.voice"
+    ],
+    "/v7/tests/web-transactions": [
+      "tests.web-transactions"
+    ],
+    "/v7/tests/web-transactions/instant": [
+      "tests.web-transactionsinstant"
+    ],
+    "/v7/tests/web-transactions/{testId}": [
+      "tests.web-transactions"
+    ],
+    "/v7/tests/web-transactions/{testid}": [
+      "tests.web-transactions"
+    ],
+    "/v7/tests/{testId}/history": [
+      "tests.history"
+    ],
+    "/v7/tests/{testId}/run": [
+      "tests.run"
+    ],
+    "/v7/tests/{testId}/snapshot": [
+      "tests.snapshot"
+    ],
+    "/v7/tests/{testid}/history": [
+      "tests.history"
+    ],
+    "/v7/tests/{testid}/run": [
+      "tests.run"
+    ],
+    "/v7/tests/{testid}/snapshot": [
+      "tests.snapshot"
+    ],
+    "/v7/usage": [
+      "usage.usage"
+    ],
+    "/v7/usage/units/enterprise-agents": [
+      "usage.unitsenterprise-agents"
+    ],
+    "/v7/usage/units/tests": [
+      "usage.unitstests"
+    ],
+    "/v7/user-agents": [
+      "user-agents.user-agents"
+    ],
+    "/v7/users": [
+      "users.users"
+    ],
+    "/v7/users/current": [
+      "users.current"
+    ],
+    "/v7/users/{id}": [
+      "users.users"
+    ]
+  }
+}

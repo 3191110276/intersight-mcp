@@ -1,0 +1,211 @@
+{
+  "metadata": {
+    "published_version": "1.0.0",
+    "source_url": "https://developer.cisco.com/docs/cisco-xdr/automation-api-guide/",
+    "sha256": "2178346b4fbe619e5da100efc17db05c17d28e9d591c76d928b82a49ea08fb99",
+    "retrieval_date": "2026-04-16"
+  },
+  "methods": {
+    "targets.targets.create": {
+      "sdkMethod": "targets.targets.create",
+      "summary": "Create target",
+      "tags": [
+        "Targets"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "createTarget",
+        "method": "POST",
+        "pathTemplate": "/api/v1/targets",
+        "path": "/api/v1/targets",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "Target",
+        "TargetCreateRequest"
+      ],
+      "resource": "TargetCreateRequest"
+    },
+    "targets.targets.list": {
+      "sdkMethod": "targets.targets.list",
+      "summary": "List targets",
+      "tags": [
+        "Targets"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listTargets",
+        "method": "GET",
+        "pathTemplate": "/api/v1/targets",
+        "path": "/api/v1/targets",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "is_internal",
+        "types"
+      ],
+      "relatedSchemas": [
+        "inline.listTargets.parameter.query.is_internal",
+        "inline.listTargets.parameter.query.types",
+        "inline.listTargets.response.200"
+      ]
+    },
+    "targets.validate.create": {
+      "sdkMethod": "targets.validate.create",
+      "summary": "Validate targets",
+      "tags": [
+        "Targets"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "validateTargets",
+        "method": "POST",
+        "pathTemplate": "/api/v1/targets/validate",
+        "path": "/api/v1/targets/validate",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "relatedSchemas": [
+        "TargetValidateRequest",
+        "inline.validateTargets.response.200"
+      ],
+      "resource": "TargetValidateRequest"
+    },
+    "workflows.start.create": {
+      "sdkMethod": "workflows.start.create",
+      "summary": "Start workflow execution",
+      "tags": [
+        "Workflows"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "startWorkflow",
+        "method": "POST",
+        "pathTemplate": "/api/v1/workflows/start",
+        "path": "/api/v1/workflows/start",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "async",
+        "sync",
+        "unique_name",
+        "workflow_id"
+      ],
+      "relatedSchemas": [
+        "StartWorkflowRequest",
+        "inline.startWorkflow.parameter.query.async",
+        "inline.startWorkflow.parameter.query.sync",
+        "inline.startWorkflow.parameter.query.unique_name",
+        "inline.startWorkflow.parameter.query.workflow_id",
+        "inline.startWorkflow.response.200",
+        "inline.startWorkflow.response.202"
+      ],
+      "resource": "StartWorkflowRequest"
+    },
+    "workflows.summary.list": {
+      "sdkMethod": "workflows.summary.list",
+      "summary": "Get workflow summary",
+      "tags": [
+        "Workflows"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "getWorkflowSummary",
+        "method": "GET",
+        "pathTemplate": "/api/v1/workflows/summary",
+        "path": "/api/v1/workflows/summary",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "relatedSchemas": [
+        "inline.getWorkflowSummary.response.200"
+      ]
+    },
+    "workflows.workflows.create": {
+      "sdkMethod": "workflows.workflows.create",
+      "summary": "Create workflow",
+      "tags": [
+        "Workflows"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "createWorkflow",
+        "method": "POST",
+        "pathTemplate": "/api/v1/workflows",
+        "path": "/api/v1/workflows",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "requestBodyRequired": true,
+      "relatedSchemas": [
+        "Workflow",
+        "WorkflowCreateRequest"
+      ],
+      "resource": "WorkflowCreateRequest"
+    },
+    "workflows.workflows.list": {
+      "sdkMethod": "workflows.workflows.list",
+      "summary": "List workflows",
+      "tags": [
+        "Workflows"
+      ],
+      "descriptor": {
+        "kind": "http-operation",
+        "operationId": "listWorkflows",
+        "method": "GET",
+        "pathTemplate": "/api/v1/workflows",
+        "path": "/api/v1/workflows",
+        "responseMode": "json",
+        "validationPlan": {
+          "kind": "none"
+        },
+        "followUpPlan": {
+          "kind": "none"
+        }
+      },
+      "queryParameters": [
+        "categories",
+        "is_atomic"
+      ],
+      "relatedSchemas": [
+        "inline.listWorkflows.parameter.query.categories",
+        "inline.listWorkflows.parameter.query.is_atomic",
+        "inline.listWorkflows.response.200"
+      ]
+    }
+  }
+}

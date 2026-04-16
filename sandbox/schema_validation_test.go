@@ -38,6 +38,22 @@ func TestValidateRequestBodyAgainstSchemaAdditionalPropertyIssue(t *testing.T) {
 	assertDryRunIssue(t, errs[0], "$.Extra", "unknown_field", validationSourceOpenAPI)
 }
 
+func TestValidateRequestBodyAgainstSchemaImplicitAdditionalPropertyIssue(t *testing.T) {
+	t.Parallel()
+
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{ext: targetintersight.SandboxExtensions()}, &dryRunSchema{
+		Type: "object",
+		Properties: map[string]*dryRunSchema{
+			"Key": {Type: "string"},
+		},
+	}, map[string]any{"Key": "path", "Value": ""})
+
+	if len(errs) != 1 {
+		t.Fatalf("len(errs) = %d, want 1: %#v", len(errs), errs)
+	}
+	assertDryRunIssue(t, errs[0], "$.Value", "unknown_field", validationSourceOpenAPI)
+}
+
 func TestValidateRequestBodyAgainstSchemaTypeMismatchIssue(t *testing.T) {
 	t.Parallel()
 
@@ -116,6 +132,27 @@ func TestValidateRequestBodyAgainstSchemaOneOfAndAnyOfIssues(t *testing.T) {
 		t.Fatalf("len(anyOfErrs) = %d, want 1", len(anyOfErrs))
 	}
 	assertDryRunIssue(t, anyOfErrs[0], "$", "any_of", validationSourceOpenAPI)
+}
+
+func TestValidateRequestBodyAgainstSchemaOneOfIgnoresGenericObjectCatchall(t *testing.T) {
+	t.Parallel()
+
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{}, &dryRunSchema{
+		OneOf: []*dryRunSchema{
+			{
+				Type: "object",
+				Properties: map[string]*dryRunSchema{
+					"Moid": {Type: "string"},
+				},
+				Required: []string{"Moid"},
+			},
+			{Type: "object"},
+		},
+	}, map[string]any{"Moid": "org-1"})
+
+	if len(errs) != 0 {
+		t.Fatalf("len(errs) = %d, want 0: %#v", len(errs), errs)
+	}
 }
 
 func TestValidateRequestBodyAgainstSchemaRelationshipIssues(t *testing.T) {
@@ -206,6 +243,30 @@ func TestNormalizeValueForSchemaDoesNotOverrideExplicitDiscriminators(t *testing
 	}
 	if body["ObjectType"] != "custom.Object" {
 		t.Fatalf("ObjectType = %#v, want custom.Object", body["ObjectType"])
+	}
+}
+
+func TestValidateRequestBodyAgainstSchemaRelaxesMissingPolymorphicDiscriminators(t *testing.T) {
+	t.Parallel()
+
+	errs := validateRequestBodyAgainstSchema(&dryRunSpecIndex{ext: targetintersight.SandboxExtensions()}, &dryRunSchema{
+		Type:     "object",
+		Required: []string{"ClassId", "ObjectType", "FailureThreshold"},
+		Properties: map[string]*dryRunSchema{
+			"ClassId": {
+				Type: "string",
+				Enum: []any{"workload.BatchDeployment", "workload.CanaryDeployment"},
+			},
+			"ObjectType": {
+				Type: "string",
+				Enum: []any{"workload.BatchDeployment", "workload.CanaryDeployment"},
+			},
+			"FailureThreshold": {Type: "integer"},
+		},
+	}, map[string]any{"FailureThreshold": 1})
+
+	if len(errs) != 0 {
+		t.Fatalf("len(errs) = %d, want 0: %#v", len(errs), errs)
 	}
 }
 
